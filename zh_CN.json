@@ -1,0 +1,57 @@
+{
+    "log.core.numpy": "NumPy模式:{type} NumPy版本:{version} {error}",
+
+    "log.core.locally.generate.vectors.error": "本地模型生成向量出现错误, 跳过该向量生成: {e}",
+    "log.core.api.generate.vectors.error": "请求生成向量出现错误, 达到重试上限, 跳过该向量生成: {e}",
+    "log.core.api.generate.vectors.retry": "请求生成向量出现错误, 正在重试: {e}",
+
+    "log.core.debug.load.embedded.model": "正在从 HuggingFace仓库 加载嵌入模型: {model}",
+    "log.core.load.embedded.model.succeed": "成功从 HuggingFace仓库 加载嵌入模型: {model}",
+    "log.core.load.embedded.model.error": "从 HuggingFace仓库 加载嵌入模型: {model} 出错: {e}",
+    "log.core.generated.vector.nan": "未生成任何向量: {texts}",
+    
+    "log.core.debug.vector.range": "向量范围: {range}",
+    "log.core.debug.vector.shape": "向量形状: {shape}",
+    "log.core.read.vevtor.error": "读取向量出现错误: {e}",
+
+    "log.core.debug.request.messages": "提示词: {promptex}, 内容: {messages}",
+    "log.core.generate.translator.error": "请求生成翻译出现错误, 达到重试上限, 跳过该向量生成: {e}, {output}",
+    "log.core.generate.translator.retry": "请求生成翻译出现错误, 正在重试: {e}, {output}",
+
+    "log.core.parsing.parameters.error": "解析参数时出现错误, 跳过该词条: {e}, {index}",
+    "log.core.parsing.reference.word.error": "解析参考词时出现错误, 跳过该词条: {e}, {item}",
+
+    "log.core.translator.error": "翻译出现错误: {e}, {texts}",
+    "log.core.translator.cache.hit": "翻译缓存命中率: {hit}",
+    "log.core.translator.succeed": "翻译完成, 导出路径: {path}",
+
+    "log.core.settle.succeed": "处理完成, 导出路径: {path}",
+
+    "log.module.zip.read.error": "读取压缩文件出现错误: {e}",
+    "log.module.read.file0.not.lang.error": "File0中没有原始语言文件",
+    "log.module.read.file1.not.lang.error": "File1中没有目标语言文件",
+
+    "tqdm.file.read": "读取文件",
+    "tqdm.file.processing": "处理文件",
+    "tqdm.model.load": "加载模型",
+    "tqdm.vectors.generate": "生成向量",
+    "tqdm.vectors.write": "存储向量",
+    "tqdm.vectors.read": "读取向量",
+    "tqdm.index.train": "训练索引",
+    "tqdm.index.build": "构建索引",
+    "tqdm.index.search": "近邻索引",
+    "tqdm.index.write": "存储索引",
+    "tqdm.index.read": "读取索引",
+    "tqdm.translations.generate": "生成翻译",
+    "tqdm.translations.use": "应用翻译",
+    "tqdm.translations.cache.find": "查找缓存",
+    "tqdm.translations.cache.use": "应用缓存",
+    "tqdm.progress.encoding": "正在编码",
+    "tqdm.vectors.quantization": "量化向量",
+    "tqdm.vectors.quantization.reverse": "反量化向量",
+    "tqdm.scale.quantization": "向化缩放",
+    "tqdm.scale.quantization.reverse": "反量化缩放"
+
+
+
+}
