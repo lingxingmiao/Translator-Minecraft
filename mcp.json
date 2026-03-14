@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "TranslationMinecraft": {
+      "url": "http://127.0.0.1:25560/mcp/",
+      "timeout": 167800000
+    }
+  }
+}
