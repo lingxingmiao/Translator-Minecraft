@@ -1,11 +1,14 @@
 # Translator Minecraft
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的神经续作。<br>
-此软件提供MCP服务为Minecraft的光影包、资源包、模组、FTB任务、困难任务提供便捷的翻译功能。<br>
+此软件提供MCP服务为Minecraft的光影包、资源包、模组、FTB任务、更好的任务提供便捷的翻译功能。<br>
 还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，可以使用这个文件来导出数据集来微调大语言模型。<br>
 并且存储的向量还支持多种量化格式，以此来减少存储空间。<br>
 此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）。<br>
+## 演示
+![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
+## 添加此工具
 
-# 推荐配置
+## 推荐配置
 - 中央处理器：CPU-Z多核3000分以上的64位处理器
 - 计算加速器：NVIDIA支持CUDA Toolkit 12.0的Maxwell以上架构 8GB内存（非必须）
 - 内存：4GB（按向量大小）
