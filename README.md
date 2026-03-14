@@ -1,0 +1,2 @@
+# Translator-Minecraft
+使用大语言模型来翻译Minecraft中的各种内容
