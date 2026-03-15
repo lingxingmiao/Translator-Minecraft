@@ -4,9 +4,11 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，可以使用这个文件来导出数据集来微调大语言模型。<br>
 并且存储的向量还支持多种量化格式，以此来减少存储空间。<br>
 此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）。<br>
+如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。
 ## 演示
 ![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
 ## 添加此工具
+
 
 ## 推荐配置
 - 中央处理器：CPU-Z多核3000分以上的64位处理器
