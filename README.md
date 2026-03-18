@@ -151,3 +151,10 @@ ARG GUI停更
 - 添加 系统变量:
     - FENGMANG_GPU_ACC（是否启用GPU加速）
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
+
+## Release.1.3 bata.1
+- 更改 向量存储的内部格式为类似字典
+- 添加 向量量化格式: (神经)
+    - Float8_E4M3
+    - NVFP4
+    - 残差量化
