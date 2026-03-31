@@ -155,6 +155,8 @@ ARG GUI停更
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
 
 ### Release.1.4 bata.1
+- 添加 OAuth2.0 格式 API 调用（进行中）
+- 添加 调用大语言模型额外参数传入（进行中）
 - 添加/修改 向量量化存储相关: (神经)
     - 添加 Float8_E4M3
     - 修改添加 非对称量化（Q系列量化）
