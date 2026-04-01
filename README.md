@@ -108,7 +108,7 @@ conda env remove -n Translator_Minecraft
 - 更改 单次多词 格式
 
 ### Release.1.2
-- 添加 已安装的整合包翻译支持（未完成）
+- 添加 已安装的整合包翻译支持（失败）
 
 ### Release.1.3 Bata.1
 ARG GUI停更
@@ -155,8 +155,9 @@ ARG GUI停更
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
 
 ### Release.1.4 bata.1
-- 添加 OAuth2.0 格式 API 调用（进行中）
+- 添加 OAuth2.0 格式 API 调用（失败）
 - 添加 调用大语言模型额外参数传入（进行中）
+- 添加 已安装的整合包翻译支持（进行中）
 - 添加/修改 向量量化存储相关: (神经)
     - 添加 Float8_E4M3
     - 修改添加 非对称量化（Q系列量化）
