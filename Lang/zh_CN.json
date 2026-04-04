@@ -27,9 +27,15 @@
 
     "log.core.settle.succeed": "处理完成, 导出路径: {path}",
 
+    "log.core.translator.modpack.error.mod":  "翻译整合包模组出现错误或信息, 跳过该模组: {e}, {mod}",
+
     "log.module.zip.read.error": "读取压缩文件出现错误: {e}",
     "log.module.read.file0.not.lang.error": "File0中没有原始语言文件",
     "log.module.read.file1.not.lang.error": "File1中没有目标语言文件",
+    "log.module.pack.i18n.no": "未找到I18nUpdateMod资源包, 可能导致翻译时长增加",
+    "log.module.quests.load.error": "读取 {mod} 任务文件出现错误, 跳过文件 {file}: {e}",
+
+    "log.quantization.superposition.error": "向量数据不允许叠加非浮点类型数据",
 
     "tqdm.file.read": "读取文件",
     "tqdm.file.processing": "处理文件",
@@ -49,8 +55,11 @@
     "tqdm.progress.encoding": "正在编码",
     "tqdm.vectors.quantization": "量化向量",
     "tqdm.vectors.quantization.reverse": "反量化向量",
-    "tqdm.scale.quantization": "向化缩放",
-    "tqdm.scale.quantization.reverse": "反量化缩放"
+    "tqdm.scale.quantization": "量化缩放",
+    "tqdm.scale.quantization.reverse": "反量化缩放",
+    "tqdm.translations.mod": "翻译模组",
+    "tqdm.translations.resource": "翻译资源"
+
 
 
 
