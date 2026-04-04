@@ -3,16 +3,18 @@ import traceback as eb
 import threading
 import hashlib
 import zipfile
+import tomllib
 import pickle
 import random
 import json
+import glob
 import time
 import math
 import ast
 import os
 import re
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from functools import partial
 from collections import defaultdict
 from typing import Callable, Dict, Any
@@ -20,6 +22,7 @@ from dataclasses import dataclass, replace
 from concurrent.futures import ThreadPoolExecutor, as_completed
 #需要安装↓
 import faiss
+import numpy
 #需要安装↓
 from fastmcp import FastMCP
 from pyhocon import ConfigFactory, HOCONConverter
@@ -82,4 +85,5 @@ __all__ = [
     "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
     "faiss", "requests", "math", "tqdm", "dataclass",
     "replace", "random", "ConfigFactory", "HOCONConverter", "time",
-    "GPU_ACC", "FastMCP", "MCPConfig"]
+    "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
+    "tomllib", "glob"]

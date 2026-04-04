@@ -37,6 +37,7 @@ def SetTranslatorConfig(config_kwargs: dict):
     #### 2. 大语言模型设置 (LLM)
     - `LLM_API_URL` (str): API 请求地址，默认 "" (必填项之一)
     - `LLM_API_KEY` (str): API 密钥，默认 "" (必填项之一)
+    - `LLM_API_KWARGS` (dict): API 而外参数，默认 {}
     - `LLM_MODEL` (str): 模型名称，默认 ""
     - `LLM_TEMP` (float): 温度参数 (0.0-1.0)，越低越确定，默认 0.00
     - `LLM_TOP_K` (int): 采样参数，默认 60
@@ -47,6 +48,7 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `LLM_MAX_WORKERS` (int): 最大并发数，默认 24
     - `LLM_MAX_BATCH` (int): 单次批处理数量，默认 3
     - `LLM_MAX_RETRY` (int): 失败重试次数，默认 128
+    - `LLM_ORIGINAL_REFERENCE` (bool): 输出是否包含原文，示例: 我喜欢你(I like you)，默认 True
 
     #### 3. 嵌入模型设置 (Embedding)
     - `EMB_API_URL` (str): 嵌入模型 API 地址，默认 ""
@@ -61,8 +63,9 @@ def SetTranslatorConfig(config_kwargs: dict):
     #### 4. 向量存储设置 (Vector Store) 修改量化相关设置可能导致出现错误
     - `VEC_FILE_PATH` (str): 向量文件存储目录，默认 r"./Vectors"
     - `VEC_FILE_NAME` (str): 向量文件名，默认 "Vectors"
-    - `VEC_QUANTIZATION` (str): 量化类型，["Float32", "Float16", "Float16_S1M15", "BFloat16", "Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"] 从中选择，默认 "Q8_K_X"
-    - `VEC_QUANTIZATION_BLOCK_SIZE` (int): 量化块大小，默认 64
+    - `VEC_QUANTIZATION` (str): 量化类型，["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3", "Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"] 从中选择，默认 "Q4_K_X"
+    - `VEC_QUANTILE` (float): Q系列量化裁切分位数，范围0.99-1.0，默认0.998
+    - `VEC_QUANTIZATION_BLOCK_SIZE` (int): 量化块大小，需要2的倍数，最大256，默认 32
 
     #### 5. 缓存与路径 (Cache & Path)
     - `TRANSLATOR_CACHE_WRITE` (bool): 是否写入翻译缓存，默认 True
@@ -234,6 +237,44 @@ def TranslatorBQ(Path: str) -> str:
     except Exception:
         return f"发生未知错误:\n{eb.format_exc()}"
 @mcp.tool()
+def TranslatorModPack(Path: str, AllMode: bool = False) -> str:
+    """
+    ### 工具功能
+    翻译已安装的整合包。
+    此工具依赖全局配置，**使用前请确保已调用 `SetTranslatorConfig`。
+    最低工作参数: LLM_API_URL、LLM_MODEL
+    如果用户没有说明请不要随意改变配置。
+
+    ### 参数详解
+    - `Path` (str): **minecraft文件夹实例路径**。
+      - MMC系列启动器示例: ~/PrismLauncher/instances/Fabulously Optimized/minecraft
+      - 通用启动器示例: ~/HMCLauncher/.minecraft 或 ~/HMCLauncher/version/Fabulously Optimized/
+    - `AllMode` (bool): **全模式**。
+      - True: 翻译所有可翻译的模组。
+      - False: 剔除I18n模组已有的汉化。
+
+    ### 返回内容
+    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
+    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
+
+    ### 注意事项
+    1. 该函数会翻译一切可翻译的内容包括 模组、资源文件夹、KJS魔改文件夹、FTB任务、BQ任务
+    2. 翻译完成 模组部分会在资源包文件夹新建一个 ModPack_Translation-{LANGUAGE}.zip 需要玩家手动选择加载
+    3. 翻译至中文推荐安装I18n模组后启动一次再翻译
+    """
+    Path = 目录处理(Path)
+    try:
+        设置时间()
+        translator = Translator(Config=配置文件)
+        translator.翻译整合包(
+            path=Path,
+            all_mode=AllMode,
+        )
+        logs = translator.调用额外函数("读取日志")
+        return f"函数执行完成\n{logs}"
+    except Exception:
+        return f"发生未知错误:\n{eb.format_exc()}"
+@mcp.tool()
 def ImportDictMiniSystemPrompt(File: str, Mode: str = "dense"):
     """
     ### 工具功能
@@ -261,6 +302,63 @@ def ImportDictMiniSystemPrompt(File: str, Mode: str = "dense"):
         translator.导入DictMini参考词(
             file=File,
             mode=Mode
+        )
+        logs = translator.调用额外函数("读取日志")
+        return f"函数执行完成\n{logs}"
+    except Exception:
+        return f"发生未知错误:\n{eb.format_exc()}"
+@mcp.tool()
+def ImportDictMiniTranslatorCache(File: str):
+    """
+    ### 工具功能
+    导入翻译缓存（仅支持 DictMini.json 文件）, 翻译缓存可用于命中翻译文本。
+    此工具不完全依赖全局配置, 默认已经设置。
+    此工具文件默认保存 TRANSLATOR_CACHE_PATH/TRANSLATOR_CACHE_NAME 下。
+    如果用户没有说明请不要随意改变配置。
+    
+    ### 参数详解
+    - `File` (str): **导入文件**。
+      - 导入 DictMini.json 文件。
+      - 文件来源: https://github.com/CFPATools/i18n-dict。
+      
+    ### 返回内容
+    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
+    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
+    """
+    File = 路径处理(File)
+    try:
+        设置时间()
+        translator = Translator(Config=配置文件)
+        translator.导入DictMini缓存(
+            file=File,
+        )
+        logs = translator.调用额外函数("读取日志")
+        return f"函数执行完成\n{logs}"
+    except Exception:
+        return f"发生未知错误:\n{eb.format_exc()}"
+@mcp.tool()
+def ImportSystemPrompt(Path: str):
+    """
+    ### 工具功能
+    导入翻译提示词（支持 Minecraft jar模组、zip光影/资源包、该软件专属格式pkl语言文件）。
+    此工具不完全依赖全局配置, 但是依赖嵌入模型(EMB_MODEL), 默认已经设置。
+    此工具文件默认保存 VEC_FILE_PATH/VEC_FILE_NAME 下。
+    如果用户没有说明请不要随意改变配置。
+    
+    ### 参数详解
+    - `Path` (str): **导入路径**。
+      - 导入该路径下的所有 .jar .zip 与 .pkl 文件。
+      
+    ### 返回内容
+    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
+    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
+    """
+    Path = 目录处理(Path)
+    try:
+        设置时间()
+        translator = Translator(Config=配置文件)
+        translator.导入参考词(
+            path=Path, 
         )
         logs = translator.调用额外函数("读取日志")
         return f"函数执行完成\n{logs}"
@@ -394,35 +492,7 @@ def MergeLangUpdate(File0: str, NotLangFile: str, File1: str = None, OutputPath:
         return f"函数执行完成\n{logs}"
     except Exception:
         return f"发生未知错误:\n{eb.format_exc()}"
-@mcp.tool()
-def ImportSystemPrompt(Path: str):
-    """
-    ### 工具功能
-    导入翻译提示词（支持 Minecraft jar模组、zip光影/资源包、该软件专属格式pkl语言文件）。
-    此工具不完全依赖全局配置, 但是依赖嵌入模型(EMB_MODEL), 默认已经设置。
-    此工具文件默认保存 VEC_FILE_PATH/VEC_FILE_NAME 下。
-    如果用户没有说明请不要随意改变配置。
-    
-    ### 参数详解
-    - `Path` (str): **导入路径**。
-      - 导入该路径下的所有 .jar .zip 与 .pkl 文件。
-      
-    ### 返回内容
-    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
-    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
-    """
-    Path = 目录处理(Path)
-    try:
-        设置时间()
-        translator = Translator(Config=配置文件)
-        translator.导入参考词(
-            path=Path, 
-        )
-        logs = translator.调用额外函数("读取日志")
-        return f"函数执行完成\n{logs}"
-    except Exception:
-        return f"发生未知错误:\n{eb.format_exc()}"
-@mcp.tool()
+
 def ViewFolders(path='.') -> dict:
     """查看当前文件夹下有什么文件与文件夹"""
     result = {}

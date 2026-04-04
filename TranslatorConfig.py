@@ -7,6 +7,7 @@ class DefaultConfig:
     
     LLM_API_URL = ""
     LLM_API_KEY = ""
+    LLM_API_KWARGS = {}
     LLM_MODEL = ""
     LLM_TOP_K = 60
     LLM_TOP_P = 0.70
@@ -17,6 +18,7 @@ class DefaultConfig:
     LLM_MAX_WORKERS = 24
     LLM_MAX_BATCH = 1
     LLM_MAX_RETRY = 128
+    LLM_ORIGINAL_REFERENCE = True
     LLM_SYSTEM_PROMPTEX1 = f"""
 【以下是翻译任务提示，严禁输出】
 """
@@ -33,23 +35,25 @@ class DefaultConfig:
 - 翻译为{LANGUAGE_OUTPUT}语言
 - 翻译领域为Minecraft游戏
 - 输入遇到{LLM_SYSTEM_PROMPTEX1}请不要输出这段内容与后面的内容
+- 如果遇到 nomifactory.quest.normal.db.12.desc nomifactory.quest.normal.db.884.title 这种格式的键文本(可能带有大中小括号), 请保留原文
 """
 
     EMB_API_URL = ""
     EMB_API_KEY = ""
     EMB_MODEL = "nomic-ai/nomic-embed-text-v1.5" # string: 嵌入模型/HuggingFace仓库名
-    EMB_MODEL_ACC_MODE = "ONNX" # string: None, ONNX, float64, float32, float16, bfloat16
+    EMB_MODEL_ACC_MODE = "bfloat16" # string: None, ONNX, float64, float32, float16, bfloat16
     EMB_MAX_TOKENS = 2048
     EMB_TOKENSTOTEXT_RATIO = 3.0
     EMB_MAX_WORKERS = 24
     EMB_MAX_RETRY = 128
 
     VEC_INT_DTYPE = ["Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"]
-    VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_S1M15", "BFloat16"]
+    VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
     VEC_FILE_PATH = r"./Vectors"
     VEC_FILE_NAME = "Vectors"
-    VEC_QUANTIZATION = "Q8_K_X" # string: VEC_INT_DTYPE 与 VEC_FLOAT_DTYPE 选中其中一个
-    VEC_QUANTIZATION_BLOCK_SIZE = 64 # int: 2的倍数 最小1 最大256 默认64
+    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE 与 VEC_FLOAT_DTYPE 选中其中一个
+    VEC_QUANTILE = 0.998
+    VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
     
     TRANSLATOR_CACHE_WRITE = True
     TRANSLATOR_CACHE_READ = True
@@ -72,12 +76,29 @@ class DefaultConfig:
     INDEX_REFINEFLAT_K_FACTOR = 2.0
 DEFAULT_CONFIG = DefaultConfig()
 class RuntimeConfig:
-    def __init__(self, **kwargs):
-        self._config = replace(DEFAULT_CONFIG)
-        for key, value in kwargs.items():
-            if hasattr(self._config, key):
-                setattr(self._config, key, value)
+    def __init__(self, **参数):
+        object.__setattr__(self, '_配置', replace(DEFAULT_CONFIG))
+        
+        for 键, 值 in 参数.items():
+            if hasattr(self._配置, 键):
+                setattr(self._配置, 键, 值)
             else:
-                raise AttributeError(f"未知配置项：{key}")
-    def __getattr__(self, name):
-        return getattr(self._config, name)
+                raise AttributeError(f"未知配置项：{键}")
+
+    def __getattr__(self, 名称):
+        try:
+            配置 = object.__getattribute__(self, '_配置')
+        except AttributeError:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{名称}'")
+        
+        return getattr(配置, 名称)
+
+    def __setattr__(self, 名称, 值):
+        if 名称 == '_配置':
+            object.__setattr__(self, 名称, 值)
+        else:
+            try:
+                配置 = object.__getattribute__(self, '_配置')
+                setattr(配置, 名称, 值)
+            except AttributeError:
+                object.__setattr__(self, 名称, 值)
