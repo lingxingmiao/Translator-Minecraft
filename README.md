@@ -161,6 +161,7 @@ conda env remove -n Translator_Minecraft
 - 添加 单实例 嵌入模型、向量文件、文本文件、向量索引 持久化
 - 添加 翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 - 添加 自动汉化更新 的 I18n词典 导入翻译缓存功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
+- 添加 翻译对照功能，返回示例：想妈妈了(think ma ma le)
 - 添加/修改 向量量化存储相关: (神经)
     - 添加 Float8_E4M3
     - 修改添加 非对称量化（Q系列量化）
