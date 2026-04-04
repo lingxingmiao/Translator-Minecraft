@@ -108,10 +108,9 @@ conda env remove -n Translator_Minecraft
 - 更改 单次多词 格式
 
 ### Release.1.2
-- 添加 已安装的整合包翻译支持（失败）
+- 添加 已安装的整合包翻译支持（失败，Release.1.4 bata.1完成）
 
 ### Release.1.3 Bata.1
-ARG GUI停更
 - 大量修改传入方式
 - 添加 IndexRefineFlat 方法
 - 添加 翻译资源文件 单文件传入键值自动补全
