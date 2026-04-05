@@ -180,3 +180,4 @@ conda env remove -n Translator_Minecraft
 
 ### Release.1.4 bata.2
 - 添加 FastApi（供应商模式）（进行中）
+- 修复 Module.从模组文件夹获取模组ID 的缩进块问题
