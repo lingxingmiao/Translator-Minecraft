@@ -183,7 +183,7 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译任务传入文件路径与键路径导致的LLM预填充耗时增加的问题
 
 ### Release.1.4 bata.2
-- 添加 FastApi（供应商模式）（进行中）
+- 添加 FastApi（供应商模式）（通用翻译，分离语言文件更新，合并语言文件更新）
 - 添加 通用翻译函数
     - 额外支持 未安装整合包（支持 CurseForge Modrinth MultiMC）（仅翻译整合包内已有文件生成补丁）
     - 支持 Zip压缩后的 Minecraft实例 FTB任务 BQ任务 文件夹
@@ -191,3 +191,4 @@ conda env remove -n Translator_Minecraft
 - 修复 Module.从模组文件夹获取模组ID 的缩进块问题
 - 修复 整合包翻译没有资源包文件夹导致的错误
 - 修复 整合包翻译没有模组文件夹导致的错误
+- 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
