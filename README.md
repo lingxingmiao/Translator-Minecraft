@@ -20,8 +20,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ```powershell
 conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
-pip install numpy faiss-cpu tqdm requests pyhocon fastmcp
-# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码 MCP服务器
+pip install numpy faiss-cpu tqdm requests pyhocon
+# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码
+pip install uvicorn fastapi
+# API服务器（可选）
+pip install fastmcp
+# MCP服务器（可选）
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
 pip install uninstall torch
@@ -183,7 +187,7 @@ conda env remove -n Translator_Minecraft
 - 添加 通用翻译函数
     - 额外支持 未安装整合包（支持 CurseForge Modrinth MultiMC）（仅翻译整合包内已有文件生成补丁）
     - 支持 Zip压缩后的 Minecraft实例 FTB任务 BQ任务 文件夹
-- 修改 FTB任务文件写入固定4个线程，而不是处理器逻辑处理器的二分之一
+- 修改 任务文件读取/写入固定4个线程，而不是处理器逻辑处理器的二分之一
 - 修复 Module.从模组文件夹获取模组ID 的缩进块问题
 - 修复 整合包翻译没有资源包文件夹导致的错误
 - 修复 整合包翻译没有模组文件夹导致的错误
