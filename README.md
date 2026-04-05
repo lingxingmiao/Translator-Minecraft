@@ -20,8 +20,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ```powershell
 conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
-pip install numpy faiss-cpu tqdm requests pyhocon
-# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码
+pip install numpy faiss-cpu tqdm requests pyhocon pyfiglet
+# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码 艺术
 pip install uvicorn fastapi
 # API服务器（可选）
 pip install fastmcp
@@ -183,7 +183,7 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译任务传入文件路径与键路径导致的LLM预填充耗时增加的问题
 
 ### Release.1.4 bata.2
-- 添加 FastApi（供应商模式）（通用翻译，分离语言文件更新，合并语言文件更新）
+- 添加 FastApi（供应商模式，headers:{"Authorization": f"Bearer sk-114514"}）（通用翻译，分离语言文件更新，合并语言文件更新）
 - 添加 通用翻译函数
     - 额外支持 未安装整合包（支持 CurseForge Modrinth MultiMC）（仅翻译整合包内已有文件生成补丁）
     - 支持 Zip压缩后的 Minecraft实例 FTB任务 BQ任务 文件夹
