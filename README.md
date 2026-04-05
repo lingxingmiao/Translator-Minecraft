@@ -177,3 +177,6 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译任务返回重新排序导致的错误
 - 修复 读取FTB任务遇到双重编码字符串导致程序无法正确处理的问题
 - 修复 翻译任务传入文件路径与键路径导致的LLM预填充耗时增加的问题
+
+### Release.1.4 bata.2
+- 添加 FastApi（供应商模式）（进行中）
