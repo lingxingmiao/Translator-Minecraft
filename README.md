@@ -180,4 +180,9 @@ conda env remove -n Translator_Minecraft
 
 ### Release.1.4 bata.2
 - 添加 FastApi（供应商模式）（进行中）
+- 添加 通用翻译函数
+    - 未安装整合包翻译支持（支持 CuresForge Modrinth MultiMC）（仅翻译整合包内已有文件生成补丁）
+- 修改 FTB任务文件写入固定4个线程，而不是处理器逻辑处理器的二分之一
 - 修复 Module.从模组文件夹获取模组ID 的缩进块问题
+- 修复 整合包翻译没有资源包文件夹导致的错误
+- 修复 整合包翻译没有模组文件夹导致的错误
