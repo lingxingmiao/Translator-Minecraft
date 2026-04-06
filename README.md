@@ -40,7 +40,15 @@ nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn T
 conda deactivate
 conda env remove -n Translator_Minecraft
 ```
-
+### 推荐模型 可用模型翻译速度排名
+- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)（单次多次翻译可能导致输出问题）
+- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)（速度质量平衡）
+- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B)（单次多次翻译可能导致输出问题）
+- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)（速度质量平衡）
+- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B)（单次多次翻译可能导致输出问题）
+- [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B)（单次多次翻译可能导致输出问题）（质量较好）
+- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct)
+- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B)（单次多次翻译可能导致输出问题）
 ## 量化类型
 ### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
 | RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
