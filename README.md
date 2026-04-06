@@ -20,8 +20,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ```powershell
 conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
-pip install numpy faiss-cpu tqdm requests pyhocon pyfiglet
-# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码 艺术
+pip install numpy faiss-cpu tqdm requests pyhocon
+# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码
 pip install uvicorn fastapi
 # API服务器（可选）
 pip install fastmcp
