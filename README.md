@@ -40,7 +40,7 @@ nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn T
 conda deactivate
 conda env remove -n Translator_Minecraft
 ```
-### 推荐模型 可用模型翻译速度排名
+## 推荐模型 可用模型翻译速度排名
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)（单次多次翻译可能导致输出问题）
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)（速度质量平衡）
 - [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B)（单次多次翻译可能导致输出问题）
