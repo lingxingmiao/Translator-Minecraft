@@ -1,4 +1,4 @@
-from TranslatorLib import HARDWARE_INFO, np, mp, threading, hashlib, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, faiss, requests, GPU_ACC, numpy
+from TranslatorLib import HARDWARE_INFO, np, mp, threading, hashlib, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, faiss, requests, GPU_ACC, numpy, PurePosixPath
 from TranslatorConfig import RuntimeConfig
 from TranslatorQuantization import Quantization
 from TranslatorLocale import Locale
@@ -394,7 +394,8 @@ class Translator:
             Self.Module.写入日志("log.core.translator.error", e=eb.format_exc(), texts=texts, info_level=3)
             raise eb.format_exc()
         return 返回列表
-    def 翻译语言文件(Self, file0: str,  file1: str = "", output_path: str = ".", export_inspection: bool = False, output_lang_str: bool = False, read_error: bool = True):
+    def 翻译语言文件(Self, file0: str,  file1: str = "", output_path: str = "", export_inspection: bool = False, output_lang_str: bool = False, read_error: bool = True):
+        output_path = Self.Module.输出路径处理(output_path)
         未翻译列表 = []
         去翻译列表 = []
         输出列表 = []
@@ -533,14 +534,14 @@ class Translator:
             key = item[0][0]
             分组[key].append(item)
         翻译列表 = [分组[k] for k in sorted(分组.keys())]
-        with mp.Pool(processes=int(mp.cpu_count() / 2 if mp.cpu_count() / 2 > 1 else 1)) as 解释器:
+        with mp.Pool(processes=4) as 解释器:
             任务结果 = 解释器.imap(partial(Self.Module.应用FTBQ翻译, mode=("H" if os.path.isdir(os.path.join(path, "quests")) else "L")), 翻译列表)
             for 单个任务 in tqdm(任务结果, total=len(翻译列表), desc="tqdm.translations.use"): pass
         Self.Module.写入日志("log.core.translator.succeed", path=path, info_level=0)
     def 翻译BQ任务(Self, path: str):
         翻译列表 = []
         nbt文件 = [str(index) for index in Path(path).rglob("*.json")]
-        with mp.Pool(processes=int(mp.cpu_count() / 2 if mp.cpu_count() / 2 > 1 else 1)) as 解释器:
+        with mp.Pool(processes=4) as 解释器:
             任务结果 = 解释器.imap(Self.Module.读取单个BQ_Json文件, nbt文件)
             for 单个任务 in tqdm(任务结果, total=len(nbt文件), desc="tqdm.file.read"):
                 翻译列表.extend(单个任务)
@@ -551,7 +552,7 @@ class Translator:
             key = item[0][0]
             分组[key].append(item)
         翻译列表 = [分组[k] for k in sorted(分组.keys())]
-        with mp.Pool(processes=int(mp.cpu_count() / 2 if mp.cpu_count() / 2 > 1 else 1)) as 解释器:
+        with mp.Pool(processes=4) as 解释器:
             任务结果 = 解释器.imap(partial(Self.Module.应用BQ翻译), 翻译列表)
             for 单个任务 in tqdm(任务结果, total=len(翻译列表), desc="tqdm.translations.use"): pass
         Self.Module.写入日志("log.core.translator.succeed", path=path, info_level=0)
@@ -592,7 +593,8 @@ class Translator:
                 导出列表.append({"instruction": f"翻译为{Self.Config.LANGUAGE_OUTPUT}语言", "input": index[0], "output": index[1], "system": f"将下列文本翻译为{Self.Config.LANGUAGE_OUTPUT}语言"})
         with open(output_file, 'w+', encoding='utf-8') as f:
             f.write('\n'.join(json.dumps(item, ensure_ascii=False, separators=(',', ':')) for item in tqdm(导出列表, desc="tqdm.progress.encoding")))
-    def 分离语言文件更新(Self, file0: str, file1: str = "", output_path: str = ".", mode: str = "none"):
+    def 分离语言文件更新(Self, file0: str, file1: str = "", output_path: str = "", mode: str = "none"):
+        output_path = Self.Module.输出路径处理(output_path)
         缺失列表 = []
         输出列表 = []
         文件0, _, 文件1, _, 输出扩展名, _ = Self.Module.读取资源文件(file0, file1)
@@ -617,6 +619,7 @@ class Translator:
         if mode == "none":
             Self.Module.保存语言文件(导出路径, [f"{index[0]}={index[1]}" for index in 缺失列表])
             Self.Module.写入日志("log.core.settle.succeed", path=str(Path(导出路径).resolve()), info_level=0)
+            return Path(导出路径).resolve()
         elif mode == "extra":
             输入列表 = []
             for index in 缺失列表:
@@ -653,8 +656,9 @@ class Translator:
             with open(str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve()), 'w+', encoding='utf-8') as f:
                 f.write("\n".join(输出列表))
             Self.Module.写入日志("log.core.settle.succeed", path=str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve()), info_level=0)
-            
-    def 合并语言文件更新(Self, file0: str, notlang_file: str, file1: str = "", output_path: str = "."):
+            return Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve()
+    def 合并语言文件更新(Self, file0: str, notlang_file: str, file1: str = "", output_path: str = ""):
+        output_path = Self.Module.输出路径处理(output_path)
         合并列表 = []
         输出列表 = []
         缺失列表 = []
@@ -708,35 +712,50 @@ class Translator:
                 for 压缩文件 in 压缩文件夹Path.rglob('*'):
                     if 压缩文件.is_file():
                         f.write(压缩文件, arcname=压缩文件.relative_to(压缩文件夹))
+            Self.Module.写入日志("log.core.settle.succeed", path=f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip", info_level=0)
+            return Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve()
         else:
             输出路径 = str(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}")
             Self.Module.保存语言文件(输出路径, 输出列表)
-        Self.Module.写入日志("log.core.settle.succeed", path=str(Path(输出路径)), info_level=0)
+            Self.Module.写入日志("log.core.settle.succeed", path=str(Path(输出路径)), info_level=0)
+            return Path(输出路径).resolve()
     def 翻译整合包(Self, path: str, all_mode: bool = False):
-        I18n模组ID = [] if all_mode else Self.Module.从资源包文件夹获取I18n翻译模组ID(path)
-        模组ID = Self.Module.从模组文件夹获取模组ID(path)
-        模组ID字典 = {item[0]: item[1] for item in 模组ID}
-        I18n缺失模组ID = []
-        for index in 模组ID字典:
-            if index not in I18n模组ID:
-                I18n缺失模组ID.append([index, 模组ID字典[index]]) 
-        缓存路径 = f"{Self.Config.PATH_CACHE}/{Self.Module.随机16进制字符串(4)}/ModPack_Translation_{Self.Config.LANGUAGE_OUTPUT}/"
-        for index in tqdm(I18n缺失模组ID, desc="tqdm.translations.mod"):
-            try:
-                保存路径 = Path(f"{缓存路径}/assets/{index[0]}/lang/")
-                保存路径.mkdir(parents=True, exist_ok=True)
-                Self.翻译语言文件(file0=f"{path}/mods/{index[1]}", file1="", output_path=保存路径, output_lang_str=True, read_error=False)
-            except FileNotFoundError:
-                Self.Module.写入日志("log.core.translator.modpack.error.mod", e="", mod=index[0], info_level=0)
-            except Exception:
-                Self.Module.写入日志("log.core.translator.modpack.error.mod", e=eb.format_exc(), mod=index[0], info_level=1)
-        for p in sorted(Path(f"{缓存路径}/assets/").rglob('*'), reverse=True):
-            try: p.rmdir()
-            except: pass
+        翻译列表路径 = {}
+        if Path(f"{path}/mods").is_dir():
+            I18n模组ID = [] if all_mode else Self.Module.从资源包文件夹获取I18n翻译模组ID(path)
+            模组ID = Self.Module.从模组文件夹获取模组ID(path)
+            模组ID字典 = {item[0]: item[1] for item in 模组ID}
+            I18n缺失模组ID = []
+            for index in 模组ID字典:
+                if index not in I18n模组ID:
+                    I18n缺失模组ID.append([index, 模组ID字典[index]]) 
+            缓存路径 = f"{Self.Config.PATH_CACHE}/{Self.Module.随机16进制字符串(4)}/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}/"
+            for index in tqdm(I18n缺失模组ID, desc="tqdm.translations.mod"):
+                try:
+                    保存路径 = Path(f"{缓存路径}/assets/{index[0]}/lang/")
+                    保存路径.mkdir(parents=True, exist_ok=True)
+                    Self.翻译语言文件(file0=f"{path}/mods/{index[1]}", file1="", output_path=保存路径, output_lang_str=True, read_error=False)
+                except FileNotFoundError:
+                    Self.Module.写入日志("log.core.translator.modpack.error.mod", e="", mod=index[0], info_level=0)
+                except Exception:
+                    Self.Module.写入日志("log.core.translator.modpack.error.mod", e=eb.format_exc(), mod=index[0], info_level=1)
+            for p in sorted(Path(f"{缓存路径}/assets/").rglob('*'), reverse=True):
+                try: p.rmdir()
+                except: pass
+            with open(f"{str(缓存路径)}/pack.mcmeta", "w+", encoding="utf-8") as f:
+                f.write(json.dumps({"pack": {"description": f"{Self.Config.LANGUAGE_OUTPUT}语言资源包, 由 海盐青茫 制作, 由 {Self.Config.LLM_MODEL} 翻译","pack_format": 9999,"supported_formats": [0, 9999],"min_format": 0,"max_format": 9999}}, ensure_ascii=False, indent=4))
+            Path(f"{path}/resourcepacks/").mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(f"{path}/resourcepacks/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}.zip", 'w', zipfile.ZIP_DEFLATED) as f:
+                for 压缩文件 in Path(缓存路径).rglob('*'):
+                    if 压缩文件.is_file():
+                        f.write(压缩文件, arcname=压缩文件.relative_to(缓存路径))
+            翻译列表路径[f"/resourcepacks/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}.zip"] = ["file"]
         if Path(f"{path}/config/ftbquests").is_dir():
             Self.翻译FTB任务(f"{path}/config/ftbquests")
+            翻译列表路径[f"/config/ftbquests"] = ["path"]
         if Path(f"{path}/config/betterquesting").is_dir():
             Self.翻译BQ任务(f"{path}/config/betterquesting")
+            翻译列表路径[f"/config/betterquesting"] = ["path"]
         for index in ["resources", "kubejs/assets"]:
             文件夹路径 = f"{path}/{index}"
             if Path(文件夹路径).is_dir():
@@ -747,15 +766,97 @@ class Translator:
                         Self.翻译语言文件(file0=f"{无后缀语言文件名}.lang", output_path=f"{文件夹路径}/{文件夹}/lang")
                     if Path(f"{无后缀语言文件名}.json").is_file():
                         Self.翻译语言文件(file0=f"{无后缀语言文件名}.json", output_path=f"{文件夹路径}/{文件夹}/lang")
-        with open(f"{str(缓存路径)}/pack.mcmeta", "w+", encoding="utf-8") as f:
-            f.write(json.dumps({"pack": {"description": f"{Self.Config.LANGUAGE_OUTPUT}语言资源包, 由 海盐青茫 制作, 由 {Self.Config.LLM_MODEL} 翻译","pack_format": 9999,"supported_formats": [0, 9999],"min_format": 0,"max_format": 9999}}, ensure_ascii=False, indent=4))
-        with zipfile.ZipFile(f"{path}/resourcepacks/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}.zip", 'w', zipfile.ZIP_DEFLATED) as f:
-            for 压缩文件 in Path(缓存路径).rglob('*'):
-                if 压缩文件.is_file():
-                    f.write(压缩文件, arcname=压缩文件.relative_to(缓存路径))
+            翻译列表路径[f"/{index}"] = ["path"]
         Self.Module.写入日志("log.core.translator.succeed", path=Path(f"{path}/resourcepacks/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}.zip"), info_level=0)
-        return Path(f"{path}/resourcepacks/ModPack_Translation-{Self.Config.LANGUAGE_OUTPUT}.zip")
-
+        return 翻译列表路径
+    def 翻译通用文件(Self, file0, file1 = None, all_mode: bool = False, export_inspection = False):
+        缓存文件夹 = f"{Self.Config.PATH_CACHE}/{Self.Module.随机16进制字符串(4)}/"
+        Path(缓存文件夹).mkdir(parents=True, exist_ok=True)
+        if Path(file0).is_file():
+            文件0扩展名 = Path(file0).suffix
+            if 文件0扩展名 in [".lang", ".json", ".jar"]:
+                Self.Module.写入日志("log.core.translator.general.model", model="Mod" if 文件0扩展名 == ".jar" else "Language File", info_level=0)
+                返回路径 = Self.翻译语言文件(file0=file0, file1=file1, output_path=缓存文件夹, export_inspection=export_inspection)
+                Self.Module.写入日志("log.core.translator.succeed", path=Path(返回路径), info_level=0)
+                return Path(返回路径)
+            elif 文件0扩展名 in [".zip", ".mrpack"]:
+                with zipfile.ZipFile(file0, 'r') as zf:
+                    namelist = zf.namelist()
+                    def has_dir(prefix: str) -> bool:
+                        return any(name.startswith(prefix + '/') or name == prefix for name in namelist)
+                    if has_dir('shaders'):
+                        Self.Module.写入日志("log.core.translator.general.model", model="Shaders", info_level=0)
+                        返回路径 = Self.翻译语言文件(file0=file0, file1=file1, output_path=缓存文件夹, export_inspection=export_inspection)
+                        Self.Module.写入日志("log.core.translator.succeed", path=Path(返回路径), info_level=0)
+                        return Path(返回路径)
+                    elif has_dir('ftbquests'):
+                        Self.Module.写入日志("log.core.translator.general.model", model="FTBQuests", info_level=0)
+                        zf.extractall(缓存文件夹)
+                        Self.翻译FTB任务(f"{缓存文件夹}/ftbquests")
+                        with zipfile.ZipFile(f"{缓存文件夹}/FTBQuests-Translation.zip", 'w', zipfile.ZIP_DEFLATED) as f:
+                            for 压缩文件 in Path(f"{缓存文件夹}/ftbquests").rglob('*'):
+                                if 压缩文件.is_file():
+                                    f.write(压缩文件, arcname=压缩文件.relative_to(str(缓存文件夹)))
+                        return f"{缓存文件夹}/FTBQuests-Translation.zip"
+                    elif has_dir('betterquesting'):
+                        Self.Module.写入日志("log.core.translator.general.model", model="BetterQuesting", info_level=0)
+                        zf.extractall(缓存文件夹)
+                        Self.翻译BQ任务(f"{缓存文件夹}/betterquesting")
+                        with zipfile.ZipFile(f"{缓存文件夹}/BetterQuesting-Translation.zip", 'w', zipfile.ZIP_DEFLATED) as f:
+                            for 压缩文件 in Path(f"{缓存文件夹}/betterquesting").rglob('*'):
+                                if 压缩文件.is_file():
+                                    f.write(压缩文件, arcname=压缩文件.relative_to(str(缓存文件夹)))
+                        return f"{缓存文件夹}/BetterQuesting-Translation.zip"
+                    else:
+                        roots = {n.split('/')[0] for n in namelist if not n.startswith('__MACOSX/')}
+                        整合包模式 = "General ModPack"
+                        if has_dir('overrides'):
+                            roots = ["overrides"]
+                            整合包模式 = "CurseForge/Modrint/General ModPack"
+                        if has_dir('minecraft'):
+                            roots = ["minecraft"]
+                            整合包模式 = "MultiMC/General ModPack"
+                        if len(roots) == 1:
+                            root = roots.pop()
+                            if has_dir(f'{root}/mods') or has_dir(f'{root}/config') or has_dir(f'{root}/kubejs') or has_dir(f'{root}/resources'):
+                                Self.Module.写入日志("log.core.translator.general.model", model=整合包模式, info_level=0)
+                                zf.extractall(缓存文件夹)
+                                解压根目录完整路径 = f"{缓存文件夹}/{root}"
+                                压缩路径映射 = Self.翻译整合包(解压根目录完整路径, all_mode=all_mode)
+                                输出Zip路径 = f"{缓存文件夹}/ModPack-Translation-Addion.zip"
+                                with zipfile.ZipFile(输出Zip路径, 'w', zipfile.ZIP_DEFLATED) as modpackzf:
+                                    for 相对路径, 类型列表 in 压缩路径映射.items():
+                                        类型 = 类型列表[0] if 类型列表 else ""
+                                        清理后的相对路径 = 相对路径.lstrip('/')
+                                        真实文件路径 = os.path.join(解压根目录完整路径, 清理后的相对路径)
+                                        if 类型 == "file":
+                                            modpackzf.write(真实文件路径, arcname=相对路径.lstrip('/'))
+                                        elif 类型 == "path":
+                                            for 根目录, 子目录, 文件名列表 in os.walk(真实文件路径):
+                                                for 文件名 in 文件名列表:
+                                                    文件完整路径 = os.path.join(根目录, 文件名)
+                                                    文件在Zip中的相对路径 = os.path.relpath(文件完整路径, 解压根目录完整路径)
+                                                    文件在Zip中的相对路径 = 文件在Zip中的相对路径.replace(os.sep, '/')
+                                                    modpackzf.write(文件完整路径, arcname=文件在Zip中的相对路径)
+                                Self.Module.写入日志("log.core.translator.succeed", path=Path(输出Zip路径), info_level=0)
+                                return Path(输出Zip路径)
+                            else:
+                                Self.Module.写入日志("log.core.translator.general.modpack.translate.file.no", info_level=2)
+                                return Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log")
+                        else:
+                            Self.Module.写入日志("log.core.translator.general.structure.unknown", info_level=3)
+                            return Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log")
+            else:
+                Self.Module.写入日志("log.core.translator.general.structure.unknown", info_level=3)
+                return Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log")
+        elif Path(file0).is_dir():
+            文件夹名称 = Path(file0).name
+            if 文件夹名称 == "ftbquests":
+                Self.翻译FTB任务(path=file0)
+            elif 文件夹名称 == "betterquesting":
+                Self.翻译BQ任务(path=file0)
+            else:
+                Self.翻译整合包(path=file0, all_mode=all_mode)
 测试 = False
 if __name__ == "__main__" and 测试:
     翻译 = Translator({
@@ -766,8 +867,11 @@ if __name__ == "__main__" and 测试:
     "LLM_MAX_BATCH": 1,
     "LLM_CONTEXTS": False,
     "EMB_MODEL": r"C:\Users\FengMang\Desktop\Translator Minecraft\nomic-embed-text-v1.5",
-    "DEBUG_MODE": True
+    "DEBUG_MODE": True,
+    "LLM_MAX_WORKERS": 48
   })
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    翻译.翻译整合包(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology 翻译测试\minecraft")
+    #翻译.翻译整合包(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology 翻译测试\minecraft")
     #翻译.翻译FTB任务(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology\minecraft\config\ftbquests")
+    #翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\Enigmatica2Expert-1.92.zip")
+    #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")

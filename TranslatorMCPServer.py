@@ -4,7 +4,7 @@ mcp = FastMCP("TranslationMinecraft")
 
 配置文件 = {}
 def 设置时间():
-    时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+    时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + f"{int((time.time() % 1) * 10000):04d}"
     配置文件['LOGS_FILE_NAME'] = f"logs-{时间}"
 def 路径处理(path: str):
     return str(pt(re.sub(r'(\\\\|//|\\)', '/', path)).resolve())
@@ -123,26 +123,37 @@ def GetTranslatorConfig():
     key_items = {k: v for k, v in config_dict.items() if not k.startswith("_")}
     return f"当前配置状态：\n" + "\n".join([f"- {k}: {v}" for k, v in key_items.items()])
 @mcp.tool()
-def TranslatorLang(File0: str, File1: str = None, OutputPath: str = None, ExportInspection: bool = False) -> str:
+def TranslatorCore(File0: str, File1: str = None, ExportInspection: bool = False, AllMode: bool = False) -> str:
     """
     ### 工具功能
-    翻译语言文件或包含语言文件的压缩包（支持 Minecraft jar模组、zip光影/资源包、.lang/.json语言文件）。
+    此函数为程序核心功能
+    翻译语言文件或包含语言文件的压缩包
+    支持类型:
+      - .zip,光影/资源包
+      - .lang/.json语言文件
+      - .zip/.mrpack/已安装的整合包文件夹,整合包(模组包)(设计仅支持CurseForge Modrint MultiMC格式的整合包, 其他格式可能通用)(翻译包含 KubeJS配置文件夹、资源文件夹(非资源包文件夹)、模组文件夹、FTB任务文件夹、BQ任务文件夹)
+      - .zip/ftbquests文件夹,FTBQuests(FTB任务 1.12以上版本,传入路径翻译自动覆盖源文件)
+      - .zip/betterquesting文件夹,BetterQuesting(更好的任务 1.7以上版本,传入路径翻译自动覆盖源文件)
     此工具依赖全局配置，**使用前请确保已调用 `SetTranslatorConfig`。
     最低工作参数: LLM_API_URL、LLM_MODEL
     如果用户没有说明请不要随意改变配置。
 
     ### 参数详解
     - `File0` (str): **源文件路径**。
-      - 如果是压缩包 (.jar/.zip)：将解压并翻译包内的语言文件。
-      - 如果是语言文件 (.lang/.json)：直接翻译该文件。
+      - 翻译File0内容, 程序会自动处理内部路径 
     - `File1` (str): **参考文件路径** (可选)。
       - 留空：仅基于 File0 进行翻译。
       - 指定路径：作为目标语言参考或对比基准（例如：提供已有的目标语言文件用于合并或差异计算）。
     - `OutputPath` (str): **输出路径** (可选)。
       - 留空：默认保存在当前工作目录。
     - `ExportInspection` (bool): **导出审核文件** (可选)。
+      - 翻译 Minecraft jar模组、zip光影/资源包、.lang/.json语言文件 此项才可以正常工作
       - False (默认): 直接输出翻译完成的文件。
       - True: 输出用于人工校对/审核的中间格式文件 (.translatorlang)，忽略常规输出命名规则。
+    - `AllMode` (bool): **整合包翻译模组跳过模式** (可选)。
+      - 翻译.zip/.mrpack/已安装的整合包路径,整合包(模组包) 此项才可以正常工作
+      - True: 翻译所有可翻译的模组。
+      - False (默认): 剔除I18n模组已有的汉化。需要资源包文件夹内已有 I18n自动汉化更新资源(安装 I18n自动汉化更新 模组启动游戏自动生成) 才可以正常工作
 
     ### 返回内容
     - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
@@ -151,129 +162,24 @@ def TranslatorLang(File0: str, File1: str = None, OutputPath: str = None, Export
     ### 注意事项
     1. 压缩包模式会自动处理内部结构，无需手动解压。
     2. 目标语言代码由全局配置 `LANGUAGE_OUTPUT` 决定。
+    3. 如果用户描述为中文且返回日志文件包含 未找到I18nUpdateMod资源包,可能导致翻译时长增加 可提醒用户安装 I18n自动汉化更新 模组(https://www.mcmod.cn/class/1188.html)
     """
     File0 = 路径处理(File0)
     File1 = 路径处理(File1) if File1 else ""
-    OutputPath = 目录处理(OutputPath) if OutputPath else ""
     try:
         设置时间()
         translator = Translator(Config=配置文件)
-        translator.翻译语言文件(
+        translator.翻译通用文件(
             file0=File0, 
             file1=File1, 
-            output_path=OutputPath, 
-            export_inspection=ExportInspection
+            export_inspection=ExportInspection,
+            all_mode=AllMode
         )
         logs = translator.调用额外函数("读取日志")
         return f"函数执行完成\n{logs}"
     except Exception:
         return f"发生未知错误:\n{eb.format_exc()}"
-@mcp.tool()
-def TranslatorFTBQ(Path: str) -> str:
-    """
-    ### 工具功能
-    翻译 Minecraft 的 FTB Quests(FTB任务) 模组的任务部分并覆盖源文件。
-    此工作仅支持 Minecraft 1.12 及以上版本。
-    此工具依赖全局配置，**使用前请确保已调用 `SetTranslatorConfig`。
-    最低工作参数: LLM_API_URL、LLM_MODEL
-    如果用户没有说明请不要随意改变配置。
 
-    ### 参数详解
-    - `Path` (str): **翻译路径**。
-      - 翻译该路径下的FTB配置文件。
-      - 示例输入: .minecraft/config/ftbquests
-
-    ### 返回内容
-    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
-    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
-
-    ### 注意事项
-    1. 程序会自动处理内部结构, 无需手动处理。
-    2. 目标语言代码由全局配置 `LANGUAGE_OUTPUT` 决定。
-    """
-    Path = 目录处理(Path)
-    try:
-        设置时间()
-        translator = Translator(Config=配置文件)
-        translator.翻译FTB任务(
-            path=Path, 
-        )
-        logs = translator.调用额外函数("读取日志")
-        return f"函数执行完成\n{logs}"
-    except Exception:
-        return f"发生未知错误:\n{eb.format_exc()}"
-@mcp.tool()
-def TranslatorBQ(Path: str) -> str:
-    """
-    ### 工具功能
-    翻译 Minecraft 的 Better Questing(更好的任务) 模组的任务部分并覆盖源文件。
-    此工作仅支持 Minecraft 1.7 及以上版本。
-    此工具依赖全局配置，**使用前请确保已调用 `SetTranslatorConfig`。
-    最低工作参数: LLM_API_URL、LLM_MODEL
-    如果用户没有说明请不要随意改变配置。
-
-    ### 参数详解
-    - `Path` (str): **翻译路径**。
-      - 翻译该路径下的FTB配置文件。
-      - 示例输入: .minecraft/config/ftbquests
-
-    ### 返回内容
-    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
-    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
-
-    ### 注意事项
-    1. 程序会自动处理内部结构, 无需手动处理。
-    2. 目标语言代码由全局配置 `LANGUAGE_OUTPUT` 决定。
-    """
-    Path = 目录处理(Path)
-    try:
-        设置时间()
-        translator = Translator(Config=配置文件)
-        translator.翻译BQ任务(
-            path=Path, 
-        )
-        logs = translator.调用额外函数("读取日志")
-        return f"函数执行完成\n{logs}"
-    except Exception:
-        return f"发生未知错误:\n{eb.format_exc()}"
-@mcp.tool()
-def TranslatorModPack(Path: str, AllMode: bool = False) -> str:
-    """
-    ### 工具功能
-    翻译已安装的整合包。
-    此工具依赖全局配置，**使用前请确保已调用 `SetTranslatorConfig`。
-    最低工作参数: LLM_API_URL、LLM_MODEL
-    如果用户没有说明请不要随意改变配置。
-
-    ### 参数详解
-    - `Path` (str): **minecraft文件夹实例路径**。
-      - MMC系列启动器示例: ~/PrismLauncher/instances/Fabulously Optimized/minecraft
-      - 通用启动器示例: ~/HMCLauncher/.minecraft 或 ~/HMCLauncher/version/Fabulously Optimized/
-    - `AllMode` (bool): **全模式**。
-      - True: 翻译所有可翻译的模组。
-      - False: 剔除I18n模组已有的汉化。
-
-    ### 返回内容
-    - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。
-    - **失败**: 返回字符串，包含 "发生未知错误" 及具体的 traceback 堆栈信息。
-
-    ### 注意事项
-    1. 该函数会翻译一切可翻译的内容包括 模组、资源文件夹、KJS魔改文件夹、FTB任务、BQ任务
-    2. 翻译完成 模组部分会在资源包文件夹新建一个 ModPack_Translation-{LANGUAGE}.zip 需要玩家手动选择加载
-    3. 翻译至中文推荐安装I18n模组后启动一次再翻译
-    """
-    Path = 目录处理(Path)
-    try:
-        设置时间()
-        translator = Translator(Config=配置文件)
-        translator.翻译整合包(
-            path=Path,
-            all_mode=AllMode,
-        )
-        logs = translator.调用额外函数("读取日志")
-        return f"函数执行完成\n{logs}"
-    except Exception:
-        return f"发生未知错误:\n{eb.format_exc()}"
 @mcp.tool()
 def ImportDictMiniSystemPrompt(File: str, Mode: str = "dense"):
     """

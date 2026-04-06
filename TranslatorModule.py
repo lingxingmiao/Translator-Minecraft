@@ -341,50 +341,55 @@ class Module:
         except Exception:
             Self.写入日志("log.module.pack.i18n.no", info_level=3)
             return []
-def 从模组文件夹获取模组ID(Self, 路径: str):
-    所有模组路径 = Path(f"{路径}/{"mods"}").glob('*.jar')
-    模组ID列表 = []
-    for 模组文件路径 in 所有模组路径:
-        try:
-            with zipfile.ZipFile(模组文件路径, 'r') as 压缩文件:
-                文件列表 = 压缩文件.namelist()
-                
-                模组ID = None
-                
-                if "fabric.mod.json" in 文件列表:
-                    try:
-                        with 压缩文件.open("fabric.mod.json") as 文件:
-                            数据 = json.load(文件)
-                        模组ID = 数据.get("id")
-                    except Exception as 异常:
-                        print(f"解析 fabric.mod.json 失败: {异常}")
-
-                if "META-INF/mods.toml" in 文件列表 and 模组ID is None:
-                    try:
-                        with 压缩文件.open("META-INF/mods.toml") as 文件:
-                            数据 = tomllib.load(文件)
-                        模组列表 = 数据.get('mods', [])
-                        if 模组列表:
-                            模组ID = 模组列表[0].get('modId')
-                    except Exception as 异常:
-                        print(f"解析 mods.toml 失败: {异常}")
-
-                if 模组ID is None:
-                    候选文件列表 = ["mcmod.info"]
-                    if "mcmod.info" not in 文件列表:
-                        候选文件列表 = [文件名 for 文件名 in 文件列表 if 文件名.endswith('.info')]
+    def 从模组文件夹获取模组ID(Self, 路径: str):
+        所有模组路径 = Path(f"{路径}/{"mods"}").glob('*.jar')
+        模组ID列表 = []
+        for 模组文件路径 in 所有模组路径:
+            try:
+                with zipfile.ZipFile(模组文件路径, 'r') as 压缩文件:
+                    文件列表 = 压缩文件.namelist()
                     
-                    for 信息文件 in 候选文件列表:
+                    模组ID = None
+                    
+                    if "fabric.mod.json" in 文件列表:
                         try:
-                            with 压缩文件.open(信息文件) as 文件:
-                                内容 = 文件.read().decode('utf-8-sig')
-                                数据列表 = json.loads(内容)
-                                if isinstance(数据列表, list) and len(数据列表) > 0:
-                                    模组ID = 数据列表[0].get('modid')
-                                    break
-                        except Exception:
-                            continue
-                模组ID列表.append([模组ID, 模组文件路径.name])
-        except Exception as 异常:
-            print(f"读取 ZIP 失败: {异常}")
-    return 模组ID列表
+                            with 压缩文件.open("fabric.mod.json") as 文件:
+                                数据 = json.load(文件)
+                            模组ID = 数据.get("id")
+                        except Exception as 异常:
+                            print(f"解析 fabric.mod.json 失败: {异常}")
+
+                    if "META-INF/mods.toml" in 文件列表 and 模组ID is None:
+                        try:
+                            with 压缩文件.open("META-INF/mods.toml") as 文件:
+                                数据 = tomllib.load(文件)
+                            模组列表 = 数据.get('mods', [])
+                            if 模组列表:
+                                模组ID = 模组列表[0].get('modId')
+                        except Exception as 异常:
+                            print(f"解析 mods.toml 失败: {异常}")
+
+                    if 模组ID is None:
+                        候选文件列表 = ["mcmod.info"]
+                        if "mcmod.info" not in 文件列表:
+                            候选文件列表 = [文件名 for 文件名 in 文件列表 if 文件名.endswith('.info')]
+                        
+                        for 信息文件 in 候选文件列表:
+                            try:
+                                with 压缩文件.open(信息文件) as 文件:
+                                    内容 = 文件.read().decode('utf-8-sig')
+                                    数据列表 = json.loads(内容)
+                                    if isinstance(数据列表, list) and len(数据列表) > 0:
+                                        模组ID = 数据列表[0].get('modid')
+                                        break
+                            except Exception:
+                                continue
+                    模组ID列表.append([模组ID, 模组文件路径.name])
+            except Exception as 异常:
+                print(f"读取 ZIP 失败: {异常}")
+        return 模组ID列表
+    def 输出路径处理(Self, path: str):
+        if not path:
+            path = f"./{Self.Config.PATH_CACHE}/{Self.随机16进制字符串(4)}"
+        Path(path).mkdir(parents=True, exist_ok=True)
+        return path
