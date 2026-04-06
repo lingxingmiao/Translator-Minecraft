@@ -24,7 +24,7 @@ conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
 pip install numpy faiss-cpu tqdm requests pyhocon
 # 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码
-pip install uvicorn fastapi
+pip install uvicorn fastapi slowapi
 # API服务器（可选）
 pip install fastmcp
 # MCP服务器（可选）
@@ -203,7 +203,11 @@ conda env remove -n Translator_Minecraft
 - 修复 整合包翻译没有模组文件夹导致的错误
 - 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
 
-### Release.1.4
+### Release.1.4 （进行中）
+- 添加 API翻译实例工作上限（阻塞）
+- 添加 API每IP限速器
 - 修改 API现在来自所有域名请求都可以处理
 - 修改 通用翻译函数遇到问题强制返回错误信息
 - 修复 修复FTB任务读取subtitle项为列表无法处理的问题
+- 修复 通用翻译函数部分不会返回Path对象的问题
+- 修复 解析模组ID错误没有在该程序语言文件的问题
