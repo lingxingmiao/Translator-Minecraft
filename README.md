@@ -202,3 +202,8 @@ conda env remove -n Translator_Minecraft
 - 修复 整合包翻译没有资源包文件夹导致的错误
 - 修复 整合包翻译没有模组文件夹导致的错误
 - 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
+
+### Release.1.4
+- 修改 API现在来自所有域名请求都可以处理
+- 修改 通用翻译函数遇到问题强制返回错误信息
+- 修复 修复FTB任务读取subtitle项为列表无法处理的问题
