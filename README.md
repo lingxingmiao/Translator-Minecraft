@@ -218,3 +218,4 @@ conda env remove -n Translator_Minecraft
 - 修复 FTB任务读取subtitle项为列表无法处理的问题
 - 修复 FTB任务读取在日志拉屎的问题
 - 修复 部分片段代码可读性或可维护性过高的问题
+- 修复 向量叠加失败文本会继续叠加的问题
