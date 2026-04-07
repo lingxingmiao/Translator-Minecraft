@@ -204,8 +204,10 @@ conda env remove -n Translator_Minecraft
 - 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
 
 ### Release.1.4 （进行中）
+- 添加 API异步轮询（Cloudflare Tunnel有上限太搞了）
 - 添加 API翻译实例工作上限（阻塞）
 - 添加 API每IP限速器
+- 修改 GPU加速模式默认为false
 - 修改 API现在来自所有域名请求都可以处理
 - 修改 通用翻译函数遇到问题强制返回错误信息
 - 修复 修复FTB任务读取subtitle项为列表无法处理的问题
