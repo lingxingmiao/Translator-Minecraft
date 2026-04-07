@@ -207,9 +207,11 @@ conda env remove -n Translator_Minecraft
 - 添加 API异步轮询（Cloudflare Tunnel有上限太搞了）
 - 添加 API翻译实例工作上限（阻塞）
 - 添加 API每IP限速器
+- 添加 全局日志开关
 - 修改 GPU加速模式默认为false
 - 修改 API现在来自所有域名请求都可以处理
 - 修改 通用翻译函数遇到问题强制返回错误信息
-- 修复 修复FTB任务读取subtitle项为列表无法处理的问题
+- 修复 FTB任务读取subtitle项为列表无法处理的问题
 - 修复 通用翻译函数部分不会返回Path对象的问题
 - 修复 解析模组ID错误没有在该程序语言文件的问题
+- 修复 FTB任务读取在日志拉屎的问题
