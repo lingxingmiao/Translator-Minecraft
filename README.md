@@ -225,3 +225,4 @@ conda env remove -n Translator_Minecraft
 - 修复 向量叠加失败文本会继续叠加的问题
 - 修复 LLM与EMB模型请求重试不会等待的问题
 - 修复 LLM请求核爆的时候会直接导致线程错误的问题
+- 修复 LLM参数导致出现部分回答错误
