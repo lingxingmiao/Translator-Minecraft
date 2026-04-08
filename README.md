@@ -6,7 +6,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）。<br>
 如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。<br><br>
 
-API公开测试, 获取ApiKey私信QQ3254693390或提交Issues 别打我电脑 (IPv6直连): http://[2409:8a34:232:1750:3509:753:740c:da9d]:25561/
+API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.github.io/
 ## 演示
 ![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
 ## 添加此工具
