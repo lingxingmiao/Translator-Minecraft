@@ -47,7 +47,7 @@ conda env remove -n Translator_Minecraft
 - [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)（单次多次翻译可能导致输出问题）
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)（单次多次翻译可能导致输出问题）
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)（可能导致无限输出）（预填充速度慢）
-- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)（速度质量平衡）
+- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)（综合最优，推荐！）
 - [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)（速度质量平衡）
 - [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B)（单次多次翻译可能导致输出问题）
 - [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B)（单次多次翻译可能导致输出问题）
