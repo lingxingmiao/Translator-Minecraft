@@ -44,7 +44,7 @@ conda env remove -n Translator_Minecraft
 ```
 ## 推荐模型翻译速度排名 16GRAM
 警告：LMStudi使用CUDA进行并行推理可能会导致模型崩溃！
-- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)（单次多次翻译可能导致输出问题）
+- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)（单次多次翻译可能导致输出问）（激活参数过小不可用）
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)（单次多次翻译可能导致输出问题）
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)（可能导致无限输出）（预填充速度慢）
 - [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)（综合最优，推荐！）
@@ -218,6 +218,7 @@ conda env remove -n Translator_Minecraft
 - 修改 API现在来自所有域名请求都可以处理
 - 修改 通用翻译函数遇到问题强制返回错误信息
 - 修改 翻译任务读取或写入文件现在可以进行配置
+- 修改 缓存路径全部改为uuid库生成
 - 修复 通用翻译函数部分不会返回Path对象的问题
 - 修复 解析模组ID错误没有在该程序语言文件的问题
 - 修复 FTB任务读取subtitle项为列表无法处理的问题
@@ -227,3 +228,4 @@ conda env remove -n Translator_Minecraft
 - 修复 LLM与EMB模型请求重试不会等待的问题
 - 修复 LLM请求核爆的时候会直接导致线程错误的问题
 - 修复 LLM参数导致出现部分回答错误
+- 修复 保存Lang文件遇到 \n 时无法正确处理的bug
