@@ -212,6 +212,7 @@ conda env remove -n Translator_Minecraft
 - 添加 API返回日志功能
 - 添加 API翻译实例工作上限（阻塞）
 - 添加 API每IP限速器
+- 添加 API SSL文件配置
 - 添加 全局日志开关
 - 添加 详细进程日志
 - 修改 GPU加速模式默认为false
