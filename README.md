@@ -234,3 +234,4 @@ conda env remove -n Translator_Minecraft
 - 修复 LLM请求核爆的时候会直接导致线程错误的问题
 - 修复 LLM参数导致出现部分回答错误
 - 修复 保存Lang文件遇到 \n 时无法正确处理的bug
+- 修复 输入遇到引号缓存无法命中的问题（来自 Release.1.4 Bata.1 的修复 翻译内容分号哪哪都是导致的解析错误）
