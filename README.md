@@ -213,6 +213,7 @@ conda env remove -n Translator_Minecraft
 - 添加 API翻译实例工作上限（阻塞）
 - 添加 API每IP限速器
 - 添加 API SSL文件配置
+- 添加 API设置翻译语言
 - 添加 全局日志开关
 - 添加 详细进程日志
 - 修改 GPU加速模式默认为false
@@ -220,6 +221,7 @@ conda env remove -n Translator_Minecraft
 - 修改 通用翻译函数遇到问题强制返回错误信息
 - 修改 翻译任务读取或写入文件现在可以进行配置
 - 修改 缓存路径全部改为uuid库生成
+- 修改 翻译缓存改为全局功能
 - 修复 通用翻译函数部分不会返回Path对象的问题
 - 修复 解析模组ID错误没有在该程序语言文件的问题
 - 修复 FTB任务读取subtitle项为列表无法处理的问题
