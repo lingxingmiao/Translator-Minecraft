@@ -28,7 +28,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import faiss
 import numpy
 #需要安装↓
-from enum import Enum
 from pyhocon import ConfigFactory, HOCONConverter
 #Codna需要安装↓
 import requests
