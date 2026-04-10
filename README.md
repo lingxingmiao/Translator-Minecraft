@@ -208,7 +208,7 @@ conda env remove -n Translator_Minecraft
 - 修复 整合包翻译没有模组文件夹导致的错误
 - 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
 
-### Release.1.4
+### Release.1.4 bata.3
 - 添加 API异步轮询（Cloudflare Tunnel有上限太搞了）
 - 添加 API返回日志功能
 - 添加 API翻译实例工作上限（阻塞）
@@ -238,5 +238,4 @@ conda env remove -n Translator_Minecraft
 - 修复 保存Lang文件遇到 \n 时无法正确处理的bug
 - 修复 输入遇到引号缓存无法命中的问题（来自 Release.1.4 Bata.1 的修复 翻译内容分号哪哪都是导致的解析错误）
 
-### Release.1.5 Bata.1（进行中）
-- 等我买了新显卡发了新视频
+### Release.1.4（进行中）
