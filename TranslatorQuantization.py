@@ -400,7 +400,7 @@ class Quantization:
     def 叠加量化向量(Self, 旧字典, 新字典):
         if "ZeroPoint" in [index for index in 旧字典]:
             Self.Module.写入日志("log.quantization.superposition.error", info_level=2)
-            结果字典 = 新字典
+            返回结果 = [新字典, False]
         else:
             结果字典 = {}
             拼接键 = ["Vector"]
@@ -410,4 +410,5 @@ class Quantization:
                     结果字典[key] = np.concatenate((旧字典[key], 新字典[key]), axis=0)
             if 形状键 in 旧字典 and 形状键 in 新字典:
                 结果字典[形状键] = (旧字典[形状键][0] + 新字典[形状键][0],)
-        return 结果字典
+            返回结果 = [结果字典, True]
+        return 返回结果

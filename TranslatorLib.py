@@ -4,27 +4,31 @@ import threading
 import hashlib
 import zipfile
 import tomllib
+import asyncio
+import shutil
 import pickle
-import random
 import json
 import glob
 import time
+import uuid
 import math
 import ast
 import os
 import re
 import io
 
+from typing import Callable, Dict, Any, Union, Optional, List
 from pathlib import Path, PurePosixPath
 from functools import partial
+from contextlib import asynccontextmanager
 from collections import defaultdict
-from typing import Callable, Dict, Any, Union, Optional, List
 from dataclasses import dataclass, replace
 from concurrent.futures import ThreadPoolExecutor, as_completed
 #需要安装↓
 import faiss
 import numpy
 #需要安装↓
+from enum import Enum
 from pyhocon import ConfigFactory, HOCONConverter
 #Codna需要安装↓
 import requests
@@ -32,15 +36,15 @@ import requests
 from tqdm import tqdm
 #可选服务安装↓
 try:
-    import uvicorn, fastapi
+    import uvicorn, fastapi, slowapi
 except ImportError:
-    uvicorn, fastapi = None, None
+    uvicorn, fastapi, slowapi = None, None, None
 try:
     from fastmcp import FastMCP
 except ImportError:
     FastMCP = None
 
-GPU_ACC = os.getenv("FENGMANG_GPU_ACC", "true").lower() == "true"
+GPU_ACC = os.getenv("FENGMANG_GPU_ACC", "true").lower() == "false"
 GPU_DEVICE_ID = os.getenv("FENGMANG_GPU_DEVICE_ID", None)
 if GPU_DEVICE_ID is not None:
     GPU_DEVICE_ID = int(GPU_DEVICE_ID)
@@ -88,7 +92,7 @@ if FastMCP:
         }
         with open(MCPConfigFile, "w+", encoding="utf-8") as f:
             json.dump(MCPConfig, f, indent=4)
-if fastapi:
+if uvicorn and fastapi and slowapi:
     APIConfigFile = Path("api-config.cfg").resolve()
     APIConfigFile.parent.mkdir(parents=True, exist_ok=True)
     if APIConfigFile.is_file():
@@ -96,10 +100,22 @@ if fastapi:
             APIConfig = json.load(f)
     else:
         APIConfig = {
-            "server": {},
+            "server": {
+                    "LLM_API_URL": "",
+                    "LLM_API_KEY": "",
+                    "LLM_MODEL": "",
+                    "EMB_API_URL": "",
+                    "EMB_API_KEY": "",
+                    "EMB_MODEL": "",
+                    "LOGS_GLOBAL": False
+                },
             "api": {
                     "host": "127.0.0.1",
-                    "port": 25561
+                    "port": 25561,
+                    "ssl_keyfile": None,
+                    "ssl_certfile": None,
+                    "max_concurrent": 4,
+                    "current-limiting": "8/minute"
                 },
             "keys": []
         }
@@ -111,7 +127,8 @@ __all__ = [
     "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO',
     "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
     "faiss", "requests", "math", "tqdm", "dataclass",
-    "replace", "random", "ConfigFactory", "HOCONConverter", "time",
+    "replace", "ConfigFactory", "HOCONConverter", "time",
     "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
-    "tomllib", "glob", "APIConfig", "Union",
-    "Optional", "List", "io", "uvicorn"]
+    "tomllib", "glob", "APIConfig", "Union", "Enum",
+    "Optional", "List", "io", "asyncio",
+    "asynccontextmanager", "uuid", "shutil"]

@@ -84,6 +84,12 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `INDEX_HNSW_CONSTRUCTION` (int): 构建复杂度，默认 720
     - `INDEX_HNSW_SEARCH` (int): 搜索复杂度，默认 480
     - `INDEX_REFINEFLAT_K_FACTOR` (float): 精炼因子，默认 2.0
+    
+    #### 任务并发设置 (Task Concurrency)
+    - `QUESTS_FTB_READ_MAX_CONCURRENT` (int): FTBQuests 读取最大并发数，默认 4
+    - `QUESTS_FTB_WRITE_MAX_CONCURRENT` (int): FTBQuests 写入最大并发数，默认 4
+    - `QUESTS_BQ_READ_MAX_CONCURRENT` (int): BetterQuesting 读取最大并发数，默认 4
+    - `QUESTS_BQ_WRITE_MAX_CONCURRENT` (int): BetterQuesting 写入最大并发数，默认 4
 
     ### 使用示例 (Example)
     ```python

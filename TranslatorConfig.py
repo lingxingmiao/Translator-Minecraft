@@ -9,15 +9,16 @@ class DefaultConfig:
     LLM_API_KEY = ""
     LLM_API_KWARGS = {}
     LLM_MODEL = ""
-    LLM_TOP_K = 60
-    LLM_TOP_P = 0.70
-    LLM_TEMP = 0.00
+    LLM_TOP_K = 30
+    LLM_TOP_P = 0.95
+    LLM_TEMP = 0.30
     LLM_PROMPT_LOCATION = "system"
-    LLM_CONTEXTS = True
+    LLM_CONTEXTS = False
     LLM_CONTEXTS_LENGTH = 65536
     LLM_MAX_WORKERS = 24
     LLM_MAX_BATCH = 1
-    LLM_MAX_RETRY = 128
+    LLM_MAX_RETRY = 20
+    LLM_RETRY_INTERVAL = 5
     LLM_ORIGINAL_REFERENCE = True
     LLM_SYSTEM_PROMPTEX1 = f"""
 【以下是翻译任务提示，严禁输出】
@@ -25,8 +26,7 @@ class DefaultConfig:
     LLM_SYSTEM_PROMPTEX2 = f"""
 - 输入为列表，输出必须严格符合Python标准列表格式，如['翻译1', '翻译2']
 """
-    LLM_SYSTEM_PROMPT = f"""
-/no_thinking
+    LLM_SYSTEM_PROMPT = f"""/no_thinking
 # 【任务内容】
 - 仅输出原文翻译内容，不得包含解释、参考、键、额外内容(如“以下是翻译：”或“翻译如下：”等)
 - 单个符号需要翻译(遇到&或§或%需要保留后面一个符号)
@@ -45,7 +45,8 @@ class DefaultConfig:
     EMB_MAX_TOKENS = 2048
     EMB_TOKENSTOTEXT_RATIO = 3.0
     EMB_MAX_WORKERS = 24
-    EMB_MAX_RETRY = 128
+    EMB_MAX_RETRY = 20
+    EMB_RETRY_INTERVAL = 5
 
     VEC_INT_DTYPE = ["Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"]
     VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
@@ -64,8 +65,14 @@ class DefaultConfig:
     DEBUG_MODE = False
     LOGS_FILE_PATH = r"./Logs"
     LOGS_FILE_NAME = "logs"
+    LOGS_GLOBAL = True
     LANG_PATH = r"./Lang"
     LANGUAGE = r"zh_CN"
+    
+    QUESTS_FTB_READ_MAX_CONCURRENT = 4
+    QUESTS_FTB_WRITE_MAX_CONCURRENT = 4
+    QUESTS_BQ_READ_MAX_CONCURRENT = 4
+    QUESTS_BQ_WRITE_MAX_CONCURRENT = 4
 
     INDEX_K = 3
     INDEX_MODE = "RefineFlat" # HNSWSQ RefineFlat

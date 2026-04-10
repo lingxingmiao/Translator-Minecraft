@@ -1,4 +1,4 @@
-from TranslatorLib import re, os, time, json, random, pickle, zipfile, Path, ConfigFactory, HOCONConverter, eb, PurePosixPath, glob, tomllib
+from TranslatorLib import re, os, time, json, uuid, pickle, zipfile, Path, ConfigFactory, HOCONConverter, eb, PurePosixPath, glob, tomllib
 from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
 from TranslatorLocale import Locale
 
@@ -28,7 +28,8 @@ class Module:
         elif info_level == 4 and (not Self.Config.DEBUG_MODE):
             return
         写入内容 = f"{时间}{日志等级}{text}\n"
-        Self.写入全局日志(写入内容)
+        if (Path(日志文件名).resolve() != Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()) and Self.Config.LOGS_GLOBAL:
+            Self.写入全局日志(写入内容)
         with open(f"{日志文件名}.log", "a+", encoding="utf-8") as f:
             f.write(写入内容)
     def 写入全局日志(Self, text: str):
@@ -54,9 +55,17 @@ class Module:
                     if "title" in index2:
                         文本列表.append([[index, ["rewards", index2q], ["title"]], index2["title"]])
             if "subtitle" in SNBT文件:
-                文本列表.append([[index, ["subtitle"]], SNBT文件["subtitle"]])
+                if isinstance(SNBT文件["subtitle"], str):
+                    文本列表.append([[index, ["subtitle"]], SNBT文件["subtitle"]])
+                if isinstance(SNBT文件["subtitle"], list):
+                    for index2q, index2 in enumerate(SNBT文件["subtitle"]):
+                        文本列表.append([[index, ["subtitle", index2q]], index2])
             if "title" in SNBT文件:
-                文本列表.append([[index, ["title"]], SNBT文件["title"]])
+                if isinstance(SNBT文件["title"], str):
+                    文本列表.append([[index, ["title"]], SNBT文件["title"]])
+                if isinstance(SNBT文件["title"], list):
+                    for index2q, index2 in enumerate(SNBT文件["title"]):
+                        文本列表.append([[index, ["title", index2q]], index2])
             if "tasks" in SNBT文件:
                 for index1q, index1 in enumerate(SNBT文件["tasks"]):
                     if "items" in index1:
@@ -104,10 +113,16 @@ class Module:
                                 双重字符串 = index2.strip()
                                 if (双重字符串.startswith('[') and 双重字符串.endswith(']')) or (双重字符串.startswith('{') and 双重字符串.endswith('}')):
                                     try:
-                                        返回内容 = json.loads(双重字符串)[1]
-                                        if "translate" in 返回内容:
-                                            返回内容 = 返回内容["translate"]
-                                    except json.JSONDecodeError:
+                                        parsed = json.loads(双重字符串)
+                                        if isinstance(parsed, list) and len(parsed) > 1:
+                                            返回内容 = parsed[1]
+                                            if isinstance(返回内容, dict) and "translate" in 返回内容:
+                                                返回内容 = 返回内容["translate"]
+                                        else:
+                                            返回内容 = index2 
+                                    except json.JSONDecodeError as e:
+                                        返回内容 = index2
+                                    except (TypeError, IndexError, KeyError) as e:
                                         返回内容 = index2
                             文本列表.append([[index, ["quests", index1q], ["description", index2q]], 返回内容])
                     if "rewards" in index1:
@@ -130,63 +145,68 @@ class Module:
             Self.写入日志("log.module.quests.load.error", mod="FTB Quests", file=index, e=eb.format_exc(), info_level=2)
         return 文本列表
     def 应用FTBQ翻译(Self, index: list, mode: str):
+        位置 = "None"
+        层数 = "None"
         SNBT文件 = ConfigFactory.parse_file(index[0][0][0])
         for index1p, index1 in enumerate(index):
-            层数 = len(index[index1p][0][1:])
-            位置 = index1[0][1:]
-            if 层数 == 1:
-                if len(位置[0]) == 1:
-                    SNBT文件[位置[0][0]] = index1[1]
-                else:
-                    列表 = SNBT文件[位置[0][0]]
-                    列表[位置[0][1]] = index1[1]
-                    SNBT文件[位置[0][0]] = 列表
-            elif 层数 == 2:
-                if len(位置[1]) == 1:
-                    SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = index1[1]
-                else:
-                    列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]]
-                    列表[位置[1][1]] = index1[1]
-                    SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = 列表
-            elif 层数 == 3:
-                if not isinstance(位置[1][1], str):
-                    if len(位置[2]) == 1:
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = index1[1]
+            try:
+                层数 = len(index[index1p][0][1:])
+                位置 = index1[0][1:]
+                if 层数 == 1:
+                    if len(位置[0]) == 1:
+                        SNBT文件[位置[0][0]] = index1[1]
                     else:
-                        列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]]
-                        列表[位置[2][1]] = index1[1]
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = 列表
-                else:
-                    if len(位置[1]) == 2:
+                        列表 = SNBT文件[位置[0][0]]
+                        列表[位置[0][1]] = index1[1]
+                        SNBT文件[位置[0][0]] = 列表
+                elif 层数 == 2:
+                    if len(位置[1]) == 1:
+                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = index1[1]
+                    else:
+                        列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]]
+                        列表[位置[1][1]] = index1[1]
+                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = 列表
+                elif 层数 == 3:
+                    if not isinstance(位置[1][1], str):
                         if len(位置[2]) == 1:
                             SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = index1[1]
                         else:
                             列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]]
                             列表[位置[2][1]] = index1[1]
                             SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = 列表
-                    elif len(位置[1]) == 3:
-                        if len(位置[2]) == 1:
-                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]] = index1[1]
-                        else:
-                            列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]]
-                            列表[位置[2][1]] = index1[1]
-                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]] = 列表
-            elif 层数 == 4:
-                if len(位置[2]) == 1:
-                    if len(位置[3]) == 1:
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]] = index1[1]
-                    elif len(位置[3]) == 2:
-                        列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]]
-                        列表[位置[3][1]] = index1[1]
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]] = 列表
-                elif len(位置[2]) == 2:
-                    if len(位置[3]) == 1:
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]] = index1[1]
-                    elif len(位置[3]) == 2:
-                        列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]]
-                        列表[位置[3][1]] = index1[1]
-                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]] = 列表
-
+                    else:
+                        if len(位置[1]) == 2:
+                            if len(位置[2]) == 1:
+                                SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = index1[1]
+                            else:
+                                列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]]
+                                列表[位置[2][1]] = index1[1]
+                                SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]] = 列表
+                        elif len(位置[1]) == 3:
+                            if len(位置[2]) == 1:
+                                SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]] = index1[1]
+                            else:
+                                列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]]
+                                列表[位置[2][1]] = index1[1]
+                                SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[1][2]][位置[2][0]] = 列表
+                elif 层数 == 4:
+                    if len(位置[2]) == 1:
+                        if len(位置[3]) == 1:
+                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]] = index1[1]
+                        elif len(位置[3]) == 2:
+                            列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]]
+                            列表[位置[3][1]] = index1[1]
+                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[3][0]] = 列表
+                    elif len(位置[2]) == 2:
+                        if len(位置[3]) == 1:
+                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]] = index1[1]
+                        elif len(位置[3]) == 2:
+                            列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]]
+                            列表[位置[3][1]] = index1[1]
+                            SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]] = 列表
+            except Exception:
+                Self.写入日志("log.module.quests.write.error", index=index[0][0][0], item=index1, level=层数, position=位置, e=eb.format_exc(), info_level=2)
+ 
         with open(index[0][0][0], "w", encoding="utf-8") as f:
             json文件 = HOCONConverter.to_json(SNBT文件, indent=4).splitlines()
             if mode ==  "H":
@@ -230,14 +250,18 @@ class Module:
                             文件列表.append([[index, ["questLines:9", index1, "properties:10", "betterquesting:10"], ["desc:8"]], NBT文件["questDatabase:9"][index1]["properties:10"]["betterquesting:10"]["desc:8"]])
         return 文件列表
     def 应用BQ翻译(Self, index: list):
+        位置 = "None"
         with open(index[0][0][0], "r", encoding="utf-8") as f:
             NBT文件 = json.load(f)
         for index1 in index:
-            位置 = index1[0][1:]
-            if len(位置[0]) == 2:
-                NBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = index1[1]
-            if len(位置[0]) == 4:
-                NBT文件[位置[0][0]][位置[0][1]][位置[0][2]][位置[0][3]][位置[1][0]] = index1[1]
+            try:
+                位置 = index1[0][1:]
+                if len(位置[0]) == 2:
+                    NBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = index1[1]
+                if len(位置[0]) == 4:
+                    NBT文件[位置[0][0]][位置[0][1]][位置[0][2]][位置[0][3]][位置[1][0]] = index1[1]
+            except Exception:
+                Self.写入日志("log.module.quests.write.error", index=index[0][0][0], item=index1, level="None", position=位置, e=eb.format_exc(), info_level=2)
         with open(index[0][0][0], "w+", encoding="utf-8") as f:
             json.dump(NBT文件, f, ensure_ascii=False, indent=2)
     def 读取语言文件(Self, file: str):
@@ -251,20 +275,30 @@ class Module:
     def 保存语言文件(Self, file: str, 保存列表: list):
         with open(file, "w+", encoding="utf-8") as f:
             if Path(file).suffix == ".lang":
-                f.write("\n".join(保存列表))
+                清理列表 = []
+                for line in 保存列表:
+                    if not line.strip():
+                        清理列表.append(line)
+                        continue
+                    line = line.replace(r'\n', '<<NEWLINE_PLACEHOLDER>>')
+                    line = line.replace(r'\r', '<<CARRIAGE_PLACEHOLDER>>')
+                    line = line.replace('\r', ' ').replace('\n', ' ')
+                    line = ' '.join(line.split())
+                    line = line.replace('<<NEWLINE_PLACEHOLDER>>', r'\n')
+                    line = line.replace('<<CARRIAGE_PLACEHOLDER>>', r'\r')
+                    清理列表.append(line)
+                f.write("\n".join(清理列表))
             elif Path(file).suffix == ".json":
-                保存列表 = [line for line in 保存列表   if line.strip()   and '=' in line   and not line.lstrip().startswith(('//', '#'))]
+                保存列表 = [line for line in 保存列表 if line.strip() and '=' in line and not line.lstrip().startswith(('//', '#'))]
                 json文件 = {line.split('=', 1)[0]: line.split('=', 1)[1] for line in 保存列表}
                 f.write(json.dumps(json文件, ensure_ascii=False, indent=4))
-    def 随机16进制字符串(Self, length: int):
-        return '-'.join([f'{random.randint(0, 0xFFFF):04X}' for _ in range(length)])
     def 读取压缩文件(Self, file_path: str, cache_path: str, original_language: str, target_language: str):
         try:
             for _ in tqdm(range(1), desc="tqdm.file.read"): 
                 with zipfile.ZipFile(file_path, 'r') as f:
                     可用文件列表 = [False]
                     文件列表 = f.namelist()
-                    文件路径 = f"{cache_path}/{Self.随机16进制字符串(1)}_{Path(file_path).stem}"
+                    文件路径 = f"{cache_path}/{uuid.uuid4().hex}_{Path(file_path).stem}"
                     if any(name.startswith("shaders") for name in 文件列表):
                         可用文件列表 = [True]
                         f.extractall(文件路径)
@@ -279,11 +313,12 @@ class Module:
             raise FileNotFoundError(eb.format_exc())
         return 可用文件列表
     def 读取资源文件(Self, file0: str, file1: str = "", read_error: bool = True):
+        Self.写入日志("log.core.file.read.start", file0=file0, file1=file1)
         压缩路径 = ""
         文件1 = ""
         file2 = ""
         if Path(file0).suffix in [".zip", ".jar"]:
-            缓存路径 = f"{Self.Config.PATH_CACHE}/{Self.随机16进制字符串(4)}"
+            缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
             file2 = Self.读取压缩文件(file0, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
             file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT) if file1 else []
             if not any(isinstance(item, list) and len(item) > 0 and item[0] == Self.Config.LANGUAGE_INPUT.lower() for item in file2[1:]):
@@ -315,6 +350,7 @@ class Module:
             if file1:
                 文件1, _ = Self.读取语言文件(file1)
             输出扩展名 = Path(file0).suffix
+        Self.写入日志("log.core.file.read.end", file0=file0, file1=file1)
         return 文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2
     def 翻译缓存(Self, 输入列表: list = []):
         文本文件 = []
@@ -328,6 +364,7 @@ class Module:
                 pickle.dump(文本文件, f)
         return {item[0]: item[1] for item in 文本文件}, {item[0] for item in 文本文件}
     def 从资源包文件夹获取I18n翻译模组ID(Self, 路径: str):
+        Self.写入日志("log.core.modid.get.start", info_level=0)
         try:
             with zipfile.ZipFile(glob.glob(os.path.join(f"{路径}/resourcepacks/", "Minecraft-Mod-Language-Modpack*"))[0], 'r') as f:
                 模组ID集 = set()
@@ -337,11 +374,14 @@ class Module:
                         if len(Path路径.parts) > 1:
                             模组ID = Path路径.parts[1]
                             模组ID集.add(模组ID)
-            return list(模组ID集)
+            返回内容 = list(模组ID集)
         except Exception:
             Self.写入日志("log.module.pack.i18n.no", info_level=3)
-            return []
+            返回内容 = []
+        Self.写入日志("log.core.modid.get.end", info_level=0)
+        return 返回内容
     def 从模组文件夹获取模组ID(Self, 路径: str):
+        Self.写入日志("log.core.modid.get.start", info_level=0)
         所有模组路径 = Path(f"{路径}/{"mods"}").glob('*.jar')
         模组ID列表 = []
         for 模组文件路径 in 所有模组路径:
@@ -356,8 +396,8 @@ class Module:
                             with 压缩文件.open("fabric.mod.json") as 文件:
                                 数据 = json.load(文件)
                             模组ID = 数据.get("id")
-                        except Exception as 异常:
-                            print(f"解析 fabric.mod.json 失败: {异常}")
+                        except Exception:
+                            Self.写入日志("log.module.parsemodid.error", e=eb.format_exc())
 
                     if "META-INF/mods.toml" in 文件列表 and 模组ID is None:
                         try:
@@ -366,8 +406,8 @@ class Module:
                             模组列表 = 数据.get('mods', [])
                             if 模组列表:
                                 模组ID = 模组列表[0].get('modId')
-                        except Exception as 异常:
-                            print(f"解析 mods.toml 失败: {异常}")
+                        except Exception:
+                            Self.写入日志("log.module.parsemodid.error", e=eb.format_exc())
 
                     if 模组ID is None:
                         候选文件列表 = ["mcmod.info"]
@@ -385,11 +425,12 @@ class Module:
                             except Exception:
                                 continue
                     模组ID列表.append([模组ID, 模组文件路径.name])
-            except Exception as 异常:
-                print(f"读取 ZIP 失败: {异常}")
+            except Exception:
+                Self.写入日志("log.module.parsemodid.file.error", e=eb.format_exc())
+        Self.写入日志("log.core.modid.get.end", info_level=0)
         return 模组ID列表
     def 输出路径处理(Self, path: str):
         if not path:
-            path = f"./{Self.Config.PATH_CACHE}/{Self.随机16进制字符串(4)}"
+            path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
         Path(path).mkdir(parents=True, exist_ok=True)
         return path
