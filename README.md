@@ -38,6 +38,7 @@ conda install anaconda::cupy
 
 pip install nuitka
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorMCPServer.py
+nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
 
 conda deactivate
 conda env remove -n Translator_Minecraft
@@ -52,8 +53,8 @@ conda env remove -n Translator_Minecraft
 - [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B)（单次多次翻译可能导致输出问题）
 - [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B)（单次多次翻译可能导致输出问题）
 - [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)（稳定性好）
+- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct)（高质量）（稳定性好）
 - [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B)（单次多次翻译可能导致输出问题）
-- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct)
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B)（单次多次翻译可能导致输出问题）
 ## 量化类型
 ### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
