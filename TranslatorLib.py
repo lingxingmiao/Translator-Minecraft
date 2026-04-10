@@ -128,6 +128,6 @@ __all__ = [
     "faiss", "requests", "math", "tqdm", "dataclass",
     "replace", "ConfigFactory", "HOCONConverter", "time",
     "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
-    "tomllib", "glob", "APIConfig", "Union", "Enum",
+    "tomllib", "glob", "APIConfig", "Union",
     "Optional", "List", "io", "asyncio",
     "asynccontextmanager", "uuid", "shutil"]
