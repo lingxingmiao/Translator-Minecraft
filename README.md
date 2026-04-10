@@ -36,7 +36,7 @@ pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https
 conda install anaconda::cupy
 # 向量处理加速（可选）
 
-pip install nuitka
+pip install nuitka rich
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorMCPServer.py
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
 
