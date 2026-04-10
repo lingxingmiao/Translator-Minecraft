@@ -7,10 +7,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。<br><br>
 
 API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.github.io/
-## 演示
+## MCP演示
 ![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
-## 添加此工具
-
 
 ## 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
@@ -31,7 +29,7 @@ pip install fastmcp
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
 pip install uninstall torch
-pip install torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 # 内置向量生成（可选）
 conda install anaconda::cupy
 # 向量处理加速（可选）
