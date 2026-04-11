@@ -12,7 +12,7 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 
 ## 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
-- 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.0的Maxwell2.0以上架构 推荐24GB内存
+- 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.0的Maxwell2.0以上架构 推荐16GB以上内存
 - 内存(程序占用)：最低4GB 推荐8GB
 - 存储：平均4GB（按向量大小）
 
@@ -175,7 +175,7 @@ conda env remove -n Translator_Minecraft
 - 添加 调用大语言模型额外参数传入
 - 添加 已安装的整合包翻译支持（支持 KJS FTBQ BQ 资源文件夹 模组，支持 I18n翻译剔除）
 - 添加 FTB任务与BQ任务翻译自动剔除键与滚木
-- 添加 单实例 嵌入模型、向量文件、文本文件、向量索引 持久化
+- 添加 单实例 嵌入模型、向量文件、文本文件、向量索引 持久化（多实例无持久化）
 - 添加 翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 - 添加 自动汉化更新 的 I18n词典 导入翻译缓存功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
 - 添加 翻译对照功能，返回示例：想妈妈了(think ma ma le)
@@ -237,6 +237,6 @@ conda env remove -n Translator_Minecraft
 - 修复 输入遇到引号缓存无法命中的问题（来自 Release.1.4 Bata.1 的修复 翻译内容分号哪哪都是导致的解析错误）
 
 ### Release.1.4（进行中）
-- 优化 内置向量同实例不会重新加载模型
-- 优化 不同向量持久化（进行中）
-- 优化 反量化解码速度（进行中）
+- 优化 嵌入模型多实例持久化
+- 优化 不同向量文本多实例持久化
+- 优化 索引文件多实例持久化
