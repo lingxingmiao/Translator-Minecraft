@@ -238,3 +238,5 @@ conda env remove -n Translator_Minecraft
 
 ### Release.1.4（进行中）
 - 优化 内置向量同实例不会重新加载模型
+- 优化 不同向量持久化（进行中）
+- 优化 反量化解码速度（进行中）
