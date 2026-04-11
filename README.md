@@ -12,7 +12,7 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 
 ## 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
-- 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.0的Maxwell2.0以上架构 8GB内存
+- 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.0的Maxwell2.0以上架构 推荐24GB内存
 - 内存(程序占用)：最低4GB 推荐8GB
 - 存储：平均4GB（按向量大小）
 
