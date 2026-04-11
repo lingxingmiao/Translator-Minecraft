@@ -240,3 +240,4 @@ conda env remove -n Translator_Minecraft
 - 优化 嵌入模型多实例持久化
 - 优化 不同向量文本多实例持久化
 - 优化 索引文件多实例持久化
+- 修改 GPU加速模式配置更改至config.cfg
