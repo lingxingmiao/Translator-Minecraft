@@ -237,4 +237,4 @@ conda env remove -n Translator_Minecraft
 - 修复 输入遇到引号缓存无法命中的问题（来自 Release.1.4 Bata.1 的修复 翻译内容分号哪哪都是导致的解析错误）
 
 ### Release.1.4（进行中）
-- 修改 分离内置向量同实例不会重新加载模型
+- 优化 内置向量同实例不会重新加载模型
