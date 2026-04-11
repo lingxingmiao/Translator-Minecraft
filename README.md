@@ -20,8 +20,8 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 ```powershell
 conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
-pip install numpy faiss-cpu tqdm requests pyhocon
-# 向量处理 向量索引 进度显示* 网络请求* FTB任务snbt编解码
+pip install numpy faiss-cpu requests     pyhocon          rich
+#          向量处理 向量索引  网络请求 FTB任务snbt编解码 进度显示与艺术
 pip install uvicorn fastapi slowapi
 # API服务器（可选）
 pip install fastmcp
@@ -34,7 +34,7 @@ pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheel
 conda install -c conda-forge cupy cuda-version=12.8
 # 向量处理加速（可选）
 
-pip install nuitka rich
+pip install nuitka
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorMCPServer.py
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
 
@@ -241,3 +241,4 @@ conda env remove -n Translator_Minecraft
 - 优化 不同向量文本多实例持久化
 - 优化 索引文件多实例持久化
 - 修改 GPU加速模式配置更改至config.cfg
+- 修改 Python的Tqdm改为Rich的Tqdm
