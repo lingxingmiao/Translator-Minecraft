@@ -29,7 +29,7 @@ pip install fastmcp
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
 pip install uninstall torch
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
 # 内置向量生成（可选）
 conda install anaconda::cupy
 # 向量处理加速（可选）
