@@ -18,27 +18,30 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 
 ## 编译/环境设置
 ```powershell
+# 创建环境
 conda create -n Translator_Minecraft python=3.12 -y
+# 激活环境
 conda activate Translator_Minecraft
-pip install numpy faiss-cpu requests     pyhocon          rich
 #          向量处理 向量索引  网络请求 FTB任务snbt编解码 进度显示与艺术
-pip install uvicorn fastapi slowapi
+pip install numpy faiss-cpu requests     pyhocon          rich
 # API服务器（可选）
-pip install fastmcp
+pip install uvicorn fastapi slowapi
 # MCP服务器（可选）
+pip install fastmcp
+# 内置向量生成（可选）
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
 pip install uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
-# 内置向量生成（可选）
-conda install -c conda-forge cupy cuda-version=12.8
 # 向量处理加速（可选）
-
+conda install -c conda-forge cupy cuda-version=12.8
+# 打包exe 没有做torch兼容 手动打包cupy不可用
 pip install nuitka
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorMCPServer.py
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
-
+# 退出环境
 conda deactivate
+# 删除环境
 conda env remove -n Translator_Minecraft
 ```
 ## 推荐模型翻译速度排名 16GRAM
@@ -242,5 +245,5 @@ conda env remove -n Translator_Minecraft
 - 优化 不同向量文本多实例持久化
 - 优化 索引文件多实例持久化
 - 修改 GPU加速模式配置更改至config.cfg
-- 修改 Python的Tqdm改为Rich的Tqdm
+- 修改 Tqdm的Tqdm改为Rich的Tqdm
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
