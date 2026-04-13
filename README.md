@@ -125,7 +125,7 @@ conda env remove -n Translator_Minecraft
 - 更改 单次多词 格式
 
 ### Release.1.2
-- 添加 已安装的整合包翻译支持（失败，Release.1.4 bata.1完成）
+- 添加 已安装的整合包翻译支持（失败，Release.1.4 Bata.1完成）
 
 ### Release.1.3 Bata.1
 - 大量修改传入方式
@@ -170,7 +170,7 @@ conda env remove -n Translator_Minecraft
     - FENGMANG_GPU_ACC（是否启用GPU加速）
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
 
-### Release.1.4 bata.1
+### Release.1.4 Bata.1
 - 添加 OAuth2.0 格式 API 调用（失败）
 - 添加 调用大语言模型额外参数传入
 - 添加 已安装的整合包翻译支持（支持 KJS FTBQ BQ 资源文件夹 模组，支持 I18n翻译剔除）
@@ -189,13 +189,13 @@ conda env remove -n Translator_Minecraft
 - 修复 配置文件相关操作时可能导致的奔溃问题
 - 修复 分离语言文件更新 导出路径没有填写的问题
 - 修复 翻译语言文件输出语言文件路径不正确导致的一系列问题
-- 修复 翻译内容分号哪哪都是导致的解析错误（于 Release.1.4 删除）
+- 修复 翻译内容分号哪哪都是导致的解析错误（于 Release.1.4 Bata.3 删除）
 - 修复 日志未启用DEBUG导致无视DEBUG选项直接输出INFO
 - 修复 翻译任务返回重新排序导致的错误
 - 修复 读取FTB任务遇到双重编码字符串导致程序无法正确处理的问题
 - 修复 翻译任务传入文件路径与键路径导致的LLM预填充耗时增加的问题
 
-### Release.1.4 bata.2
+### Release.1.4 Bata.2
 - 添加 FastApi（供应商模式，headers:{"Authorization": f"Bearer sk-114514"}）（通用翻译，分离语言文件更新，合并语言文件更新）
 - 添加 通用翻译函数
     - 额外支持 未安装整合包（支持 CurseForge Modrinth MultiMC）（仅翻译整合包内已有文件生成补丁）
@@ -206,7 +206,7 @@ conda env remove -n Translator_Minecraft
 - 修复 整合包翻译没有模组文件夹导致的错误
 - 优化 MCP服务所有翻译改用 通用翻译 Qwen3.5约4778Token Qwen3约4808Token Gamma4约4361Token 
 
-### Release.1.4 bata.3
+### Release.1.4 Bata.3
 - 添加 API异步轮询（Cloudflare Tunnel有上限太搞了）
 - 添加 API返回日志功能
 - 添加 API翻译实例工作上限（阻塞）
