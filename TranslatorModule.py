@@ -433,4 +433,4 @@ class Module:
         if not path:
             path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
         Path(path).mkdir(parents=True, exist_ok=True)
-        return path
+        return Path(path).resolve()

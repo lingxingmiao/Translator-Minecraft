@@ -42,6 +42,7 @@ class DefaultConfig:
     EMB_API_KEY = ""
     EMB_MODEL = "nomic-ai/nomic-embed-text-v1.5" # string: 嵌入模型/HuggingFace仓库名
     EMB_MODEL_ACC_MODE = "bfloat16" # string: None, ONNX, float64, float32, float16, bfloat16
+    EMB_MODEL_DEVICE = "cuda:0"
     EMB_MAX_TOKENS = 2048
     EMB_TOKENSTOTEXT_RATIO = 3.0
     EMB_MAX_WORKERS = 24

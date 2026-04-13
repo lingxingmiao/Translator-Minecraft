@@ -5,7 +5,6 @@ import hashlib
 import zipfile
 import tomllib
 import asyncio
-import shutil
 import pickle
 import json
 import glob
@@ -29,10 +28,12 @@ import faiss
 import numpy
 #需要安装↓
 from pyhocon import ConfigFactory, HOCONConverter
+from rich.console import Console
+from rich.panel import Panel
+from rich.align import Align
+from tqdm.rich import tqdm
 #Codna需要安装↓
 import requests
-#Codna需要安装↓
-from tqdm import tqdm
 #可选服务安装↓
 try:
     import uvicorn, fastapi, slowapi
@@ -42,19 +43,29 @@ try:
     from fastmcp import FastMCP
 except ImportError:
     FastMCP = None
-
-GPU_ACC = os.getenv("FENGMANG_GPU_ACC", "true").lower() == "false"
-GPU_DEVICE_ID = os.getenv("FENGMANG_GPU_DEVICE_ID", None)
-if GPU_DEVICE_ID is not None:
-    GPU_DEVICE_ID = int(GPU_DEVICE_ID)
-
+    
+ConfigFile = Path("config.cfg").resolve()
+ConfigFile.parent.mkdir(parents=True, exist_ok=True)
+if ConfigFile.is_file():
+    with open(ConfigFile, "r", encoding="utf-8") as f:
+        Config = json.load(f)
+else:
+    Config = {
+        "GPU_Accelerator": True,
+        "GPU_Device_ID": None
+    }
+    with open(ConfigFile, "w+", encoding="utf-8") as f:
+        json.dump(Config, f, indent=4)
+        
+GPU_ACC = False
+GPU_ERROR = None
 try:
-    if not GPU_ACC:
+    if not Config["GPU_Accelerator"]:
         raise ValueError("GPU_ACC is set to False")
     
     import cupy as np
-    if GPU_DEVICE_ID is not None:
-        np.cuda.runtime.setDevice(GPU_DEVICE_ID)
+    if Config["GPU_Device_ID"] is not None:
+        np.cuda.runtime.setDevice(Config["GPU_Device_ID"])
     
     np.dot(np.random.rand(2, 2), np.random.rand(2, 2))
     if not np.cuda.is_available():
@@ -65,21 +76,29 @@ try:
         "version": np.__version__,
         "device_count": np.cuda.runtime.getDeviceCount(),
         "device_id": np.cuda.runtime.getDevice(),
-        "error": str("")
+        "error": ""
     }
     
     GPU_ACC = True
-except Exception as e:
-    import numpy as np
+except ValueError:
+    np = numpy
     HARDWARE_INFO = {
         "type": "CPU",
         "version": np.__version__,
-        "error": str(e)
+        "error": ""
+    }
+    GPU_ERROR = False
+except Exception as e:
+    np = numpy
+    HARDWARE_INFO = {
+        "type": "CPU",
+        "version": np.__version__,
+        "error": e
     }
     
-    GPU_ACC = False
+    GPU_ERROR = e
 if FastMCP:
-    MCPConfigFile = Path("mcp-config.cfg").resolve()
+    MCPConfigFile = Path("config-mcp.cfg").resolve()
     MCPConfigFile.parent.mkdir(parents=True, exist_ok=True)
     if MCPConfigFile.is_file():
         with open(MCPConfigFile, "r", encoding="utf-8") as f:
@@ -92,7 +111,7 @@ if FastMCP:
         with open(MCPConfigFile, "w+", encoding="utf-8") as f:
             json.dump(MCPConfig, f, indent=4)
 if uvicorn and fastapi and slowapi:
-    APIConfigFile = Path("api-config.cfg").resolve()
+    APIConfigFile = Path("config-api.cfg").resolve()
     APIConfigFile.parent.mkdir(parents=True, exist_ok=True)
     if APIConfigFile.is_file():
         with open(APIConfigFile, "r", encoding="utf-8") as f:
@@ -120,14 +139,26 @@ if uvicorn and fastapi and slowapi:
         }
         with open(APIConfigFile, "w+", encoding="utf-8") as f:
             json.dump(APIConfig, f, indent=4)
+            
+显示内容 = f"""[cyan]████████╗██████╗  █████╗ ███╗   ██╗███████╗██╗      █████╗ ███╗   ███╗ ██████╗
+[cyan]╚══██╔══╝██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ██╔══██╗████╗ ████║██╔════╝
+   [cyan]██║   ██████╔╝███████║██╔██╗ ██║███████╗██║     ███████║██╔████╔██║██║
+   [cyan]██║   ██╔══██╗██╔══██║██║╚██╗██║╚════██║██║     ██╔══██║██║╚██╔╝██║██║
+   [cyan]██║   ██║  ██║██║  ██║██║ ╚████║███████║███████╗██║  ██║██║ ╚═╝ ██║╚██████╗
+   [cyan]╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝
+
+TranslatorMinecraft Core
+[bright_green]Version:[/] Release 1.4
+[bright_green]GPU Accelerator:[/] {"True" if GPU_ACC else GPU_ERROR}"""
+Console(force_terminal=True, color_system="auto").print(Panel(Align(显示内容, align="center"),title="[blue]TranslatorMinecraft Core[/blue]",border_style="blue",padding=(1, 2),width=110))
+
 __all__ = [
-    'np', "mp", "threading", "eb", "hashlib",
-    "zipfile", "pickle", "json", "ast", "os",
-    "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO',
-    "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
-    "faiss", "requests", "math", "tqdm", "dataclass",
-    "replace", "ConfigFactory", "HOCONConverter", "time",
-    "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
-    "tomllib", "glob", "APIConfig", "Union",
-    "Optional", "List", "io", "asyncio",
-    "asynccontextmanager", "uuid", "shutil"]
+    'np', "mp", "threading", "eb", "hashlib"
+    "zipfile", "pickle", "json", "ast", "os"
+    "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO'
+    "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any"
+    "faiss", "requests", "math", "tqdm", "dataclass"
+    "replace", "ConfigFactory", "HOCONConverter", "time"
+    "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath"
+    "tomllib", "glob", "APIConfig", "Union", "asynccontextmanager"
+    "Optional", "List", "io", "asyncio", "uuid"]

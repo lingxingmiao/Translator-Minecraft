@@ -1,8 +1,9 @@
-from TranslatorLib import HARDWARE_INFO, np, mp, threading, hashlib, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, faiss, requests, GPU_ACC, numpy, time, uuid
+from TranslatorLib import HARDWARE_INFO, np, mp, threading, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, faiss, requests, GPU_ACC, time, uuid
 from TranslatorConfig import RuntimeConfig
 from TranslatorQuantization import Quantization
 from TranslatorLocale import Locale
 from TranslatorModule import Module
+import TranslatorPersistence
 
 class Translator:
     def __init__(Self, Config: dict = None):
@@ -19,10 +20,6 @@ class Translator:
         tqdm = Self.Locale.Tqdm
         Self.Quantization = Quantization(Config=Config)
         Self.Module.写入日志("log.core.numpy", type=HARDWARE_INFO['type'], version=HARDWARE_INFO['version'], error=HARDWARE_INFO['error'],info_level=0)
-        Self.嵌入模型 = None
-        Self.向量索引 = None
-        Self.向量文件 = None
-        Self.文本文件 = None
         Self.上下文 = []
         Self.线程锁 = threading.Lock()
         Self.函数库: Dict[str, Callable] = {}
@@ -71,35 +68,10 @@ class Translator:
                     else:
                         Self.Module.写入日志("log.core.api.generate.vectors.retry", e=eb.format_exc(), info_level=2)
                         time.sleep(Self.Config.EMB_RETRY_INTERVAL)
-    def 加载嵌入模型(Self):
-        if (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
-            Self.Module.写入日志("log.core.debug.load.embedded.model", model=Self.Config.EMB_MODEL, info_level=0)
-            try:
-                with Self.线程锁:
-                    for _ in tqdm(range(1), desc="tqdm.model.load"):
-                        from sentence_transformers import SentenceTransformer
-                        model_kwargs = {}
-                        model_kwargs["dtype"] = Self.Config.EMB_MODEL_ACC_MODE
-                        if Self.Config.EMB_MODEL_ACC_MODE == "onnx":
-                            Self.嵌入模型 = SentenceTransformer(
-                                Self.Config.EMB_MODEL,
-                                trust_remote_code=True,
-                                backend="onnx",
-                            )
-                        else:
-                            Self.嵌入模型 = SentenceTransformer(
-                                Self.Config.EMB_MODEL,
-                                trust_remote_code=True,
-                                model_kwargs=model_kwargs
-                            )
-                Self.Module.写入日志("log.core.load.embedded.model.succeed", model=Self.Config.EMB_MODEL, info_level=0)
-            except Exception:
-                Self.Module.写入日志("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc(), info_level=3)
-                raise eb.format_exc()
     def 并行生成向量(Self, texts: list,) -> list:
         Self.Module.写入日志("log.core.vector.generate.start", info_level=0)
-        if not Self.嵌入模型:
-            Self.加载嵌入模型()
+        if (not Self.嵌入模型) and (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
+            Self.嵌入模型 = TranslatorPersistence.获取嵌入模型(Self=Self)
         if texts:
             最大字符数 = Self.Config.EMB_MAX_TOKENS * Self.Config.EMB_TOKENSTOTEXT_RATIO
             分组结果 = []
@@ -144,63 +116,7 @@ class Translator:
         Self.Module.写入日志("log.core.generated.vector.nan", texts=texts, info_level=3)
 
     def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
-        检索词 = []
-        pkl文件内容 = []
-        待处理文本 = []
-        文件路径 = Self.Config.VEC_FILE_PATH
-        文件名 = Self.Config.VEC_FILE_NAME
-        if texts:
-            if Path(f"{文件路径}/{文件名}.pkl").is_file():
-                with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                    pkl文件内容.extend(pickle.load(f))
-                    for index in pkl文件内容:
-                        检索词.append(index[0])
-            检索词_set = set(检索词)
-            待处理文本 = [index for index in texts if index[0] not in 检索词_set]
-        elif Self.向量文件 and Self.文本文件:
-            return Self.向量文件, Self.文本文件
-        Self.Module.写入日志("log.core.vector.cache.start")
-        if 待处理文本 and Self.Config.EMB_MODEL:
-            返回内容向量 = Self.并行生成向量(待处理文本)
-            向量结果列表 = 返回内容向量[0]
-            Self.Module.写入日志("log.core.debug.vector.range", range=(向量结果列表.min(), 向量结果列表.max()), info_level=4)
-            文本结果列表 = [[返回内容向量[1][0][i], 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][0]))]
-            for _ in tqdm(range(1), desc="tqdm.vectors.write"):
-                叠加状态 = False
-                if Path(f"{文件路径}/{文件名}.npz").is_file():
-                    向量文件 = numpy.load(f"{文件路径}/{文件名}.npz", allow_pickle=True)
-                    向量文件 = {key: np.asarray(向量文件[key]) for key in 向量文件.files}
-                    向量文件, 叠加状态 = Self.Quantization.叠加量化向量(向量文件, Self.Quantization.编码向量(向量结果列表))
-                    np.savez_compressed(f"{文件路径}/{文件名}.npz", **向量文件)
-                else:
-                    向量文件 = Self.Quantization.编码向量(向量结果列表)
-                    np.savez_compressed(f"{文件路径}/{文件名}.npz", **向量文件)
-
-                if Path(f"{文件路径}/{文件名}.pkl").is_file():
-                    if 叠加状态:
-                        with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                            文本文件 = pickle.load(f)
-                        文本文件.extend(文本结果列表)
-                        with open(f"{文件路径}/{文件名}.pkl", "wb") as f:
-                            pickle.dump(文本文件, f)
-                else:
-                    with open(f"{文件路径}/{文件名}.pkl", "wb") as f:
-                        pickle.dump(文本结果列表, f)
-                    文本文件 = 文本结果列表
-        else:
-            try:
-                for _ in tqdm(range(1), desc="tqdm.vectors.read"):
-                    向量文件 = numpy.load(f"{文件路径}/{文件名}.npz", allow_pickle=True)
-                    向量文件 = {key: np.asarray(向量文件[key]) for key in 向量文件.files}
-                    with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                        文本文件 = pickle.load(f)
-            except Exception:
-                Self.Module.写入日志("log.core.read.vevtor.error", e=eb.format_exc(), info_level=2)
-                向量文件, 文本文件 = False, False
-        Self.Module.写入日志("log.core.vector.cache.end")
-        Self.向量文件 = 向量文件
-        Self.文本文件 = 文本文件
-        return Self.向量文件, Self.文本文件
+        return TranslatorPersistence.参考词预处理(Self=Self, texts=texts)
     def 生成翻译(Self, texts: list, other_input: str):
         额外内容 = str([index[1] for index in other_input])
         messages = []
@@ -269,14 +185,14 @@ class Translator:
                         Self.上下文.append({"role": "assistant", "content": 添加上下文结果})
                 return 返回结果
             except Exception:
-                Self.Module.写入日志("log.core.debug.request.messages", promptex=额外内容, messages=texts, info_level=2)
+                Self.Module.写入日志("log.core.generate.translator.messages.error", promptex=额外内容, messages=texts, info_level=1)
                 返回结果 = [[other_input[index][0], texts[index], texts[index]] for index in range(len(texts))]
                 请求次数 += 1
                 if 请求次数 >= Self.Config.LLM_MAX_RETRY:
-                    Self.Module.写入日志("log.core.generate.translator.error", e=eb.format_exc(), output=请求结果, info_level=3)
+                    Self.Module.写入日志("log.core.generate.translator.error", e=eb.format_exc(), output=请求结果, info_level=2)
                     return 返回结果
                 else:
-                    Self.Module.写入日志("log.core.generate.translator.retry", e=eb.format_exc(), output=请求结果, info_level=2)
+                    Self.Module.写入日志("log.core.generate.translator.retry", e=eb.format_exc(), output=请求结果, info_level=1)
                     time.sleep(Self.Config.LLM_RETRY_INTERVAL)
     def 构建索引(Self, 向量文件):
         Self.Module.写入日志("log.core.index.generate.start", info_level=0)
@@ -307,32 +223,7 @@ class Translator:
         Self.Module.写入日志("log.core.index.generate.end", info_level=0)
         return 向量索引
     def 缓存索引(Self, 向量文件, 文本文件):
-        if Self.向量索引:
-            return Self.向量索引
-        Self.Module.写入日志("log.core.index.cache.start", info_level=0)
-        索引配置 = [Self.Config.INDEX_MODE, Self.Config.INDEX_SQ, Self.Config.INDEX_HNSW_CONSTRUCTION, Self.Config.INDEX_HNSW_SEARCH, Self.Config.INDEX_HNSW_M, Self.Config.INDEX_REFINEFLAT_K_FACTOR]
-        参考词哈希 = hashlib.sha3_256(pickle.dumps((向量文件, 文本文件, 索引配置))).hexdigest()
-        if Path(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3").is_file():
-            with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "r") as f:
-                参考词哈希文件 = f.read()
-            if 参考词哈希文件 == 参考词哈希:
-                for _ in tqdm(range(1), desc="tqdm.index.read"):
-                    向量索引 = faiss.read_index(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
-            else:
-                向量索引 = Self.构建索引(向量文件)
-                for _ in tqdm(range(1), desc="tqdm.index.write"):
-                    with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "w+") as f:
-                        f.write(参考词哈希)
-                    faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
-        else:
-            向量索引 = Self.构建索引(向量文件)
-            for _ in tqdm(range(1), desc="tqdm.index.write"):
-                with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "w+") as f:
-                    f.write(参考词哈希)
-                faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
-        Self.向量索引 = 向量索引
-        Self.Module.写入日志("log.core.index.cache.end", info_level=0)
-        return Self.向量索引
+        return TranslatorPersistence.缓存索引(Self=Self, 向量文件=向量文件, 文本文件=文本文件)
     def 翻译语言列表(Self, texts: list) -> list:
         输入列表 = []
         返回列表 = []
@@ -910,42 +801,27 @@ class Translator:
         return 返回内容.resolve()
     def 检索缓存(Self, text: str):
         return Self.Module.翻译缓存()[0][text]
-# ANSI Shadow
-绿色 = '\033[92m'
-默认色 = '\033[0m'
-蓝色 = '\033[34m'
-青色 = '\033[36m'
-print(f"""
-{蓝色}╭─────────────────────────────────────────────────────────────────────────────────────────────╮
-{蓝色}│                                                                                             │
-{蓝色}│                                                                                             │
-{蓝色}│        {青色}████████╗██████╗  █████╗ ███╗   ██╗███████╗██╗      █████╗ {绿色}███{青色}╗   {绿色}███{青色}╗ {绿色}██████{青色}╗       {蓝色}│
-{蓝色}│        {青色}╚══██╔══╝██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ██╔══██╗{默认色}████{青色}╗ {默认色}████{青色}║{默认色}██{青色}╔════╝       {蓝色}│
-{蓝色}│           {青色}██║   ██████╔╝███████║██╔██╗ ██║███████╗██║     ███████║{默认色}██{青色}╔{默认色}████{青色}╔{默认色}██{青色}║{默认色}██{青色}║            {蓝色}│
-{蓝色}│           {青色}██║   ██╔══██╗██╔══██║██║╚██╗██║╚════██║██║     ██╔══██║{默认色}██{青色}║╚{默认色}██{青色}╔╝{默认色}██{青色}║{默认色}██{青色}║            {蓝色}│
-{蓝色}│           {青色}██║   ██║  ██║██║  ██║██║ ╚████║███████║███████╗██║  ██║{默认色}██{青色}║ ╚═╝ {默认色}██{青色}║╚{默认色}██████{青色}╗       {蓝色}│
-{蓝色}│           {青色}╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝{青色}╚═╝     ╚═╝ ╚═════╝       {蓝色}│
-{蓝色}│                                                                                             │
-{蓝色}│                                 {蓝色}TranslatorMinecraft Core                                    {蓝色}│
-{蓝色}│                                   {绿色}Version: {默认色}Release 1.4                                      {蓝色}│
-{蓝色}│                                                                                             │
-{蓝色}╰─────────────────────────────────────────────────────────────────────────────────────────────╯{青色}""")
-测试 = True
+
+测试 = False
 if __name__ == "__main__" and 测试:
-    翻译 = Translator({
-    "LLM_API_URL": "http://127.0.0.1:25564/v1/chat/completions",
-    "LLM_MODEL": "qwen3-30b-a3b-instruct-2507-2.69bpw",
-    "LOGS_FILE_NAME": "测试",
-    "VEC_QUANTIZATION": "Float32",
-    "LLM_MAX_BATCH": 1,
-    "LLM_CONTEXTS": False,
-    "EMB_MODEL": r"C:\Users\FengMang\Desktop\Translator Minecraft\nomic-embed-text-v1.5",
-    "DEBUG_MODE": True,
-    "LLM_MAX_WORKERS": 8
-  })
+    参数 = {
+        "LLM_API_URL": "http://127.0.0.1:25564/v1/chat/completions",
+        "LLM_MODEL": "qwen3-30b-a3b-instruct-2507-2.69bpw",
+        "LOGS_FILE_NAME": "测试",
+        "VEC_QUANTIZATION": "Float32",
+        "LLM_MAX_BATCH": 1,
+        "LLM_CONTEXTS": False,
+        "EMB_MODEL": r"C:\Users\FengMang\Desktop\TranslatorMinecraft\nomic-embed-text-v1.5",
+        "DEBUG_MODE": True,
+        "LLM_MAX_WORKERS": 8,
+        "TRANSLATOR_CACHE_WRITE": False
+    }
+    翻译 = Translator(参数)
+    翻译2 = Translator(参数)
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.翻译整合包(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology 翻译测试\minecraft")
     #翻译.翻译FTB任务(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology\minecraft\config\ftbquests")
-    翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\cells-0.5.13-beta.jar")
+    翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\SEUS PTGI HRR Test 2.1.zip")
+    翻译2.翻译通用文件(r"C:\Users\FengMang\Downloads\SEUS PTGI HRR Test 2.1.zip")
     #print(翻译.检索缓存('Divides capacity equally among all types. Use it if you increased the "max types" in config.'))
     #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
