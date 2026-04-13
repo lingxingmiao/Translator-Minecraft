@@ -243,3 +243,4 @@ conda env remove -n Translator_Minecraft
 - 优化 索引文件多实例持久化
 - 修改 GPU加速模式配置更改至config.cfg
 - 修改 Python的Tqdm改为Rich的Tqdm
+- 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
