@@ -21,6 +21,7 @@ class Translator:
         Self.Quantization = Quantization(Config=Config)
         Self.Module.写入日志("log.core.numpy", type=HARDWARE_INFO['type'], version=HARDWARE_INFO['version'], error=HARDWARE_INFO['error'],info_level=0)
         Self.上下文 = []
+        Self.嵌入模型 = None
         Self.线程锁 = threading.Lock()
         Self.函数库: Dict[str, Callable] = {}
         Self.扫描模块函数(Self.Module)
