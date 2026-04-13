@@ -33,7 +33,7 @@ async def 验证Key(凭证: HTTPAuthorizationCredentials = Security(安全)):
     if 凭证 is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated", headers={"WWW-Authenticate": "Bearer"})
     密钥 = 凭证.credentials
-    with open("api-config.cfg", 'r', encoding='utf-8') as f:
+    with open("config-api.cfg", 'r', encoding='utf-8') as f:
         data = json.load(f)
     有效密钥 = data.get("keys", [])
     if not 有效密钥:
