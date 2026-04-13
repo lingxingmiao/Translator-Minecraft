@@ -5,6 +5,7 @@ import hashlib
 import zipfile
 import tomllib
 import asyncio
+import shutil
 import pickle
 import json
 import glob
@@ -153,12 +154,12 @@ TranslatorMinecraft Core
 Console(force_terminal=True, color_system="auto").print(Panel(Align(显示内容, align="center"),title="[blue]TranslatorMinecraft Core[/blue]",border_style="blue",padding=(1, 2),width=110))
 
 __all__ = [
-    'np', "mp", "threading", "eb", "hashlib"
-    "zipfile", "pickle", "json", "ast", "os"
-    "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO'
-    "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any"
-    "faiss", "requests", "math", "tqdm", "dataclass"
-    "replace", "ConfigFactory", "HOCONConverter", "time"
-    "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath"
-    "tomllib", "glob", "APIConfig", "Union", "asynccontextmanager"
+    'np', "mp", "threading", "eb", "hashlib",
+    "zipfile", "pickle", "json", "ast", "os",
+    "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO',
+    "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
+    "faiss", "requests", "math", "tqdm", "dataclass",
+    "replace", "ConfigFactory", "HOCONConverter", "time", "shutil",
+    "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
+    "tomllib", "glob", "APIConfig", "Union", "asynccontextmanager",
     "Optional", "List", "io", "asyncio", "uuid"]
