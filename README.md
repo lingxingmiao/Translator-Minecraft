@@ -248,6 +248,6 @@ conda env remove -n Translator_Minecraft
 - 修改 Tqdm的Tqdm改为Rich的Tqdm
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
 
-### Release.1.5 Bata（计划）
+### Release.1.5 Bata.1（计划）
 - 优化 任务翻译质量
 - 优化 4Bit及以下向量精度
