@@ -235,15 +235,16 @@ conda env remove -n Translator_Minecraft
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
 
 ### Release.1.5 Bata.1（进行中）
-- 优化 任务翻译质量（计划）
-- 优化 4Bit及以下向量精度（失败0）
+- 优化 任务翻译质量（进行中）
 - 修复 FTB任务点击事件翻译完消失的问题
 - 修复 通用翻译不会返回值导致的错误跳出
-- 修改 索引模式仅余弦暴力索引（失败0）
-- 修改 索引量化与向量存储共享量化方法（默认Q4）（失败0）
 - 修改 pyhocon更好snbtlib
 - 添加 SnbtLib依赖
 - 删除 Faiss依赖（失败0）
 - 删除 PyHocon依赖
-- 删除 向量反量化相关函数（失败0）
-- 删除 向量浮点格式存储（失败0）
+- 修改向量与索引相关操作（Numpy比不过Faiss 能做好Q4量化强于FaissSQ4）
+    - 优化 4Bit及以下向量精度
+    - 修改 索引模式仅余弦暴力索引
+    - 修改 索引量化与向量存储共享量化方法（默认Q4）
+    - 删除 向量反量化相关函数
+    - 删除 向量浮点格式存储
