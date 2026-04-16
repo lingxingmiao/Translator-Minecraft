@@ -22,8 +22,8 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 向量索引  网络请求 FTB任务snbt编解码 进度显示与艺术
-pip install numpy faiss-cpu requests     pyhocon          rich
+#          向量处理 网络请求 FTB任务snbt编解码 进度显示与艺术
+pip install numpy  requests     pyhocon          rich
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # MCP服务器（可选）
@@ -58,22 +58,7 @@ conda env remove -n Translator_Minecraft
 - [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct)（高质量）（稳定性好）
 - [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B)（单次多次翻译可能导致输出问题）（情商高）
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B)（单次多次翻译可能导致输出问题）（情商高）
-## 量化类型
-### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
-| RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
-| - | - | - | - | - |
-| 范围 | [-6.3716235, 5.829162] | [-6.3716235, 5.829162] | [-0.27004412, 0.24617423] | [-0.27004412, 0.24617423] |
-| 分位数 | 1.000 | 0.998 | 1.000 | 0.998 |
-| Q8_K_X | 0.0039/0.0000 | 0.0091/0.0001 | 0.0006/0.0001 | 0.0007/0.0002 |
-| Q6_K_X | 0.0156/0.0002 | 0.0175/0.0002 | 0.0007/0.0002 | 0.0008/0.0002 |
-| Q4_K_X | 0.0657/0.0034 | 0.0653/0.0034 | 0.0030/0.0034 | 0.0030/0.0034 |
-| Q3_K_X | 0.1408/0.0153 | 0.1390/0.0150 | 0.0064/0.0153 | 0.0063/0.0150 |
-| Q2_K_X | 0.3221/0.0849 | 0.3193/0.0833 | 0.0149/0.0761 | 0.0147/0.0747 |
-| Float32 | 0.0000/0.0000 | - | 0.0000/0.0000 | - |
-| Float16 | 0.0002/0.0000 | - | 0.0000/0.0000 | - |
-| Float16_E0M15 | 0.2441/0.0355 | - | 0.0000/0.0000 | - |
-| BFloat16 | 0.0026/0.0000 | - | 0.0001/0.0000 | - |
-| Float8_E4M3 | 0.0405/0.0004 | - | 0.0028/0.0020 | - |
+
 ## 更新日志
 ### Release.1 Alpha.1
 - 添加 语言文件 翻译支持
@@ -252,6 +237,7 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.1（进行中）
 - 优化 任务翻译质量（计划）
 - 优化 4Bit及以下向量精度（失败）
+- 修复 FTB任务点击事件翻译完消失的问题（进行中）
 - 修改 索引模式仅余弦暴力索引
 - 修改 索引量化与向量存储共享量化方法（默认Q4）
 - 修改 pyhocon更好snbtlib（进行中）
