@@ -249,9 +249,12 @@ conda env remove -n Translator_Minecraft
 - 修改 Tqdm的Tqdm改为Rich的Tqdm
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
 
-### Release.1.5 Bata.1（计划）
-- 优化 任务翻译质量
+### Release.1.5 Bata.1（进行中）
+- 优化 任务翻译质量（计划）
 - 优化 4Bit及以下向量精度（失败）
-- 修改 索引模式仅余弦暴力索引（成功）
-- 修改 索引量化与向量存储共享量化方法（默认Q4）（成功）
-- 删除 Faiss依赖（成功）
+- 修改 索引模式仅余弦暴力索引
+- 修改 索引量化与向量存储共享量化方法（默认Q4）
+- 修改 pyhocon更好snbtlib（进行中）
+- 删除 Faiss依赖
+- 删除 向量反量化相关函数
+- 删除 向量浮点格式存储
