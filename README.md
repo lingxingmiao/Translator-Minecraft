@@ -235,7 +235,7 @@ conda env remove -n Translator_Minecraft
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
 
 ### Release.1.5 Bata.1（进行中）
-- 优化 任务翻译质量(Token消耗平均翻三倍)
+- 优化 任务翻译质量(Token消耗平均翻3倍 峰值超20倍以上)
 - 修复 FTB任务点击事件翻译完消失的问题
 - 修复 通用翻译不会返回值导致的错误跳出
 - 修改 pyhocon更好snbtlib
