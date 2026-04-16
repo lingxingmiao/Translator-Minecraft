@@ -251,4 +251,7 @@ conda env remove -n Translator_Minecraft
 
 ### Release.1.5 Bata.1（计划）
 - 优化 任务翻译质量
-- 优化 4Bit及以下向量精度
+- 优化 4Bit及以下向量精度（失败）
+- 修改 索引模式仅余弦暴力索引（成功）
+- 修改 索引量化与向量存储共享量化方法（默认Q4）（成功）
+- 删除 Faiss依赖（成功）
