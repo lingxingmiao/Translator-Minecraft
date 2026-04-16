@@ -22,8 +22,8 @@ API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.gith
 conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 网络请求 FTB任务snbt编解码 进度显示与艺术
-pip install numpy  requests     pyhocon          rich
+#          向量处理 向量索引 网络请求 Snbt文件 进度显示与艺术
+pip install numpy   faiss  requests snbtlib     rich
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # MCP服务器（可选）
@@ -33,7 +33,7 @@ pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-tran
 pip install einops
 pip install uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
-# 向量处理加速（可选）
+# 向量处理加速（可选 要打包环境别安）
 conda install -c conda-forge cupy cuda-version=12.8
 # 打包exe 没有做torch兼容 手动打包cupy不可用
 pip install nuitka
