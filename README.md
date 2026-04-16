@@ -237,10 +237,12 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.1（进行中）
 - 优化 任务翻译质量（计划）
 - 优化 4Bit及以下向量精度（失败）
-- 修复 FTB任务点击事件翻译完消失的问题（进行中）
+- 修复 FTB任务点击事件翻译完消失的问题
 - 修改 索引模式仅余弦暴力索引
 - 修改 索引量化与向量存储共享量化方法（默认Q4）
-- 修改 pyhocon更好snbtlib（进行中）
+- 修改 pyhocon更好snbtlib
+- 添加 SnbtLib依赖
 - 删除 Faiss依赖
+- 删除 PyHocon依赖
 - 删除 向量反量化相关函数
 - 删除 向量浮点格式存储
