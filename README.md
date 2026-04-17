@@ -4,9 +4,10 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，可以使用这个文件来导出数据集来微调大语言模型。<br>
 并且存储的向量还支持多种量化格式，以此来减少存储空间。<br>
 此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）。<br>
-如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。<br><br>
+您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题。<br>
+第一个版本如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。<br><br>
 
-API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.github.io/
+API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.github.io/<br>
 ## MCP演示
 ![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
 
@@ -181,7 +182,7 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译内容分号哪哪都是导致的解析错误（于 Release.1.4 Bata.3 删除）
 - 修复 日志未启用DEBUG导致无视DEBUG选项直接输出INFO
 - 修复 翻译任务返回重新排序导致的错误
-- 修复 读取FTB任务遇到双重编码字符串导致程序无法正确处理的问题
+- 修复 读取FTB任务遇到双重编码字符串导致程序无法正确处理的问题（于 Release.1.5 Bata.1 正确修复）
 - 修复 翻译任务传入文件路径与键路径导致的LLM预填充耗时增加的问题
 
 ### Release.1.4 Bata.2
