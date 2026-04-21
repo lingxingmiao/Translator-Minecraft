@@ -238,6 +238,7 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.1（进行中）
 - 添加 高质量索引模式(非任务Token消耗平均翻1-3倍 任务翻译峰值超20倍以上)
 - 添加 [think]思维链剔除[/think]
+- 添加 翻译模型 频率惩罚 存在惩罚 种子 参数传入
 - 优化 并行翻译逻辑(参考 沉浸式翻译 插件)
 - 优化 额外提示词传入逻辑(Tokens更少)
 - 优化 翻译系统提示词(复制 沉浸式翻译 插件)
@@ -248,6 +249,7 @@ conda env remove -n Translator_Minecraft
 - 修复 BQ任务文件读取 questLines 值为 questDatabase 的问题(666我问Qwen这段代码是不是AI写的时候发现的)
 - 修复 翻译遇到错误重试时发生的错误
 - 修改 翻译语言文件不限制文件类型必须相同
+- 删除 额外提示词传入方式, 现在固定系统提示词位置
 - 删除 分离语言文件函数的mode参数,固定输出语言文件
 - 添加 SnbtLib依赖
 - 删除 PyHocon依赖
