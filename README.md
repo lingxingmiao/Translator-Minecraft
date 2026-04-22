@@ -249,6 +249,9 @@ conda env remove -n Translator_Minecraft
 - 修复 BQ任务文件读取 questLines 值为 questDatabase 的问题(666我问Qwen这段代码是不是AI写的时候发现的)
 - 修复 翻译遇到错误重试时发生的错误
 - 修复 翻译对照功能无法正确处理导致的程序退出
+- 修复 翻译返回会带有空格的问题
+- 修改 .translatorlang 文件改为 .translang 文件(翻译审查文件)
+- 修改 .translang 文件内部格式,现在更清晰明了
 - 修改 翻译语言文件不限制文件类型必须相同
 - 删除 额外提示词传入方式, 现在固定系统提示词位置
 - 删除 分离语言文件函数的mode参数,固定输出语言文件
