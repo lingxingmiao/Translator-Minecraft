@@ -7,7 +7,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题。<br>
 第一个版本如何安装可以查看这个[视频](https://github.com/lingxingmiao/Translator-Minecraft/raw/refs/heads/main/Image/Install.mp4)。<br><br>
 
-API公开测试, 获取URL与Key请联系QQ3254693390, https://lingxingmiao.github.io/<br>
+公益API公开测试 https://lingxingmiao.github.io 该API禁止商用/转发<br>
 ## MCP演示
 ![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Demonstration.jpg)
 
