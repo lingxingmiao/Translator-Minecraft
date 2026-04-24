@@ -7,6 +7,7 @@ import tomllib
 import asyncio
 import shutil
 import pickle
+import atexit
 import json
 import glob
 import time
@@ -25,10 +26,10 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from concurrent.futures import ThreadPoolExecutor, as_completed
 #需要安装↓
-import faiss
 import numpy
+import faiss
+import snbtlib
 #需要安装↓
-from pyhocon import ConfigFactory, HOCONConverter
 from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
@@ -60,6 +61,7 @@ else:
         
 GPU_ACC = False
 GPU_ERROR = None
+HARDWARE_INFO = {"device_count": "1", "device_id": None}
 try:
     if not Config["GPU_Accelerator"]:
         raise ValueError("GPU_ACC is set to False")
@@ -86,6 +88,8 @@ except ValueError:
     HARDWARE_INFO = {
         "type": "CPU",
         "version": np.__version__,
+        "device_count": None,
+        "device_id": None,
         "error": ""
     }
     GPU_ERROR = False
@@ -94,6 +98,8 @@ except Exception as e:
     HARDWARE_INFO = {
         "type": "CPU",
         "version": np.__version__,
+        "device_count": None,
+        "device_id": None,
         "error": e
     }
     
@@ -134,7 +140,9 @@ if uvicorn and fastapi and slowapi:
                     "ssl_keyfile": None,
                     "ssl_certfile": None,
                     "max_concurrent": 4,
-                    "current-limiting": "8/minute"
+                    "current-limiting": "8/minute",
+                    "task_states_file": "task_states.json",
+                    "task_states_save_interval": 30.0
                 },
             "keys": []
         }
@@ -149,7 +157,7 @@ if uvicorn and fastapi and slowapi:
    [cyan]╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝
 
 TranslatorMinecraft Core
-[bright_green]Version:[/] Release 1.4
+[bright_green]Version:[/] Release 1.5 Bata.1
 [bright_green]GPU Accelerator:[/] {"True" if GPU_ACC else GPU_ERROR}"""
 Console(force_terminal=True, color_system="auto").print(Panel(Align(显示内容, align="center"),title="[blue]TranslatorMinecraft Core[/blue]",border_style="blue",padding=(1, 2),width=110))
 
@@ -158,8 +166,8 @@ __all__ = [
     "zipfile", "pickle", "json", "ast", "os",
     "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO',
     "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
-    "faiss", "requests", "math", "tqdm", "dataclass",
-    "replace", "ConfigFactory", "HOCONConverter", "time", "shutil",
+    "requests", "math", "tqdm", "dataclass", "faiss",
+    "replace", "snbtlib", "time", "shutil", "atexit",
     "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
     "tomllib", "glob", "APIConfig", "Union", "asynccontextmanager",
     "Optional", "List", "io", "asyncio", "uuid"]

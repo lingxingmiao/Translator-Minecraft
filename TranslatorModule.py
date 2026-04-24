@@ -1,6 +1,7 @@
-from TranslatorLib import re, os, time, json, uuid, pickle, zipfile, Path, ConfigFactory, HOCONConverter, eb, PurePosixPath, glob, tomllib
+from TranslatorLib import os, time, json, uuid, pickle, zipfile, Path, eb, PurePosixPath, glob, tomllib, snbtlib
 from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
 from TranslatorLocale import Locale
+
 
 class Module:
     def __init__(Self, Config: dict = None):
@@ -42,7 +43,7 @@ class Module:
             return f.read()
     def 读取单个FTBQ_Snbt文件(Self, index: str):
         文本列表 = []
-        SNBT文件 = ConfigFactory.parse_file(index)
+        SNBT文件 = snbtlib.loads(Path(index).read_text(encoding='utf-8'))
         try:
             if "description" in SNBT文件:
                 if isinstance(SNBT文件["description"], str):
@@ -108,23 +109,16 @@ class Module:
                 for index1q, index1 in enumerate(SNBT文件["quests"]):
                     if "description" in index1:
                         for index2q, index2 in enumerate(index1["description"]):
-                            返回内容 = index2
-                            if isinstance(index2, str):
-                                双重字符串 = index2.strip()
-                                if (双重字符串.startswith('[') and 双重字符串.endswith(']')) or (双重字符串.startswith('{') and 双重字符串.endswith('}')):
-                                    try:
-                                        parsed = json.loads(双重字符串)
-                                        if isinstance(parsed, list) and len(parsed) > 1:
-                                            返回内容 = parsed[1]
-                                            if isinstance(返回内容, dict) and "translate" in 返回内容:
-                                                返回内容 = 返回内容["translate"]
-                                        else:
-                                            返回内容 = index2 
-                                    except json.JSONDecodeError as e:
-                                        返回内容 = index2
-                                    except (TypeError, IndexError, KeyError) as e:
-                                        返回内容 = index2
-                            文本列表.append([[index, ["quests", index1q], ["description", index2q]], 返回内容])
+                            try:
+                                返回内容 = json.loads(index2.replace(r'\"', '"'))
+                                if "text" in 返回内容:
+                                    文本列表.append([[index, ["quests", index1q], ["description", index2q, 返回内容, "text"]], 返回内容["text"]])
+                                elif "translate" in 返回内容[1]:
+                                    文本列表.append([[index, ["quests", index1q], ["description", index2q, 返回内容, 1, "translate"]], 返回内容[1]["translate"]])
+                                print(返回内容)
+                            except Exception as e:
+                                文本列表.append([[index, ["quests", index1q], ["description", index2q]], index2])
+                            
                     if "rewards" in index1:
                         for index2q, index2 in enumerate(index1["rewards"]):
                             if "title" in index2:
@@ -147,7 +141,7 @@ class Module:
     def 应用FTBQ翻译(Self, index: list, mode: str):
         位置 = "None"
         层数 = "None"
-        SNBT文件 = ConfigFactory.parse_file(index[0][0][0])
+        SNBT文件 = snbtlib.loads(Path(index[0][0][0]).read_text(encoding='utf-8'))
         for index1p, index1 in enumerate(index):
             try:
                 层数 = len(index[index1p][0][1:])
@@ -162,10 +156,22 @@ class Module:
                 elif 层数 == 2:
                     if len(位置[1]) == 1:
                         SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = index1[1]
-                    else:
+                    elif len(位置[1]) == 2:
                         列表 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]]
                         列表[位置[1][1]] = index1[1]
                         SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = 列表
+                    elif len(位置[1]) == 4:
+                        字典 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]]
+                        字典值 = 位置[1][2]
+                        字典值[位置[1][3]] = index1[1]
+                        字典[位置[1][1]] = f'"{json.dumps(字典值, ensure_ascii=False, separators=(', ', ': ')).replace('"', '\\"')}"'
+                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = 字典
+                    elif len(位置[1]) == 5:
+                        字典 = SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]]
+                        字典值 = 位置[1][2]
+                        字典值[位置[1][3]][位置[1][4]] = index1[1]
+                        字典[位置[1][1]] = f'"{json.dumps(字典值, ensure_ascii=False, separators=(', ', ': ')).replace('"', '\\"')}"'
+                        SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]] = 字典
                 elif 层数 == 3:
                     if not isinstance(位置[1][1], str):
                         if len(位置[2]) == 1:
@@ -206,22 +212,7 @@ class Module:
                             SNBT文件[位置[0][0]][位置[0][1]][位置[1][0]][位置[1][1]][位置[2][0]][位置[2][1]][位置[3][0]] = 列表
             except Exception:
                 Self.写入日志("log.module.quests.write.error", index=index[0][0][0], item=index1, level=层数, position=位置, e=eb.format_exc(), info_level=2)
- 
-        with open(index[0][0][0], "w", encoding="utf-8") as f:
-            json文件 = HOCONConverter.to_json(SNBT文件, indent=4).splitlines()
-            if mode ==  "H":
-                去逗号json文件 = []
-                for index in json文件:
-                    if index.endswith(","):
-                        index = index[:-1]
-                    去逗号json文件.append(index)
-                json文件 = 去逗号json文件
-            for index1p, index1 in enumerate(json文件):
-                index1 = re.sub(r'":\s*"([+-]?\d+\.?\d*[bdL])"',r'": \1',index1)
-                #index1 = re.sub(r'"([^"]+)":', r'\1:', index1)
-                index1 = re.sub(r'"([a-zA-Z_][a-zA-Z0-9_]*)":', r'\1:', index1)
-                json文件[index1p] = index1
-            f.write("\n".join(json文件))
+        Path(index[0][0][0]).write_text(snbtlib.dumps(SNBT文件, compact=False if mode=="H" else True), encoding='utf-8')
     def 读取单个BQ_Json文件(Self, index: str):
         文件列表 = []
         with open(index, "r", encoding="utf-8") as f:
@@ -245,9 +236,9 @@ class Module:
                 if "properties:10" in NBT文件["questLines:9"][index1]:
                     if "betterquesting:10" in NBT文件["questLines:9"][index1]["properties:10"]:
                         if "name:8" in NBT文件["questLines:9"][index1]["properties:10"]["betterquesting:10"]:
-                            文件列表.append([[index, ["questLines:9", index1, "properties:10", "betterquesting:10"], ["name:8"]], NBT文件["questDatabase:9"][index1]["properties:10"]["betterquesting:10"]["name:8"]])
+                            文件列表.append([[index, ["questLines:9", index1, "properties:10", "betterquesting:10"], ["name:8"]], NBT文件["questLines:9"][index1]["properties:10"]["betterquesting:10"]["name:8"]])
                         if "desc:8" in NBT文件["questLines:9"][index1]["properties:10"]["betterquesting:10"]:
-                            文件列表.append([[index, ["questLines:9", index1, "properties:10", "betterquesting:10"], ["desc:8"]], NBT文件["questDatabase:9"][index1]["properties:10"]["betterquesting:10"]["desc:8"]])
+                            文件列表.append([[index, ["questLines:9", index1, "properties:10", "betterquesting:10"], ["desc:8"]], NBT文件["questLines:9"][index1]["properties:10"]["betterquesting:10"]["desc:8"]])
         return 文件列表
     def 应用BQ翻译(Self, index: list):
         位置 = "None"
@@ -271,7 +262,11 @@ class Module:
             elif Path(file).suffix == ".json":
                 Json文件 = json.load(f)
                 源文件 = [f"{index}={Json文件[index]}" for index in Json文件]
-            return [line.split('=', 1)   for line in 源文件   if (stripped := line.strip()) and not stripped.startswith('#') and not stripped.startswith('//')], 源文件
+        return [
+            (lambda parts: [parts[0], parts[1], file])(line.split('=', 1)) 
+            for line in 源文件 
+            if (stripped := line.strip()) and stripped and '=' in stripped and not stripped.startswith(('#', '//'))
+        ], [源文件, file]
     def 保存语言文件(Self, file: str, 保存列表: list):
         with open(file, "w+", encoding="utf-8") as f:
             if Path(file).suffix == ".lang":
@@ -315,41 +310,69 @@ class Module:
     def 读取资源文件(Self, file0: str, file1: str = "", read_error: bool = True):
         Self.写入日志("log.core.file.read.start", file0=file0, file1=file1)
         压缩路径 = ""
-        文件1 = ""
+        文件1 = []
+        文件0 = []
+        文件0源文件 = []
         file2 = ""
-        if Path(file0).suffix in [".zip", ".jar"]:
+        file3 = ""
+        输出扩展名 = ""
+        文件0是压缩包 = Path(file0).suffix.lower() in [".zip", ".jar"]
+        文件1是压缩包 = file1 and Path(file1).suffix.lower() in [".zip", ".jar"]
+        if 文件0是压缩包:
             缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
             file2 = Self.读取压缩文件(file0, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
-            file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT) if file1 else []
-            if not any(isinstance(item, list) and len(item) > 0 and item[0] == Self.Config.LANGUAGE_INPUT.lower() for item in file2[1:]):
+            压缩路径 = 缓存路径
+            if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_INPUT.lower() for 条目 in file2[1:]):
                 if read_error:
                     Self.写入日志("log.module.read.file0.not.lang.error", info_level=3)
                 raise FileNotFoundError(Self.Lang("log.module.read.file0.not.lang.error"))
-            if file1 and not any(isinstance(item, list) and len(item) > 0 and item[0] == Self.Config.LANGUAGE_OUTPUT.lower() for item in file3[1:]):
-                if read_error:
-                    Self.写入日志("log.module.read.file1.not.lang.error", info_level=3)
-                raise FileNotFoundError(Self.Lang("log.module.read.file1.not.lang.error"))
-            for index in file2[1:]:
-                if index[0] == Self.Config.LANGUAGE_INPUT.lower():
-                    文件0 = index[1]
-                    压缩路径 = index[1]
+            if 文件1是压缩包:
+                file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
+                if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower() for 条目 in file3[1:]):
+                    if read_error:
+                        Self.写入日志("log.module.read.file1.not.lang.error", info_level=3)
+                    raise FileNotFoundError(Self.Lang("log.module.read.file1.not.lang.error"))
+            elif file1:
+                文件1 += Self.读取语言文件(file1)[0]
+                输出扩展名 = Path(file1).suffix
+            for 条目 in file2[1:]:
+                if 条目[0] == Self.Config.LANGUAGE_INPUT.lower():
+                    临时路径 = 条目[1]
+                    压缩路径 = 临时路径
+                    输出扩展名 = Path(临时路径).suffix
+                    解析数据, 源文件数据 = Self.读取语言文件(临时路径)
+                    文件0 += 解析数据
+                    文件0源文件.append(源文件数据)
             if file3:
-                for index in file3[1:]:
-                    if index[0] == Self.Config.LANGUAGE_OUTPUT.lower():
-                        文件1 = index[1]
-            else:
-                for index in file2[1:]:
-                    if index[0] == Self.Config.LANGUAGE_OUTPUT.lower():
-                        文件1 = index[1]
-            输出扩展名 = Path(文件0).suffix
-            文件0, 文件0源文件 = Self.读取语言文件(文件0)
-            if 文件1:
-                文件1, _ = Self.读取语言文件(文件1)
-        elif Path(file0).suffix in [".lang", ".json"]:
-            文件0, 文件0源文件 = Self.读取语言文件(file0)
-            if file1:
-                文件1, _ = Self.读取语言文件(file1)
+                for 条目 in file3[1:]:
+                    if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
+                        临时路径 = 条目[1]
+                        文件1 += Self.读取语言文件(临时路径)[0]
+            elif not file1:
+                for 条目 in file2[1:]:
+                    if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
+                        临时路径 = 条目[1]
+                        文件1 += Self.读取语言文件(临时路径)[0]
+        elif Path(file0).suffix.lower() in [".lang", ".json"]:
+            解析数据, 源文件数据 = Self.读取语言文件(file0)
+            文件0 += 解析数据
+            文件0源文件 = [源文件数据]
             输出扩展名 = Path(file0).suffix
+            if file1:
+                if 文件1是压缩包:
+                    缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
+                    file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
+                    压缩路径 = 缓存路径
+                    if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower() for 条目 in file3[1:]):
+                        if read_error:
+                            Self.写入日志("log.module.read.file1.not.lang.error", info_level=3)
+                        raise FileNotFoundError(Self.Lang("log.module.read.file1.not.lang.error"))
+                    for 条目 in file3[1:]:
+                        if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
+                            临时路径 = 条目[1]
+                            文件1 += Self.读取语言文件(临时路径)[0]
+                else:
+                    文件1 += Self.读取语言文件(file1)[0]
         Self.写入日志("log.core.file.read.end", file0=file0, file1=file1)
         return 文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2
     def 翻译缓存(Self, 输入列表: list = []):
@@ -388,9 +411,7 @@ class Module:
             try:
                 with zipfile.ZipFile(模组文件路径, 'r') as 压缩文件:
                     文件列表 = 压缩文件.namelist()
-                    
                     模组ID = None
-                    
                     if "fabric.mod.json" in 文件列表:
                         try:
                             with 压缩文件.open("fabric.mod.json") as 文件:
@@ -398,7 +419,6 @@ class Module:
                             模组ID = 数据.get("id")
                         except Exception:
                             Self.写入日志("log.module.parsemodid.error", e=eb.format_exc())
-
                     if "META-INF/mods.toml" in 文件列表 and 模组ID is None:
                         try:
                             with 压缩文件.open("META-INF/mods.toml") as 文件:
@@ -408,12 +428,10 @@ class Module:
                                 模组ID = 模组列表[0].get('modId')
                         except Exception:
                             Self.写入日志("log.module.parsemodid.error", e=eb.format_exc())
-
                     if 模组ID is None:
                         候选文件列表 = ["mcmod.info"]
                         if "mcmod.info" not in 文件列表:
                             候选文件列表 = [文件名 for 文件名 in 文件列表 if 文件名.endswith('.info')]
-                        
                         for 信息文件 in 候选文件列表:
                             try:
                                 with 压缩文件.open(信息文件) as 文件:
@@ -434,3 +452,11 @@ class Module:
             path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
         Path(path).mkdir(parents=True, exist_ok=True)
         return Path(path).resolve()
+    def 列表去重(Self, 列表: list):
+        Set = set()
+        输出列表 = []
+        for index in 列表:
+            if index not in Set:
+                Set.add(index)
+                输出列表.append(index)
+        return 输出列表

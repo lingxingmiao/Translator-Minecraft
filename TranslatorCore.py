@@ -1,4 +1,4 @@
-from TranslatorLib import HARDWARE_INFO, np, mp, threading, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, faiss, requests, GPU_ACC, time, uuid
+from TranslatorLib import HARDWARE_INFO, np, mp, threading, zipfile, pickle, json, ast, os, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, as_completed, Callable, Dict, Any, requests, GPU_ACC, time, uuid, faiss
 from TranslatorConfig import RuntimeConfig
 from TranslatorQuantization import Quantization
 from TranslatorLocale import Locale
@@ -19,12 +19,16 @@ class Translator:
         Self.Lang = Self.Locale.Lang
         tqdm = Self.Locale.Tqdm
         Self.Quantization = Quantization(Config=Config)
-        Self.Module.写入日志("log.core.numpy", type=HARDWARE_INFO['type'], version=HARDWARE_INFO['version'], error=HARDWARE_INFO['error'],info_level=0)
+        if GPU_ACC:
+            Self.Module.写入日志("log.core.numpy.gpu", type=HARDWARE_INFO['type'], version=HARDWARE_INFO['version'], deviceid=HARDWARE_INFO['device_id'], count=HARDWARE_INFO["device_count"], info_level=0)
+        else:
+            Self.Module.写入日志("log.core.numpy.cpu", type=HARDWARE_INFO['type'], version=HARDWARE_INFO['version'], e=HARDWARE_INFO['error'], info_level=0)
         Self.上下文 = []
         Self.嵌入模型 = None
         Self.线程锁 = threading.Lock()
         Self.函数库: Dict[str, Callable] = {}
         Self.扫描模块函数(Self.Module)
+        Self.Config.LLM_SYSTEM_PROMPT = Self.Config.LLM_SYSTEM_PROMPT.format(LANGUAGE_OUTPUT=Self.Config.LANGUAGE_OUTPUT)
     def 扫描模块函数(Self, 模块):
         for 属性名 in dir(模块):
             if 属性名.startswith('_'):
@@ -35,17 +39,17 @@ class Translator:
     def 调用额外函数(Self, 函数名: str, *参数, **关键字参数) -> Any:
         函数 = Self.函数库[函数名]
         return 函数(*参数, **关键字参数)
-    def 文本生成向量(Self, text: list, outputs: list = None) -> np.float32:
+    def 文本生成向量(Self, text: list, outputs: list = None, outputs1: list = None) -> np.float32:
         重试次数 = 0
         if (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
             with Self.线程锁:
                 try:
                     向量列表 = Self.嵌入模型.encode(text)
                     向量列表 = np.array(向量列表).astype(np.float32)
-                    return [向量列表, [text, outputs]]
+                    return [向量列表, [text, outputs, outputs1]]
                 except Exception:
                     Self.Module.写入日志("log.core.locally.generate.vectors.error", e=eb.format_exc(), info_level=2)
-                    return [None, [text, outputs]]
+                    return [None, [text, outputs, outputs1]]
         else:
             while 重试次数 < Self.Config.EMB_MAX_RETRY:
                 try:
@@ -60,17 +64,18 @@ class Translator:
                     for index in range(len(text)):
                         向量列表.append(请求结果['data'][index]['embedding'])
                     向量列表 = np.array(向量列表).astype(np.float32)
-                    return [向量列表, [text, outputs]]
+                    return [向量列表, [text, outputs, outputs1]]
                 except Exception:
                     重试次数 += 1
                     if 重试次数 >= Self.Config.EMB_MAX_RETRY:
                         Self.Module.写入日志("log.core.api.generate.vectors.error", e=eb.format_exc(), info_level=3)
-                        return [None, [text, outputs]]
+                        return [None, [text, outputs, outputs1]]
                     else:
                         Self.Module.写入日志("log.core.api.generate.vectors.retry", e=eb.format_exc(), info_level=2)
                         time.sleep(Self.Config.EMB_RETRY_INTERVAL)
     def 并行生成向量(Self, texts: list,) -> list:
         Self.Module.写入日志("log.core.vector.generate.start", info_level=0)
+        返回内容向量 = []
         if (not Self.嵌入模型) and (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
             Self.嵌入模型 = TranslatorPersistence.获取嵌入模型(Self=Self)
         if texts:
@@ -91,15 +96,16 @@ class Translator:
                 分组结果.append(当前组)
             待处理文本列表原文 = [[item[0] for item in group] for group in 分组结果]
             待处理文本列表额外输出 = [[item[1] for item in group] for group in 分组结果]
-            返回内容向量 = []
+            待处理文本列表额外输出1 = [[item[2] for item in group] for group in 分组结果]
             with ThreadPoolExecutor(max_workers=Self.Config.EMB_MAX_WORKERS) as 执行器:
                 未来任务映射 = {
                     执行器.submit(
                         Self.文本生成向量,
                         text=原文组,
-                        outputs=额外输出
+                        outputs=额外输出,
+                        outputs1=额外输出1
                     ): 原文组
-                    for 原文组, 额外输出 in zip(待处理文本列表原文, 待处理文本列表额外输出)
+                    for 原文组, 额外输出, 额外输出1 in zip(待处理文本列表原文, 待处理文本列表额外输出, 待处理文本列表额外输出1)
                 }
                 for 单个任务 in tqdm(as_completed(未来任务映射), total=len(未来任务映射), desc="tqdm.vectors.generate"):
                     返回内容向量.append(单个任务.result())
@@ -107,25 +113,32 @@ class Translator:
             合并向量 = []
             合并请求文本 = []
             合并额外返回 = []
+            合并额外返回1 = []
             for 结果 in 返回内容向量:
                 if isinstance(结果[0], np.ndarray):
                     合并向量.extend(结果[0])
                     合并请求文本.extend(结果[1][0])
                     合并额外返回.extend(结果[1][1])
+                    合并额外返回1.extend(结果[1][2])
             Self.Module.写入日志("log.core.vector.generate.end", info_level=0)
-            return [np.array(合并向量).astype(np.float32), [合并请求文本, 合并额外返回]]
+            return [np.array(合并向量).astype(np.float32), [合并请求文本, 合并额外返回, 合并额外返回1]]
         Self.Module.写入日志("log.core.generated.vector.nan", texts=texts, info_level=3)
 
     def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
         return TranslatorPersistence.参考词预处理(Self=Self, texts=texts)
     def 生成翻译(Self, texts: list, other_input: str):
-        额外内容 = str([index[1] for index in other_input])
+        额外内容 = [[index[1][0], index[1][1]] for index in other_input]
+        额外提示词 = [f"{index1[0]} --> {index1[1]}" for index in 额外内容 for index1 in index[1]]
+        额外提示词 = Self.Module.列表去重(额外提示词)
+        额外提示词 = " | ".join(额外提示词)
+        键提示词 = [f"Key:{index[0]}" for index in 额外内容]
+        键提示词 = " | ".join(键提示词)
+        额外内容 = f"{键提示词}\n{额外提示词}"
         messages = []
         if Self.Config.LLM_CONTEXTS:
             with Self.线程锁:
                 if Self.上下文:
                     messages.extend(Self.上下文[-Self.Config.LLM_CONTEXTS_LENGTH*2:])
-        请求文本长度 = len(texts)
         括号分离方式 = re.compile(r'^(?:[&§][0-9a-fk-or])*\s*\{([^}]+)\}(.*)', re.DOTALL)
         请求文本 = []
         分离文本 = []
@@ -137,19 +150,20 @@ class Translator:
             else:
                 分离文本.append("")
                 请求文本.append(index)
+        请求文本长度 = len(请求文本)
         请求文本 = 请求文本[0] if 请求文本长度 == 1 else str(请求文本)
-        if Self.Config.LLM_PROMPT_LOCATION == "user":
-            messages.insert(0, {"role": "system", "content": (Self.Config.LLM_SYSTEM_PROMPT + "" if 请求文本长度 == 1 else Self.Config.LLM_SYSTEM_PROMPTEX2).replace('\n', '')})
-            messages.append({"role": "user", "content": 请求文本 + Self.Config.LLM_SYSTEM_PROMPTEX1 + 额外内容})
-        elif Self.Config.LLM_PROMPT_LOCATION == "system":
-            messages.insert(0, {"role": "system", "content": (Self.Config.LLM_SYSTEM_PROMPT + "" if 请求文本长度 == 1 else Self.Config.LLM_SYSTEM_PROMPTEX2).replace('\n', '') + Self.Config.LLM_SYSTEM_PROMPTEX1 + 额外内容})
-            messages.append({"role": "user", "content": 请求文本})
+        请求文本 = Self.Config.LLM_USER_PROMPT.format(text=请求文本, LANGUAGE_OUTPUT=Self.Config.LANGUAGE_OUTPUT, COUNT=len(请求文本))
+        messages.insert(0, {"role": "system", "content": Self.Config.LLM_SYSTEM_PROMPT + 额外内容})
+        messages.append({"role": "user", "content": 请求文本})
         json = {
             "model": Self.Config.LLM_MODEL,
             "messages": messages,
             "top_p": Self.Config.LLM_TOP_P,
             "top_k": Self.Config.LLM_TOP_K,
             "temperature": Self.Config.LLM_TEMP,
+            "presence_penalty": Self.Config.LLM_PP,
+            "frequency_penalty": Self.Config.LLM_FP,
+            "seed": Self.Config.LLM_SEED,
             "stream": False,
         } | Self.Config.LLM_API_KWARGS
         请求次数 = 0
@@ -157,10 +171,7 @@ class Translator:
             try:
                 请求结果 = requests.post(
                     url=Self.Config.LLM_API_URL,
-                    headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {Self.Config.LLM_API_KEY}"
-                    },
+                    headers={"Content-Type": "application/json","Authorization": f"Bearer {Self.Config.LLM_API_KEY}"},
                     json=json
                 )
                 请求结果.raise_for_status()
@@ -169,25 +180,23 @@ class Translator:
                 Self.Module.写入日志("log.core.debug.request.outputs", messages=texts, item=请求结果, promptex=额外内容, info_level=4)
                 添加上下文结果 = 请求结果
                 请求结果 = re.sub(r'<think>.*?</think>\s*', '', 请求结果, flags=re.DOTALL)
-                返回的请求结果 = texts.copy()
+                请求结果 = re.sub(r'[think].*?[/think]\s*', '', 请求结果, flags=re.DOTALL)
                 返回的请求结果 = [请求结果] if 请求文本长度 == 1 else ast.literal_eval(请求结果)
                 处理后的请求结果 = []
                 for index in range(len(texts)):
-                    处理后的请求结果.append(f"{分离文本[index]} {返回的请求结果[index]}")
+                    处理后的请求结果.append(f"{分离文本[index]}{返回的请求结果[index]}")
                 返回结果 = []
                 for index in range(len(texts)):
-                    返回结果.append([other_input[index][0], texts[index], 返回的请求结果[index]])
+                    返回结果.append([other_input[index][0], texts[index], 处理后的请求结果[index], other_input[index][2]])
+                    Self.Module.写入日志("log.core.generate.translator", input=texts[index], output=返回的请求结果[index])
                 if Self.Config.LLM_CONTEXTS:
                     with Self.线程锁:
-                        if Self.Config.LLM_PROMPT_LOCATION == "user":
-                            Self.上下文.append({"role": "user", "content": 处理后的请求结果 + 额外内容})
-                        elif Self.Config.LLM_PROMPT_LOCATION == "system":
-                            Self.上下文.append({"role": "user", "content": 处理后的请求结果 })
+                        Self.上下文.append({"role": "user", "content": 请求文本})
                         Self.上下文.append({"role": "assistant", "content": 添加上下文结果})
                 return 返回结果
             except Exception:
-                Self.Module.写入日志("log.core.generate.translator.messages.error", promptex=额外内容, messages=texts, info_level=1)
-                返回结果 = [[other_input[index][0], texts[index], texts[index]] for index in range(len(texts))]
+                Self.Module.写入日志("log.core.generate.translator.messages.error", promptex=额外内容, messages=texts, e=eb.format_exc(), info_level=1)
+                返回结果 = [[other_input[index][0], texts[index], texts[index], other_input[index][2]] for index in range(len(texts))]
                 请求次数 += 1
                 if 请求次数 >= Self.Config.LLM_MAX_RETRY:
                     Self.Module.写入日志("log.core.generate.translator.error", e=eb.format_exc(), output=请求结果, info_level=2)
@@ -229,6 +238,8 @@ class Translator:
         输入列表 = []
         返回列表 = []
         命中缓存 = []
+        返回请求内容 = []
+        返回其他内容 = []
         QuestsMode = False
         if texts == []:
             return []
@@ -245,7 +256,7 @@ class Translator:
             待翻译 = []
             for item in tqdm(texts, desc="tqdm.translations.cache.use"):
                 if item[1] in 匹配字典:
-                    命中缓存.append([item[0], item[1], 翻译缓存[item[1]]])
+                    命中缓存.append([item[0], item[1], 翻译缓存[item[1]], item[2]])
                 else:
                     待翻译.append(item)
             texts[:] = 待翻译
@@ -254,14 +265,15 @@ class Translator:
             Self.Module.写入日志("log.core.translator.cache.hit", hit=f"{命中率:.4%}", info_level=0)
         for index in texts:
             try:
-                输入列表.append([index[1], index[0]])
+                输入列表.append([index[1], index[0], index[2]])
             except Exception:
                 Self.Module.写入日志("log.core.parsing.parameters.error", e=eb.format_exc(), index=index, info_level=2)
                 pass
         try:
             if texts:
+                高质量索引 = Self.Config.INDEX_QUESTS_HIQ if QuestsMode else Self.Config.INDEX_ITEM_HIQ
                 向量文件, 文本文件 = Self.参考词预处理()
-                if 文本文件:
+                if 文本文件 and (not 高质量索引):
                     Self.Module.写入日志("log.core.index.search.start", info_level=0)
                     向量文件 = Self.Quantization.解码向量(向量文件)
                     Self.Module.写入日志("log.core.debug.vector.shape", shape=向量文件.shape, info_level=4)
@@ -272,24 +284,69 @@ class Translator:
                     向量列表 = 向量列表.get() if GPU_ACC else 向量列表
                     for _ in tqdm(range(1), desc="tqdm.index.search"):
                         索引结果矩阵 = 向量索引.search(向量列表, Self.Config.INDEX_K)[1]
-                    返回请求内容 = []
-                    返回其他内容 = []
                     文本索引 = {index2[0]: index for index, index2 in enumerate(文本文件)}
                     原文文本文件 = [index[0] for index in 文本文件]
-                    for index in range(len(向量列表)):
-                        请求内容 = 输入列表[1][0][index]
+                    for index in range(len(向量列表)): 
                         键 = 输入列表[1][1][index]
-                        其他内容 = [键, f"Reference:"] if QuestsMode else [键, f"Key: {键}|Reference:"]
+                        文件路径 = 输入列表[1][2][index]
+                        其他内容 = [键, ["None", []], 文件路径] if QuestsMode else [键, [键, []], 文件路径]
                         for index2 in 索引结果矩阵[index]:
                             原文 = 原文文本文件[index2]
                             if 原文 in 文本索引:
-                                其他内容[1] += f"{文本文件[文本索引[原文]]}|"
-                        返回请求内容.append(请求内容)
+                                其他内容[1][1].append(文本文件[文本索引[原文]])
+                        返回请求内容.append(输入列表[1][0][index])
                         返回其他内容.append(其他内容)
+                    Self.Module.写入日志("log.core.index.search.end", info_level=0)
+                elif 文本文件 and 高质量索引:
+                    Self.Module.写入日志("log.core.index.search.start", info_level=0)
+                    单词列表 = []
+                    for index in texts:
+                        单词列表 += index[1].split()
+                    单词列表 = Self.Module.列表去重(单词列表)
+                    单词列表 = [w for w in 单词列表 if len(w.strip()) > 1] #去单字符
+                    单词列表 = [w for w in 单词列表 if w.lower() not in {w.lower() for w in Self.Config.INDEX_QUESTS_BASIC_WORDS}] #去基础单词
+                    单词列表 = [[index, "", ""] for index in 单词列表]
+                    向量文件 = Self.Quantization.解码向量(向量文件)
+                    向量索引 = Self.缓存索引(向量文件, 文本文件)
+                    Self.Module.写入日志("log.core.debug.vector.shape", shape=向量文件.shape, info_level=4)
+                    Self.Module.写入日志("log.core.debug.vector.range", range=(向量文件.min(), 向量文件.max()), info_level=4)
+                    单词输入列表 = Self.并行生成向量(单词列表)
+                    输入列表 = Self.并行生成向量(输入列表)
+                    单词向量列表 = np.array(单词输入列表[0]).astype(np.float32)
+                    向量列表 = np.array(输入列表[0]).astype(np.float32)
+                    单词向量列表 = 单词向量列表.get() if GPU_ACC else 单词向量列表
+                    向量列表 = 向量列表.get() if GPU_ACC else 向量列表
+                    for _ in tqdm(range(1), desc="tqdm.index.search"):
+                        单词索引结果矩阵 = 向量索引.search(单词向量列表, Self.Config.INDEX_K)[1]
+                        索引结果矩阵 = 向量索引.search(向量列表, Self.Config.INDEX_K)[1]
+                    文本索引 = {index2[0]: index for index, index2 in enumerate(文本文件)}
+                    原文文本文件 = [index[0] for index in 文本文件]
+                    单词对应内容 = {}
+                    for index in range(len(单词向量列表)):
+                        请求内容 = 单词输入列表[1][0][index]
+                        其他内容 = []
+                        for index2 in 单词索引结果矩阵[index]:
+                            原文 = 原文文本文件[index2]
+                            if 原文 in 文本索引:
+                                其他内容.append(文本文件[文本索引[原文]])
+                        单词对应内容[请求内容] = 其他内容
+                    for index in range(len(向量列表)):
+                        键 = 输入列表[1][1][index]
+                        文件路径 = 输入列表[1][2][index]
+                        其他内容 = [键, ["None", []], 文件路径] if QuestsMode else [键, [键, []], 文件路径]
+                        for index2 in 索引结果矩阵[index]:
+                            原文 = 原文文本文件[index2]
+                            if 原文 in 文本索引:
+                                其他内容[1][1].append(文本文件[文本索引[原文]])
+                        for index2 in 输入列表[1][0][index].split():
+                            if index2 in 单词对应内容:
+                                其他内容[1][1] += 单词对应内容[index2]
+                        返回其他内容.append(其他内容)
+                        返回请求内容.append(输入列表[1][0][index])
                     Self.Module.写入日志("log.core.index.search.end", info_level=0)
                 else:
                     返回请求内容 = [row[1] for row in texts]
-                    返回其他内容 = [[row[0], f"Key:{row[0]}"] for row in texts]
+                    返回其他内容 = [[row[0], f"Key:{row[0]}", row[2]] for row in texts]
                 其他列表 = [返回其他内容[i:i + Self.Config.LLM_MAX_BATCH] for i in range(0, len(返回其他内容), Self.Config.LLM_MAX_BATCH)]
                 请求列表 = [返回请求内容[i:i + Self.Config.LLM_MAX_BATCH] for i in range(0, len(返回请求内容), Self.Config.LLM_MAX_BATCH)]
                 Self.Module.写入日志("log.core.translator.generate.start", item=len(请求列表), info_level=0)
@@ -306,9 +363,9 @@ class Translator:
                         返回列表.extend(单个任务.result())
                 Self.Module.写入日志("log.core.translator.generate.end", info_level=0)
             if Self.Config.TRANSLATOR_CACHE_WRITE:
-                Self.Module.翻译缓存([[b, c] for a, b, c in 返回列表])
+                Self.Module.翻译缓存([[b, c] for a, b, c, d in 返回列表])
             返回列表.extend(命中缓存)
-            返回列表 = [[a, f"{c}({b})"] for a, b, c in 返回列表 if str(a) in 参考字典] if Self.Config.LLM_ORIGINAL_REFERENCE else [[a, c] for a, b, c in 返回列表 if str(a) in 参考字典]
+            返回列表 = [[a, f"{c}({b})", d] for a, b, c, d in 返回列表 if str(a) in 参考字典] if Self.Config.LLM_ORIGINAL_REFERENCE else [[a, c, d] for a, b, c, d in 返回列表 if str(a) in 参考字典]
         except Exception:
             Self.Module.写入日志("log.core.translator.error", e=eb.format_exc(), texts=texts, info_level=3)
             raise eb.format_exc()
@@ -318,7 +375,6 @@ class Translator:
         未翻译列表 = []
         去翻译列表 = []
         输出列表 = []
-        翻译输出列表 = []
         可翻译源文件, 源文件, 参考文件, 压缩路径, 输出扩展名, file2 = Self.Module.读取资源文件(file0, file1, read_error)
         if 参考文件:
             参考字典 = {}
@@ -328,40 +384,50 @@ class Translator:
                 except Exception:
                     Self.Module.写入日志("log.core.parsing.reference.word.error", e=eb.format_exc(), item=item, info_level=2)
                     pass
-            for index1 in 可翻译源文件:
-                key = index1[0]
+            for entry in 可翻译源文件:
+                key = entry[0]
+                path = entry[2]
                 if key in 参考字典:
-                    去翻译列表.append([key, 参考字典[key]])
+                    去翻译列表.append([key, 参考字典[key], path])
                 else:
-                    未翻译列表.append(index1)
+                    未翻译列表.append(entry)
         else:
             未翻译列表 = 可翻译源文件.copy()
-        翻译列表 = Self.翻译语言列表(未翻译列表)
+        翻译列表 = Self.翻译语言列表(未翻译列表) #翻译核心
         if export_inspection:
-            for index in tqdm(range(len(未翻译列表)), desc="tqdm.progress.encoding"):
-                行数据 = [{翻译列表[index][0]: 翻译列表[index][1]}, 未翻译列表[index][1]]
+            未翻译列表字典 = {index[0]: index[1] for index in 未翻译列表}
+            for index in tqdm(翻译列表, desc="tqdm.progress.encoding"):
+                行数据 = {index[0]: [index[1], 未翻译列表字典[index[0]]]}
                 输出列表.append(repr(行数据))
-            with open(str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang")), 'w+', encoding='utf-8') as f:
+            with open(str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translang")), 'w+', encoding='utf-8') as f:
                 f.write("\n".join(输出列表))
-            Self.Module.写入日志("log.core.translator.succeed", path=Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve(), info_level=0)
-            return Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang")
+            Self.Module.写入日志("log.core.translator.succeed", path=Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translang").resolve(), info_level=0)
+            return Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translang")
         else:
             所有翻译结果 = 翻译列表 + 去翻译列表
+            分组 = defaultdict(list)
+            for a, b, c in 所有翻译结果:
+                分组[c].append([a, b])
+            所有翻译结果 = dict(分组)
+            输出列表 = []
             for index in 源文件:
-                if index.strip().startswith(('#', '//')):
-                    翻译输出列表.append(index)
-                else:
-                    索引成功 = False
-                    for index1 in 所有翻译结果:
-                        if index.split('=', 1)[0] == index1[0]:
-                            翻译输出列表.append(f"{index1[0]}={index1[1]}")
-                            索引成功 = True
-                            break
-                    if not 索引成功:
-                        翻译输出列表.append(index)
+                翻译输出列表 = []
+                for index1 in index[0]:
+                    if index1.strip().startswith(('#', '//')):
+                        翻译输出列表.append(index1)
+                    else:
+                        索引成功 = False
+                        for index2 in 所有翻译结果[index[1]]:
+                            if index1.split('=', 1)[0] == index2[0]:
+                                翻译输出列表.append(f"{index2[0]}={index2[1]}")
+                                索引成功 = True
+                                break
+                        if not 索引成功:
+                            翻译输出列表.append(index1)
+                输出列表.append([index[1], 翻译输出列表])
             if 压缩路径 and (not output_lang_str):
-                输出路径 = f"{Path(压缩路径).parent}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}"
-                Self.Module.保存语言文件(输出路径, 翻译输出列表)
+                for index in 输出列表:
+                    Self.Module.保存语言文件(f"{Path(index[0]).parent}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}", index[1])
                 压缩文件夹Path = Path(压缩路径).parent.parent.parent
                 if file2[0] == False:
                     压缩文件夹Path = 压缩文件夹Path.parent
@@ -436,6 +502,7 @@ class Translator:
                     翻译列表2.append(index)
         except Exception: 
             Self.Module.写入日志("log.module.quests.clean.error", index=index, info_level=2)
+        翻译列表2 = [[index[0], index[1], ""] for index in 翻译列表2]
         翻译列表 = Self.翻译语言列表(翻译列表2)
         分组 = defaultdict(list)
         for item in 翻译列表:
@@ -462,6 +529,7 @@ class Translator:
                     翻译列表2.append(index)
         except Exception: 
             Self.Module.写入日志("log.module.quests.clean.error", index=index, info_level=2)
+        翻译列表2 = [[index[0], index[1], ""] for index in 翻译列表2]
         翻译列表 = Self.翻译语言列表(翻译列表2)
         分组 = defaultdict(list)
         for item in 翻译列表:
@@ -480,11 +548,11 @@ class Translator:
                 Dict文件 = json.load(f)
         if mode == "dense":
             for index in tqdm(Dict文件, desc="tqdm.file.processing"):
-                待处理列表.append([index, ", ".join(Dict文件[index])])
+                待处理列表.append([index, ", ".join(Dict文件[index]), ""])
         elif mode == "sparse":
             for index in tqdm(Dict文件, desc="tqdm.file.processing"):
                 for index1 in Dict文件[index]:
-                    待处理列表.append([index, index1])
+                    待处理列表.append([index, index1, ""])
         Self.参考词预处理(待处理列表)
         Self.Module.写入日志("log.core.file.settle.end", info_level=0)
     def 导入DictMini缓存(Self, file: str):
@@ -515,11 +583,10 @@ class Translator:
         with open(output_file, 'w+', encoding='utf-8') as f:
             f.write('\n'.join(json.dumps(item, ensure_ascii=False, separators=(',', ':')) for item in tqdm(导出列表, desc="tqdm.progress.encoding")))
         Self.Module.写入日志("log.core.file.settle.end", info_level=0)
-    def 分离语言文件更新(Self, file0: str, file1: str = "", output_path: str = "", mode: str = "none"):
+    def 分离语言文件更新(Self, file0: str, file1: str = "", output_path: str = ""):
         Self.Module.写入日志("log.core.lang.separate.start", info_level=0)
         output_path = Self.Module.输出路径处理(output_path)
         缺失列表 = []
-        输出列表 = []
         文件0, _, 文件1, _, 输出扩展名, _ = Self.Module.读取资源文件(file0, file1)
         if 文件1:
             参考字典 = {}
@@ -529,57 +596,20 @@ class Translator:
                 except Exception:
                     Self.Module.写入日志("log.core.parsing.reference.word.error", e=eb.format_exc(), item=item, info_level=2)
                     pass
-            for index1 in 文件0:
-                key = index1[0]
-                if not key in 参考字典:
-                    缺失列表.append(index1)
+            for index in 文件0:
+                key = index[0]
+                path = index[2]
+                if key in 参考字典:
+                    缺失列表.append([key, 参考字典[key], path])
         else:
             缺失列表 = 文件0.copy()
         if not Path(output_path).suffix:
-            导出路径 = str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}"))
+            导出路径 = str(Path(f"{output_path}/{Self.Config.LANGUAGE_INPUT}{输出扩展名}"))
         else:
             导出路径 = str(Path(output_path))
-        if mode == "none":
-            Self.Module.保存语言文件(导出路径, [f"{index[0]}={index[1]}" for index in 缺失列表])
-            Self.Module.写入日志("log.core.settle.succeed", path=Path(导出路径).resolve(), info_level=0)
-            返回路径 = Path(导出路径).resolve()
-        elif mode == "extra":
-            输入列表 = []
-            for index in 缺失列表:
-                try:
-                    输入列表.append([index[1], index[0]])
-                except Exception:
-                    Self.Module.写入日志("log.core.parsing.parameters.error", e=eb.format_exc(), index=index, info_level=2)
-                    pass
-            向量文件, 文本文件 = Self.参考词预处理()
-            向量文件 = Self.Quantization.解码向量(向量文件)
-            Self.Module.写入日志("log.core.debug.vector.shape", shape=向量文件.shape, info_level=4)
-            if 文本文件:
-                向量索引 = Self.缓存索引(向量文件, 文本文件)
-                输入列表 = Self.并行生成向量(输入列表)
-                向量列表 = np.array(输入列表[0]).astype(np.float32)
-                向量列表 = 向量列表.get() if GPU_ACC else 向量列表
-                for _ in tqdm(range(1), desc="tqdm.index.search"):
-                    索引结果矩阵 = 向量索引.search(向量列表, Self.Config.INDEX_K)[1]
-                返回请求内容 = []
-                返回其他内容 = []
-                文本索引 = {index2[0]: index for index, index2 in enumerate(文本文件)}
-                原文文本文件 = [index[0] for index in 文本文件]
-                for index in range(len(向量列表)):
-                    其他内容 = ""
-                    for index2 in 索引结果矩阵[index]:
-                        原文 = 原文文本文件[index2]
-                        if 原文 in 文本索引:
-                            其他内容 += (f"{文本文件[文本索引[原文]]}|")
-                    返回请求内容.append({输入列表[1][1][index]: 输入列表[1][0][index]})
-                    返回其他内容.append(f"{其他内容}")
-            for index in tqdm(range(len(返回请求内容)), desc="tqdm.progress.encoding"):
-                行数据 = [返回请求内容[index], 返回其他内容[index]]
-                输出列表.append(repr(行数据))
-            with open(str(Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve()), 'w+', encoding='utf-8') as f:
-                f.write("\n".join(输出列表))
-            Self.Module.写入日志("log.core.settle.succeed", path=Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve(), info_level=0)
-            返回路径 = Path(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}.translatorlang").resolve()
+        Self.Module.保存语言文件(导出路径, [f"{index[0]}={index[1]}" for index in 缺失列表])
+        Self.Module.写入日志("log.core.settle.succeed", path=Path(导出路径).resolve(), info_level=0)
+        返回路径 = Path(导出路径).resolve()
         Self.Module.写入日志("log.core.lang.separate.end", info_level=0)
         return 返回路径
     def 合并语言文件更新(Self, file0: str, notlang_file: str, file1: str = "", output_path: str = ""):
@@ -597,48 +627,56 @@ class Translator:
                 except Exception:
                     Self.Module.写入日志("log.core.parsing.reference.word.error", e=eb.format_exc(), item=item, info_level=2)
                     pass
-            for index1 in 文件0:
-                key = index1[0]
+            for index in 文件0:
+                key = index[0]
+                path = index[2]
                 if key in 参考字典:
-                    合并列表.append(index1)
+                    合并列表.append([key, 参考字典[key], path])
         else:
             合并列表 = 文件0.copy()
-        if Path(notlang_file).suffix == ".translatorlang":
-            with open(notlang_file, 'r', encoding='utf-8') as f:
-                缺失列表文件 = f.read().splitlines()
-            for index in 缺失列表文件:
-                index = ast.literal_eval(index)[0]
-                for index1, index2 in index.items():
-                    缺失列表.append([index1, index2])
+        未翻译文件路径 = notlang_file 
+        if Path(未翻译文件路径).suffix in [".translang"]:
+            with open(未翻译文件路径, 'r', encoding='utf-8') as 文件对象:
+                文件行列表 = 文件对象.read().splitlines()
+            for 单行文本 in 文件行列表:
+                数据字典 = ast.literal_eval(单行文本)
+                for 键名, 键值 in 数据字典.items():
+                    缺失列表.append([键名, 键值[0], ""])
         else:
             缺失列表 = Self.Module.读取语言文件(notlang_file)[0]
-        合并列表 = 合并列表 + 缺失列表
+        缺失列表 = {index[0]: index[1] for index in 缺失列表}
+        分组 = defaultdict(dict)
+        for a, b, c in 合并列表:
+            分组[c][a] = b
+        合并列表 = 分组.copy()
         for index in 文件0源文件:
-            if index.strip().startswith(('#', '//')):
-                输出列表.append(index)
-            else:
-                索引成功 = False
-                for index1 in 合并列表:
-                    if index.split('=', 1)[0] == index1[0]:
-                        输出列表.append(f"{index1[0]}={index1[1]}")
-                        索引成功 = True
-                        break
-                if not 索引成功:
-                    输出列表.append(index)
+            输出列表缓存 = []
+            for index1 in index[0]:
+                if index1.strip().startswith(('#', '//')):
+                    输出列表缓存.append(index1)
+                else:
+                    index1键 = index1.split('=', 1)[0]
+                    if index1键 in 缺失列表:
+                        输出列表缓存.append(f"{index1键}={缺失列表[index1键]}")
+                    elif index1键 in 合并列表[index[1]]:
+                        输出列表缓存.append(f"{index1键}={合并列表[index[1]][index1键]}")
+                    else:
+                        输出列表缓存.append(index1)
+            输出列表.append([index[1], 输出列表缓存])
         if 压缩路径:
-            输出路径 = f"{Path(压缩路径).parent}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}"
-            Self.Module.保存语言文件(输出路径, 输出列表)
+            for index in 输出列表:
+                Self.Module.保存语言文件(f"{Path(index[0]).parent}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}", index[1])
             压缩文件夹Path = Path(压缩路径).parent.parent.parent
             if file2[0] == False:
                 压缩文件夹Path = 压缩文件夹Path.parent
                 with open(f"{str(压缩文件夹Path)}/pack.mcmeta", "w+", encoding="utf-8") as f:
-                    f.write(json.dumps({"pack": {"description": f"{Path(file0).stem}的{Self.Config.LANGUAGE_OUTPUT}语言资源包","pack_format": 9999,"supported_formats": [0, 9999],"min_format": 0,"max_format": 9999}}, ensure_ascii=False, indent=4))
+                    f.write(json.dumps({"pack": {"description": f"{Path(file0).stem}的{Self.Config.LANGUAGE_OUTPUT}语言资源包, 由 海盐青茫 编写的程序合并","pack_format": 9999,"supported_formats": [0, 9999],"min_format": 0,"max_format": 9999}}, ensure_ascii=False, indent=4))
             压缩文件夹 = str(压缩文件夹Path)
             with zipfile.ZipFile(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip", 'w', zipfile.ZIP_DEFLATED) as f:
                 for 压缩文件 in 压缩文件夹Path.rglob('*'):
                     if 压缩文件.is_file():
                         f.write(压缩文件, arcname=压缩文件.relative_to(压缩文件夹))
-            Self.Module.写入日志("log.core.settle.succeed", path=Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve(), info_level=0)
+            Self.Module.写入日志("log.core.translator.succeed", path=Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve(), info_level=0)
             返回路径 = Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve()
         else:
             输出路径 = str(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}")
@@ -723,6 +761,11 @@ class Translator:
                             返回路径 = Self.翻译语言文件(file0=file0, file1=file1, output_path=缓存文件夹, export_inspection=export_inspection)
                             Self.Module.写入日志("log.core.translator.succeed", path=Path(返回路径).resolve(), info_level=0)
                             返回内容 = Path(返回路径)
+                        if has_dir('assets'):
+                            Self.Module.写入日志("log.core.translator.general.model", model="ResourcePacks", info_level=0)
+                            返回路径 = Self.翻译语言文件(file0=file0, file1=file1, output_path=缓存文件夹, export_inspection=export_inspection)
+                            Self.Module.写入日志("log.core.translator.succeed", path=Path(返回路径).resolve(), info_level=0)
+                            返回内容 = Path(返回路径)
                         elif has_dir('ftbquests'):
                             Self.Module.写入日志("log.core.translator.general.model", model="FTBQuests", info_level=0)
                             zf.extractall(缓存文件夹)
@@ -795,6 +838,7 @@ class Translator:
                 else:
                     Self.Module.写入日志("log.core.translator.general.model", model="General ModPack", info_level=0)
                     Self.翻译整合包(path=file0, all_mode=all_mode)
+                返回内容 = Path(file0)
         except Exception:
             Self.Module.写入日志("log.core.translator.general.error.unknown", e=eb.format_exc(), info_level=3)
             返回内容 = Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log")
@@ -803,26 +847,26 @@ class Translator:
     def 检索缓存(Self, text: str):
         return Self.Module.翻译缓存()[0][text]
 
-测试 = False
+测试 = True
 if __name__ == "__main__" and 测试:
     参数 = {
         "LLM_API_URL": "http://127.0.0.1:25564/v1/chat/completions",
-        "LLM_MODEL": "qwen3-30b-a3b-instruct-2507-2.69bpw",
-        "LOGS_FILE_NAME": "测试",
-        "VEC_QUANTIZATION": "Float32",
+        "LLM_MODEL": "Qwen3-Flash",
         "LLM_MAX_BATCH": 1,
         "LLM_CONTEXTS": False,
-        "EMB_MODEL": r"C:\Users\FengMang\Desktop\TranslatorMinecraft\nomic-embed-text-v1.5",
-        "DEBUG_MODE": True,
-        "LLM_MAX_WORKERS": 8,
-        "TRANSLATOR_CACHE_WRITE": False
+        "EMB_API_URL": "http://127.0.0.1:25564/v1/embeddings",
+        "EMB_MODEL": "text-embedding-nomic-embed-text-v1.5",
+        "LLM_MAX_WORKERS": 4
     }
     翻译 = Translator(参数)
-    翻译2 = Translator(参数)
-    #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
+    #翻译2 = Translator(参数)
+    翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.翻译整合包(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology 翻译测试\minecraft")
     #翻译.翻译FTB任务(r"C:\Users\FengMang\AppData\Roaming\PrismLauncher\instances\Star Technology\minecraft\config\ftbquests")
-    翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\SEUS PTGI HRR Test 2.1.zip")
-    翻译2.翻译通用文件(r"C:\Users\FengMang\Downloads\SEUS PTGI HRR Test 2.1.zip")
+    #翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\GTConsolidate-1.12.2-1.1.4.1-beta.jar", r"C:\Users\FengMang\Downloads\19293(GTConsolidate-1.12.2-1.1.3.3-beta).zip", export_inspection=True)
+    #翻译.合并语言文件更新(r"C:\Users\FengMang\Downloads\GTConsolidate-1.12.2-1.1.4.1-beta.jar", r"C:\Users\FengMang\Desktop\TranslatorMinecraft\Cache\d740bcc6e0b24d5daf558614c3508141\zh_cn.translang", r"C:\Users\FengMang\Downloads\19293(GTConsolidate-1.12.2-1.1.3.3-beta).zip")
+    #翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\GTConsolidate-1.12.2-1.1.4.1-beta.jar")
+    翻译.分离语言文件更新(r"fzzy_config-0.7.6+1.21+neoforge.jar")
+    #翻译2.翻译通用文件(r"C:\Users\FengMang\Downloads\SEUS PTGI HRR Test 2.1.zip")
     #print(翻译.检索缓存('Divides capacity equally among all types. Use it if you increased the "max types" in config.'))
     #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")

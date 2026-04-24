@@ -22,7 +22,7 @@ class Locale:
             except FileNotFoundError:
                 raise
             except json.JSONDecodeError as e:
-                raise ValueError(f"语言文件 JSON 格式错误 {file_path}: {e}")
+                raise ValueError(f"JSON format error in language file {file_path}: {e}")
         try:
             中文语言文件 = _load_lang_file("zh_CN")
             Self.语言对象["zh_CN"] = 中文语言文件

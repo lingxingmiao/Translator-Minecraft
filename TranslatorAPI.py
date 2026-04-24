@@ -1,4 +1,4 @@
-from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb
+from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit
 from TranslatorCore import Translator
 #需要安装↓
 from fastapi import FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks
@@ -22,7 +22,45 @@ FastAPI.state.limiter = 限流器
 FastAPI.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 请求并行数 = asyncio.Semaphore(APIConfig["api"]["max_concurrent"])
 
-任务状态字典: Dict[str, Dict] = {}
+class 持久化状态字典(Dict[str, Any]):
+    def __init__(Self, file_path: str, save_interval: float):
+        super().__init__()
+        Self.file_path = pt(file_path)
+        Self.save_interval = save_interval
+        Self._lock = threading.Lock()
+        Self._加载()
+        Self._stop_event = threading.Event()
+        threading.Thread(target=Self._后台保存循环, daemon=True).start()
+        atexit.register(Self._最终保存)
+        Self.临时翻译器实例 = Translator(APIConfig["server"])
+    def _加载(Self):
+        if Self.file_path.exists():
+            try:
+                with open(Self.file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        Self.update(data)
+            except Exception:
+                pass
+    def _保存(Self):
+        with Self._lock:
+            tmp = Self.file_path.with_suffix('.tmp')
+            try:
+                snapshot = dict(Self) 
+                with open(tmp, 'w', encoding='utf-8') as f:
+                    json.dump(snapshot, f, ensure_ascii=False, indent=2)
+                tmp.replace(Self.file_path)
+            except Exception as e:
+                print(Self.临时翻译器实例.Lang("log.api.logs.get.error", e=eb.format_exc()))
+    def _后台保存循环(Self):
+        while not Self._stop_event.is_set():
+            Self._stop_event.wait(Self.save_interval)
+            Self._保存()
+    def _最终保存(Self):
+        Self._stop_event.set()
+        Self._保存()
+
+任务状态字典 = 持久化状态字典(APIConfig["api"]["task_states_file"], save_interval=APIConfig["api"]["task_states_save_interval"])
 
 def 设置时间():
     时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + f"{int((time.time() % 1) * 10000):04d}"
@@ -157,8 +195,7 @@ async def 提交分离语言更新任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, file_name0: str = Form(...),
     input_lang: str = Form("en_us"), output_lang: str = Form("zh_cn"), logs_lang: str = Form("zh_cn"),
-    file1: UploadFile = None, file_name1: str = Form(None),
-    Mode: str = Form("none")
+    file1: UploadFile = None, file_name1: str = Form(None)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
@@ -184,7 +221,6 @@ async def 提交分离语言更新任务(
             file0=str(file0_path),
             file1=str(file1_path),
             output_path=str(缓存目录 / "output"),
-            mode=Mode
         )
     )
     return {"task_id": task_id, "status": "queued", "message": 翻译器实例.Lang("log.api.task.submitted")}

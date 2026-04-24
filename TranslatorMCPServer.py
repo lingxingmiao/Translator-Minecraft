@@ -42,9 +42,11 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `LLM_TEMP` (float): 温度参数 (0.0-1.0)，越低越确定，默认 0.00
     - `LLM_TOP_K` (int): 采样参数，默认 60
     - `LLM_TOP_P` (float): 采样参数，默认 0.70
-    - `LLM_PROMPT_LOCATION` (str): 提示语位置，默认 "system"
+    - `LLM_PP` (float): PresencePenalty参数，默认 0
+    - `LLM_FP` (float): FrequencyPenalty参数，默认 0
+    - `LLM_SEED` (int): 随机数种子，默认 42
     - `LLM_CONTEXTS` (bool): 是否启用上下文记忆，默认 True
-    - `LLM_CONTEXTS_LENGTH` (int): 上下文长度限制，默认 65536
+    - `LLM_CONTEXTS_LENGTH` (int): 上下文对话轮数上限，默认 65536
     - `LLM_MAX_WORKERS` (int): 最大并发数，默认 24
     - `LLM_MAX_BATCH` (int): 单次批处理数量，默认 3
     - `LLM_MAX_RETRY` (int): 失败重试次数，默认 128
@@ -84,6 +86,8 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `INDEX_HNSW_CONSTRUCTION` (int): 构建复杂度，默认 720
     - `INDEX_HNSW_SEARCH` (int): 搜索复杂度，默认 480
     - `INDEX_REFINEFLAT_K_FACTOR` (float): 精炼因子，默认 2.0
+    - `INDEX_QUESTS_BASIC_WORDS` (list): 翻译任务高质量检索需要去除的单词
+    - `INDEX_QUESTS_OPTIMIZE` (bool): 翻译任务高质量检索, 每个单词都有可能产生 单词长度*INDEX_K+28Token
     
     #### 任务并发设置 (Task Concurrency)
     - `QUESTS_FTB_READ_MAX_CONCURRENT` (int): FTBQuests 读取最大并发数，默认 4
@@ -417,7 +421,7 @@ def ViewFolders(path='.') -> dict:
     return result
 @mcp.tool()
 def ViewTextFile(File: str) -> str:
-    """查看文件，只能查看文本类格式"""
+    """查看文件，只能查看文本类(utf-8)格式"""
     with open(File, 'r', encoding='utf-8') as f:
         return f.read()
     

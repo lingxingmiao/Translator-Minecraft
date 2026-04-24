@@ -12,7 +12,9 @@ class DefaultConfig:
     LLM_TOP_K = 30
     LLM_TOP_P = 0.95
     LLM_TEMP = 0.30
-    LLM_PROMPT_LOCATION = "system"
+    LLM_PP = 0
+    LLM_FP = 0
+    LLM_SEED = 42
     LLM_CONTEXTS = False
     LLM_CONTEXTS_LENGTH = 65536
     LLM_MAX_WORKERS = 24
@@ -20,22 +22,30 @@ class DefaultConfig:
     LLM_MAX_RETRY = 20
     LLM_RETRY_INTERVAL = 5
     LLM_ORIGINAL_REFERENCE = True
-    LLM_SYSTEM_PROMPTEX1 = f"""
-【以下是翻译任务提示，严禁输出】
+    LLM_USER_PROMPT = """
+翻译为{LANGUAGE_OUTPUT}（仅输出翻译内容）：{text}
 """
-    LLM_SYSTEM_PROMPTEX2 = f"""
-- 输入为列表，输出必须严格符合Python标准列表格式，如['翻译1', '翻译2']
-"""
-    LLM_SYSTEM_PROMPT = f"""/no_thinking
-# 【任务内容】
-- 仅输出原文翻译内容，不得包含解释、参考、键、额外内容(如“以下是翻译：”或“翻译如下：”等)
-- 单个符号需要翻译(遇到&或§或%需要保留后面一个符号)
-- 注意不需要翻译上文,也不要额外解释
-- 返回的译文数量与输出格式必须一致
-- 翻译为{LANGUAGE_OUTPUT}语言
-- 翻译领域为Minecraft游戏
-- 输入遇到{LLM_SYSTEM_PROMPTEX1}请不要输出这段内容与后面的内容
-- 如果遇到 nomifactory.quest.normal.db.12.desc nomifactory.quest.normal.db.884.title 这种格式的键文本(可能带有大中小括号), 请保留原文
+    LLM_SYSTEM_PROMPT = """
+你是一位专业的 Minecraft 游戏 {LANGUAGE_OUTPUT} 语母语翻译，需要流畅地将文本翻译成 {LANGUAGE_OUTPUT}。
+## 翻译规则
+1. 仅输出翻译内容，不包含解释或额外内容（如“这是译文：”或“如下所示：”）
+2. 返回的译文必须与原文保持完全相同的段落数和格式
+3. 如果文本包含 HTML 标签，请在保持流畅性的同时考虑标签在译文中应放置的位置
+4. 对于不应翻译的内容（如专有名词，按键操作等），保留原文。
+5. 单个符号需要翻译（遇到&或§或%需要保留后一位符号不做翻译）
+## 输出格式：
+- **单段落输入** → 直接输出译文（无分隔符，无额外文本）
+- **多段落输入** → 多个译文严格使用 Python list 对象格式
+## 示例
+### 多段落输入：
+['原文A', '原文B', '原文C']
+### 多段落输出：
+['译文A', '译文B', '译文C']
+### 单段落输入：
+单段落内容
+### 单段落输出：
+直接翻译，无分隔符
+## 翻译提示
 """
 
     EMB_API_URL = ""
@@ -53,7 +63,7 @@ class DefaultConfig:
     VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
     VEC_FILE_PATH = r"./Vectors"
     VEC_FILE_NAME = "Vectors"
-    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE 与 VEC_FLOAT_DTYPE 选中其中一个
+    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE 选其中一个
     VEC_QUANTILE = 0.998
     VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
     
@@ -76,6 +86,9 @@ class DefaultConfig:
     QUESTS_BQ_WRITE_MAX_CONCURRENT = 4
 
     INDEX_K = 3
+    INDEX_QUESTS_BASIC_WORDS = []
+    INDEX_ITEM_HIQ = True
+    INDEX_QUESTS_HIQ = True
     INDEX_MODE = "RefineFlat" # HNSWSQ RefineFlat
     INDEX_SQ = "Q6" # string: Q4, Q6, Q8, F16, BF16
     INDEX_HNSW_M = 128

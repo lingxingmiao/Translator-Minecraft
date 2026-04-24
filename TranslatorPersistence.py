@@ -12,9 +12,9 @@ def 获取嵌入模型(Self):
         if 缓存键 in 模型缓存:
             return 模型缓存[缓存键]
         try:
-            from sentence_transformers import SentenceTransformer
-            Self.Module.写入日志("log.core.debug.load.embedded.model", model=Self.Config.EMB_MODEL, info_level=0)
             for _ in Self.Locale.Tqdm(range(1), desc=f"tqdm.model.load"):
+                from sentence_transformers import SentenceTransformer
+                Self.Module.写入日志("log.core.debug.load.embedded.model", model=Self.Config.EMB_MODEL, info_level=0)
                 if Self.Config.EMB_MODEL_ACC_MODE == "onnx":
                     模型 = SentenceTransformer(Self.Config.EMB_MODEL, trust_remote_code=True, backend="onnx")
                 else:
