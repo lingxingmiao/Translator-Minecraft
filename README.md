@@ -235,7 +235,7 @@ conda env remove -n Translator_Minecraft
 - 修改 Tqdm的Tqdm改为Rich的Tqdm
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
 
-### Release.1.5 Bata.1（进行中）
+### Release.1.5 Bata.1
 - 添加 高质量索引模式(非任务Token消耗平均翻1-3倍 任务翻译峰值超20倍以上)
 - 添加 [think]思维链剔除[/think]
 - 添加 翻译模型 频率惩罚 存在惩罚 种子 参数传入
