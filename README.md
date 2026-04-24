@@ -259,3 +259,7 @@ conda env remove -n Translator_Minecraft
 - 删除 分离语言文件函数的mode参数,固定输出语言文件
 - 添加 SnbtLib依赖
 - 删除 PyHocon依赖
+
+### Release.1.5 Bata.2 (进行中)
+- 修复 键格式a.a.a_a_a会进行翻译的问题(来自modid:gvcr2请求)(进行中)
+- 修复 单符号会进行翻译的问题(来自modid:gvcr2请求)(进行中)
