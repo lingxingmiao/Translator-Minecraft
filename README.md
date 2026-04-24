@@ -261,5 +261,5 @@ conda env remove -n Translator_Minecraft
 - 删除 PyHocon依赖
 
 ### Release.1.5 Bata.2 (进行中)
-- 修复 键与值相同会进行翻译的问题(来自modid:gvcr2翻译请求)(进行中)
-- 修复 单符号会进行翻译的问题(来自modid:gvcr2翻译请求)(进行中)
+- 修复 键与值相同会进行翻译的问题(来自modid:gvcr2翻译请求)
+- 修复 单符号会进行翻译的问题(来自modid:gvcr2翻译请求)
