@@ -263,4 +263,4 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.2 (进行中)
 - 修复 键与值相同会进行翻译的问题(来自公益AP的Imodid:gvcr2翻译请求)
 - 修复 单符号会进行翻译的问题(来自公益API的modid:gvcr2翻译请求)
-- 修改 关闭默认启用的翻译对照功能,并修改LLM_ORIGINAL_REFERENCE为TRANSLATOR_ORIGINAL_REFERENCE
+- 修改 LLM_ORIGINAL_REFERENCE为TRANSLATOR_ORIGINAL_REFERENCE
