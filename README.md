@@ -278,6 +278,7 @@ conda env remove -n Translator_Minecraft
 - 修复 R1.5,B1的 模组或资源包内有多个语言文件导致只翻译一个文件的问题 导致的无索引翻译报错的问题
 - 修复 API请求文件带有空格导致的报错问题(来自公益API的"[荧光棒] glow_sticks-fabric-1.21.11-7.3.0.jar"翻译请求)
 - 修复 翻译全部命中缓存导致的返回为空错误(来自公益API的"[荧光棒] glow_sticks-fabric-1.21.11-7.3.0.jar"翻译请求)
+- 修复 读取日志非UTF-8核爆的问题
 - 修改 LLM_ORIGINAL_REFERENCE为TRANSLATOR_ORIGINAL_REFERENCE
 - 修改 LLM/EMB_RETRY_INTERVAL为LLM/EMB_RETRY_TIME
 - 修改 API任务状态持久化为SQLitw
