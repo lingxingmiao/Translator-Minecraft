@@ -262,6 +262,9 @@ conda env remove -n Translator_Minecraft
 
 ### Release.1.5 Bata.2 (进行中)
 - 添加 API任务状态自动清理
+- 优化 HTTP请求性能
+- 优化 正则表达式性能
+- 优化 FTB/BQ任务读取/写入性能
 - 修复 键与值相同会进行翻译的问题(来自公益AP的Imodid:gvcr2翻译请求)
 - 修复 单符号会进行翻译的问题(来自公益API的modid:gvcr2翻译请求)
 - 修复 [oωo-lib](https://www.mcmod.cn/class/5043.html)模组添加[文本组件](https://zh.minecraft.wiki/w/%E6%96%87%E6%9C%AC%E7%BB%84%E4%BB%B6)格式支持导致的翻译错误的问题(来自公益API的modid:playerex翻译请求)
