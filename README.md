@@ -61,6 +61,7 @@ conda env remove -n Translator_Minecraft
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B)（单次多次翻译可能导致输出问题）（情商高）
 
 ## 更新日志
+版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
 ### Release.1 Alpha.1
 - 添加 语言文件 翻译支持
 - 添加 IndexFlatL2方法RAG检索
