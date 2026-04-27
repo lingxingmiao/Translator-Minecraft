@@ -265,6 +265,7 @@ conda env remove -n Translator_Minecraft
 - 添加 API任务状态自动清理
 - 添加 翻译/嵌入HTTP请求超时(含系数)
 - 添加 导入DictMini缓存使用重排序获取译文相似度最高的文本([CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict))(默认模型:[Qwen/Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B))
+- 添加 zh_LLA(青茫龙龙附加)程序日志语言文件(抽象的)
 - 优化 HTTP请求性能
 - 优化 正则表达式性能
 - 优化 FTB/BQ任务读取/写入性能
