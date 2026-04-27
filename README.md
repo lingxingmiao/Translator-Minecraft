@@ -133,7 +133,7 @@ conda env remove -n Translator_Minecraft
 - 添加 CuPy 加速支持
 - 添加 SentenceTransformer 自动加载嵌入模型（ONNX、Safetensors）
 - 添加 更改 单个词语 翻译为 字符串 而不是 列表
-- 添加 I18n词典 导出 数据集 功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
+- 添加 I18n词典 导出 数据集 功能（[CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
 - 添加 分离语言文件更新 与 合并语言文件更新，翻译审查文件需要从 翻译语言文件 获取，翻译提示词文件需要从 分离语言文件更新 获取
 - 添加 翻译缓存替换
 - 添加 导入DictMini参考词 添加 稠密 与 稀疏 模式（默认 稠密，稠密 性能好）
@@ -168,7 +168,7 @@ conda env remove -n Translator_Minecraft
 - 添加 FTB任务与BQ任务翻译自动剔除键与滚木
 - 添加 单实例 嵌入模型、向量文件、文本文件、向量索引 持久化（多实例无持久化）
 - 添加 翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
-- 添加 自动汉化更新 的 I18n词典 导入翻译缓存功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
+- 添加 自动汉化更新 的 I18n词典 导入翻译缓存功能（[CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
 - 添加 翻译对照功能，返回示例：想妈妈了(think ma ma le)
 - 添加/修改 向量量化存储相关: (神经)
     - 添加 Float8_E4M3
@@ -264,7 +264,7 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.2 (进行中)
 - 添加 API任务状态自动清理
 - 添加 翻译/嵌入HTTP请求超时(含系数)
-- 添加 导入DictMini缓存使用LLM获取译文相似度最高的文本
+- 添加 导入DictMini缓存使用重排序获取译文相似度最高的文本([CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict))(默认模型:[Qwen/Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B))
 - 优化 HTTP请求性能
 - 优化 正则表达式性能
 - 优化 FTB/BQ任务读取/写入性能
