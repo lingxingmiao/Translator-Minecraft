@@ -264,7 +264,7 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.2 (进行中)
 - 添加 API任务状态自动清理
 - 添加 翻译/嵌入HTTP请求超时(含系数)
-- 添加 导入DictMini缓存使用LLM获取译文相似度最高的文本(计划中)
+- 添加 导入DictMini缓存使用LLM获取译文相似度最高的文本
 - 优化 HTTP请求性能
 - 优化 正则表达式性能
 - 优化 FTB/BQ任务读取/写入性能
