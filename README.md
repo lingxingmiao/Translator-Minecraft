@@ -264,6 +264,7 @@ conda env remove -n Translator_Minecraft
 ### Release.1.5 Bata.2 (进行中)
 - 添加 API任务状态自动清理
 - 添加 翻译/嵌入HTTP请求超时(含系数)
+- 添加 导入DictMini缓存使用LLM获取译文相似度最高的文本(计划中)
 - 优化 HTTP请求性能
 - 优化 正则表达式性能
 - 优化 FTB/BQ任务读取/写入性能
@@ -284,5 +285,5 @@ conda env remove -n Translator_Minecraft
 - 修复 没有npz向量文件时且有pkl文本文件时pkl文本文件不会写入的问题
 - 修改 LLM_ORIGINAL_REFERENCE为TRANSLATOR_ORIGINAL_REFERENCE
 - 修改 LLM/EMB_RETRY_INTERVAL为LLM/EMB_RETRY_TIME
-- 修改 API任务状态持久化为SQLitw
+- 修改 API任务状态持久化为SQLite
 - 修改 LLM_CONTEXTS与LLM_CONTEXTS_LENGTH合并为LLM_CONTEXTS
