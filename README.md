@@ -284,6 +284,7 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译全部命中缓存导致的返回为空错误(来自公益API的"[荧光棒] glow_sticks-fabric-1.21.11-7.3.0.jar"翻译请求)
 - 修复 读取日志非UTF-8核爆的问题
 - 修复 没有npz向量文件时且有pkl文本文件时pkl文本文件不会写入的问题
+- 修复 API会强制设置翻译器语言导致的API Server设置无效的问题
 - 修改 LLM_ORIGINAL_REFERENCE为TRANSLATOR_ORIGINAL_REFERENCE
 - 修改 LLM/EMB_RETRY_INTERVAL为LLM/EMB_RETRY_TIME
 - 修改 LLM_USER_PROMPT为TRANSLATOR_USER_PROMPT
