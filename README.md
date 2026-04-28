@@ -45,20 +45,39 @@ conda deactivate
 # 删除环境
 conda env remove -n Translator_Minecraft
 ```
-## 推荐模型翻译速度排名 16GRAM
-警告：LMStudi使用CUDA进行并行推理可能会导致模型崩溃！
+## 推荐模型翻译质量排名
+警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！
 建议：计算加速器推荐使用TCC模式来获得更快的速度！
-- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)（单次多次翻译可能导致输出问）（激活参数过小不可用）
-- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)（单次多次翻译可能导致输出问题）（激活参数过小不可用）
-- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)（预填充速度稍慢）
-- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)（可能导致无限输出）（预填充速度慢）（激活参数过小不可用）
-- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)（综合最优，推荐！）
-- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B)（单次多次翻译可能导致输出问题）（情商高）（综合第二优，推荐！）
-- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B)（单次多次翻译可能导致输出问题）
-- [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)（稳定性好）
-- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct)（高质量）（稳定性好）
-- [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B)（单次多次翻译可能导致输出问题）（情商高）
-- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B)（单次多次翻译可能导致输出问题）（情商高）
+WMT24++：不计小于50分 "*"表示强制启用推理链
+### WMT24++ XCOMET-XXL
+- Qwen3.6-Plus 84.3分
+- [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
+- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
+- [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
+- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分 (当前公益网站使用)
+- [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
+- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 74.4分*
+- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) 72.6分
+- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 67.8分*
+- [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
+- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 69.3分*
+- [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
+- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 57.4分
+### WMT24++ NeMo Evaluator SDK And NeMo Skills
+- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 88.8分*
+- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 87.8分
+- [NVIDIA/NVIDIA-Nemotron-3-Super-120B-A12B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) 86.6分
+- [NVIDIA/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) 86.2分
+- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 85.6分*
+- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 83.2分*
+### 未知成绩
+- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) 预计 WMT24++ XCOMET-XXL 65±2分
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
+- [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)
+### 不可用
+- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
+- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
+- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
 
 ## 更新日志
 版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
