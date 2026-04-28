@@ -30,7 +30,6 @@ class Translator:
         Self.函数库: Dict[str, Callable] = {}
         Self.扫描模块函数(Self.Module)
         Self.Config.TRANSLATOR_SYSTEM_PROMPT = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(LANGUAGE_OUTPUT=Self.Config.LANGUAGE_OUTPUT)
-        Self.Config.TRANSLATOR_CACHE_SYSTEM_PROMPT = Self.Config.TRANSLATOR_CACHE_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
         Self.会话 = SimpleNamespace()
         EMB适配器 = HTTPAdapter(pool_maxsize=Self.Config.EMB_MAX_WORKERS)
         Self.会话.EMB = requests.Session()
