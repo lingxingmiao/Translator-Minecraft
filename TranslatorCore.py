@@ -45,7 +45,7 @@ class Translator:
         Self.会话.RERANKER = requests.Session()
         Self.会话.RERANKER.mount('https://', RERANKER适配器)
         Self.会话.RERANKER.mount('http://', RERANKER适配器)
-        Self.会话.RERANKER.headers.update({"Authorization": f"Bearer {Self.Config.LLM_API_KEY}"})
+        Self.会话.RERANKER.headers.update({"Authorization": f"Bearer {Self.Config.RERANKER_API_KEY}"})
         Self.正则表达式预编译 = SimpleNamespace()
         Self.正则表达式预编译.括号分离方式 = re.compile(r'^(?:[&§][0-9a-fk-or])*\s*\{([^}]+)\}(.*)', re.DOTALL)
         Self.正则表达式预编译.翻译剔除方法 = re.compile(r'^\{[^}]+\}$|^.{1,2}$')
