@@ -55,10 +55,10 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
 - Qwen/Qwen3-Max-Thinking 77.6分
 - [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
-- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分 (当前公益网站使用)
+- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分
 - [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
 - [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 74.4分*
-- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) 72.6分
+- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) 72.6分 (当前公益网站使用)
 - [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 67.8分*
 - [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
 - [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 69.3分*
