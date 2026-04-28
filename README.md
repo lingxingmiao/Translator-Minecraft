@@ -46,8 +46,8 @@ conda deactivate
 conda env remove -n Translator_Minecraft
 ```
 ## 推荐模型翻译质量排名
-警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！
-建议：计算加速器推荐使用TCC模式来获得更快的速度！
+警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
+建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
 WMT24++：不计小于50分 "*"表示强制启用推理链
 ### WMT24++ XCOMET-XXL
 - Qwen3.6-Plus 84.3分
