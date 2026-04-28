@@ -1,4 +1,4 @@
-from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit
+from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote
 from TranslatorCore import Translator
 #需要安装↓
 from fastapi import FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks
@@ -23,44 +23,104 @@ FastAPI.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 请求并行数 = asyncio.Semaphore(APIConfig["api"]["max_concurrent"])
 
 class 持久化状态字典(Dict[str, Any]):
-    def __init__(Self, file_path: str, save_interval: float):
+    def __init__(Self, db_path: str = "task_states.db", save_interval: float = 5.0, cleanup_hours: float = 24.0, cleanup_interval: float = 300.0):
         super().__init__()
-        Self.file_path = pt(file_path)
-        Self.save_interval = save_interval
+        Self._db_path = pt(db_path)
+        Self._save_interval = save_interval
+        Self._cleanup_hours = cleanup_hours
+        Self._cleanup_interval = cleanup_interval
         Self._lock = threading.Lock()
-        Self._加载()
         Self._stop_event = threading.Event()
-        threading.Thread(target=Self._后台保存循环, daemon=True).start()
-        atexit.register(Self._最终保存)
-        Self.临时翻译器实例 = Translator(APIConfig["server"])
-    def _加载(Self):
-        if Self.file_path.exists():
-            try:
-                with open(Self.file_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        Self.update(data)
-            except Exception:
-                pass
-    def _保存(Self):
+        Self._创建时间: Dict[str, float] = {}
+        Self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        Self._conn = sqlite3.connect(str(Self._db_path), check_same_thread=False)
+        Self._conn.execute("PRAGMA journal_mode=WAL;")
+        Self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                task_id TEXT PRIMARY KEY,
+                state TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )
+        """)
+        Self._conn.commit()
+        Self.临时翻译器 = Translator(APIConfig["server"])
+        Self._加载数据库()
+        threading.Thread(target=Self._轮询同步, daemon=True).start()
+        threading.Thread(target=Self._轮询清理, daemon=True).start()
+        atexit.register(Self._优雅退出)
+    def _加载数据库(Self):
         with Self._lock:
-            tmp = Self.file_path.with_suffix('.tmp')
             try:
-                snapshot = dict(Self) 
-                with open(tmp, 'w', encoding='utf-8') as f:
-                    json.dump(snapshot, f, ensure_ascii=False, indent=2)
-                tmp.replace(Self.file_path)
+                for 任务ID, 状态JSON, 创建时间戳 in Self._conn.execute("SELECT task_id, state, created_at FROM tasks"):
+                    状态数据 = json.loads(状态JSON)
+                    super().__setitem__(任务ID, 状态数据)
+                    Self._创建时间[任务ID] = 创建时间戳
             except Exception as e:
-                print(Self.临时翻译器实例.Lang("log.api.logs.get.error", e=eb.format_exc()))
-    def _后台保存循环(Self):
-        while not Self._stop_event.is_set():
-            Self._stop_event.wait(Self.save_interval)
-            Self._保存()
-    def _最终保存(Self):
+                print(Self.临时翻译器.Lang("log.api.task.load.error", e=eb.format_exc()))
+    def _执行同步(Self):
+        with Self._lock:
+            try:
+                批量数据 = []
+                for 任务ID, 状态数据 in Self.items():
+                    时间戳 = Self._创建时间.get(任务ID, time.time())
+                    安全快照 = dict(状态数据)
+                    批量数据.append((任务ID, json.dumps(安全快照, ensure_ascii=False), 时间戳))
+                
+                if 批量数据:
+                    Self._conn.executemany(
+                        "INSERT OR REPLACE INTO tasks (task_id, state, created_at) VALUES (?, ?, ?)",
+                        批量数据
+                    )
+                    Self._conn.commit()
+            except Exception as e:
+                print(Self.临时翻译器.Lang("log.api.task.sync.error", e=eb.format_exc()))
+    def _执行清理(Self):
+        截止时间 = time.time() - (Self._cleanup_hours * 3600)
+        with Self._lock:
+            try:
+                Self._conn.execute("DELETE FROM tasks WHERE created_at < ?", (截止时间,))
+                Self._conn.commit()
+                过期任务 = [tid for tid, t in Self._创建时间.items() if t < 截止时间]
+                for tid in 过期任务:
+                    Self._创建时间.pop(tid, None)
+                    if super().__contains__(tid):
+                        super().__delitem__(tid)
+            except Exception as e:
+                print(Self.临时翻译器.Lang("log.api.task.clean.error", e=eb.format_exc()))
+    def _轮询同步(Self):
+        while not Self._stop_event.wait(Self._save_interval):
+            Self._执行同步()
+    def _轮询清理(Self):
+        while not Self._stop_event.wait(Self._cleanup_interval):
+            Self._执行清理()
+    def _优雅退出(Self):
         Self._stop_event.set()
-        Self._保存()
-
-任务状态字典 = 持久化状态字典(APIConfig["api"]["task_states_file"], save_interval=APIConfig["api"]["task_states_save_interval"])
+        Self._执行同步()
+        Self._conn.close()
+    def __setitem__(Self, key, value):
+        with Self._lock:
+            if key not in Self._创建时间:
+                Self._创建时间[key] = time.time()
+            super().__setitem__(key, value)
+    def __delitem__(Self, key):
+        with Self._lock:
+            if super().__contains__(key):
+                Self._conn.execute("DELETE FROM tasks WHERE task_id = ?", (key,))
+                Self._conn.commit()
+            Self._创建时间.pop(key, None)
+            super().__delitem__(key)
+    def clear(Self):
+        with Self._lock:
+            Self._conn.execute("DELETE FROM tasks")
+            Self._conn.commit()
+            Self._创建时间.clear()
+            super().clear()
+任务状态字典 = 持久化状态字典(
+    db_path=APIConfig["api"]["task_states_file"],
+    save_interval=APIConfig["api"]["task_states_save_interval"],
+    cleanup_hours=APIConfig["api"]["task_states_cleanup_hours"],
+    cleanup_interval=APIConfig["api"]["task_states_cleanup_interval"]
+)
 
 def 设置时间():
     时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + f"{int((time.time() % 1) * 10000):04d}"
@@ -157,13 +217,19 @@ def 清理任务缓存(task_id: str):
 async def 提交翻译任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, file_name0: str = Form(...),
-    input_lang: str = Form("en_us"), output_lang: str = Form("zh_cn"), logs_lang: str = Form("zh_cn"),
+    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
     file1: UploadFile = None, file_name1: str = Form(None),
     all_mode: bool = Form(False), export_inspection: bool = Form(False)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = Translator(APIConfig["server"] | {"LANGUAGE_INPUT": input_lang, "LANGUAGE_OUTPUT": output_lang, "LANGUAGE": logs_lang})
+    语言设置参数 = {
+    "LANGUAGE_INPUT": input_lang,
+    "LANGUAGE_OUTPUT": output_lang,
+    "LANGUAGE": logs_lang
+    }
+    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
+    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -194,12 +260,18 @@ async def 提交翻译任务(
 async def 提交分离语言更新任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, file_name0: str = Form(...),
-    input_lang: str = Form("en_us"), output_lang: str = Form("zh_cn"), logs_lang: str = Form("zh_cn"),
+    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
     file1: UploadFile = None, file_name1: str = Form(None)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = Translator(APIConfig["server"] | {"LANGUAGE_INPUT": input_lang, "LANGUAGE_OUTPUT": output_lang, "LANGUAGE": logs_lang})
+    语言设置参数 = {
+    "LANGUAGE_INPUT": input_lang,
+    "LANGUAGE_OUTPUT": output_lang,
+    "LANGUAGE": logs_lang
+    }
+    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
+    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -230,13 +302,19 @@ async def 提交分离语言更新任务(
 async def 提交合并语言更新任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, notlang_file: UploadFile,
-    input_lang: str = Form("en_us"), output_lang: str = Form("zh_cn"), logs_lang: str = Form("zh_cn"),
+    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
     file_name0: str = Form(...), nolang_file_name: str = Form(...),
     file1: UploadFile = None, file_name1: str = Form(None)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = Translator(APIConfig["server"] | {"LANGUAGE_INPUT": input_lang, "LANGUAGE_OUTPUT": output_lang, "LANGUAGE": logs_lang})
+    语言设置参数 = {
+    "LANGUAGE_INPUT": input_lang,
+    "LANGUAGE_OUTPUT": output_lang,
+    "LANGUAGE": logs_lang
+    }
+    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
+    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -282,11 +360,14 @@ async def 下载任务结果(task_id: str, background_tasks: BackgroundTasks):
     文件路径 = 状态["result_path"]
     文件名 = 状态.get("filename", pt(文件路径).name)
     background_tasks.add_task(清理任务缓存, task_id)
+    encoded_filename = quote(文件名, safe='')
     return FileResponse(
         path=文件路径,
         filename=文件名,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{文件名}"; filename*=UTF-8\'\'{文件名}'}
+        headers={
+            "Content-Disposition": f'attachment; filename="{文件名.encode("ascii", errors="ignore").decode() or "download"}"; filename*=UTF-8\'\'{encoded_filename}'
+        }
     )
 @FastAPI.get("/task/logs/{task_id}", response_class=PlainTextResponse)
 async def 获取任务日志(task_id: str, last_lines: int = 100):

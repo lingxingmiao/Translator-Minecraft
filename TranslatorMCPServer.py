@@ -49,18 +49,39 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `LLM_CONTEXTS_LENGTH` (int): 上下文对话轮数上限，默认 65536
     - `LLM_MAX_WORKERS` (int): 最大并发数，默认 24
     - `LLM_MAX_BATCH` (int): 单次批处理数量，默认 3
-    - `LLM_MAX_RETRY` (int): 失败重试次数，默认 128
-    - `LLM_ORIGINAL_REFERENCE` (bool): 输出是否包含原文，示例: 我喜欢你(I like you)，默认 True
+    - `LLM_MAX_RETRY` (int): 失败重试次数，默认 8
+    - `LLM_TIMEOUT` (int): 请求超时时间，默认 300
+    - `LLM_CONN_TIMEOUT` (int): 请求连接超时时间，默认 3
+    - `LLM_RETRY_TIME` (int): 失败后重试基础等待时间，默认 5
+    - `LLM_RETRY_COEF` (float): 失败后重试基础等待时间系数，_RETRY_COEF ** (重试次数 - 1)) * _RETRY_TIME，默认 1.2
 
     #### 3. 嵌入模型设置 (Embedding)
     - `EMB_API_URL` (str): 嵌入模型 API 地址，默认 ""
     - `EMB_API_KEY` (str): 嵌入模型 API 密钥，默认 ""
     - `EMB_MODEL` (str): 模型型号或 HF 仓库名，默认 "nomic-ai/nomic-embed-text-v1.5"
     - `EMB_MODEL_ACC_MODE` (str): 加速模式 (None, ONNX, float64, etc.)，默认 "bfloat16"
+    - `EMB_MODEL_DEVICE` (str): Torch使用的加速设备，默认 "cuda:0"
     - `EMB_MAX_TOKENS` (int): 最大输入 Token 数，默认 2048
     - `EMB_TOKENSTOTEXT_RATIO` (float): Token 转字数比例，默认 3.0
     - `EMB_MAX_WORKERS` (int): 最大并发数，默认 24
-    - `EMB_MAX_RETRY` (int): 失败重试次数，默认 128
+    - `EMB_MAX_RETRY` (int): 失败重试次数，默认 8
+    - `EMB_TIMEOUT` (int): 请求超时时间，默认 300
+    - `EMB_CONN_TIMEOUT` (int): 请求连接超时时间，默认 3
+    - `EMB_RETRY_TIME` (int): 失败后重试基础等待时间，默认 5
+    - `EMB_RETRY_COEF` (float): 失败后重试基础等待时间系数，_RETRY_COEF ** (重试次数 - 1)) * _RETRY_TIME，默认 1.2
+    
+    #### 4. 重排序模型设置 (Ranking)
+    - `RERANKER_API_URL` (str): 重排序模型 API 地址，默认 ""
+    - `RERANKER_API_KEY` (str): 重排序模型 API 密钥，默认 ""
+    - `RERANKER_MODEL` (str): 模型型号或 HF 仓库名，默认 "Qwen/Qwen3-Reranker-0.6B"
+    - `RERANKER_MODEL_DEVICE` (str): Torch使用的加速设备，默认 "cuda:0"
+    - `RERANKER_INSTRUCT` (str): 重排序模型提示，默认 "Which Chinese translation best matches the meaning of the English source? Consider terminology accuracy and completeness."
+    - `RERANKER_MAX_WORKERS` (int): 最大并发数，默认 24
+    - `RERANKER_MAX_RETRY` (int): 失败重试次数，默认 8
+    - `RERANKER_TIMEOUT` (int): 请求超时时间，默认 300
+    - `RERANKER_CONN_TIMEOUT` (int): 请求连接超时时间，默认 3
+    - `RERANKER_RETRY_TIME` (int): 失败后重试基础等待时间，默认 5
+    - `RERANKER_RETRY_COEF` (float): 失败后重试基础等待时间系数，_RETRY_COEF ** (重试次数 - 1)) * _RETRY_TIME，默认 1.2
 
     #### 4. 向量存储设置 (Vector Store) 修改量化相关设置可能导致出现错误
     - `VEC_FILE_PATH` (str): 向量文件存储目录，默认 r"./Vectors"
@@ -77,8 +98,11 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `PATH_CACHE` (str): 通用缓存路径，默认 r"./Cache"
     - `LANG_PATH` (str): 语言包路径，默认 r"./Lang"
     - `DEBUG_MODE` (bool): 是否开启调试模式，默认 False
+    
+    #### 6. 翻译设置 (Translation)
+    - `TRANSLATOR_ORIGINAL_REFERENCE` (bool): 输出是否包含原文，示例: 我喜欢你(I like you)，默认 True
 
-    #### 6. 索引设置 (Indexing - Faiss/HNSW)
+    #### 7. 索引设置 (Indexing - Faiss/HNSW)
     - `INDEX_K` (int): 检索提示数量，默认 3
     - `INDEX_MODE` (str): 索引模式 (RefineFlat, HNSWSQ)，默认 "RefineFlat"
     - `INDEX_SQ` (str): 索引量化 (Q4, Q6, Q8, F16, BF16)，默认 "Q6"
@@ -89,7 +113,7 @@ def SetTranslatorConfig(config_kwargs: dict):
     - `INDEX_QUESTS_BASIC_WORDS` (list): 翻译任务高质量检索需要去除的单词
     - `INDEX_QUESTS_OPTIMIZE` (bool): 翻译任务高质量检索, 每个单词都有可能产生 单词长度*INDEX_K+28Token
     
-    #### 任务并发设置 (Task Concurrency)
+    #### 8. 任务并发设置 (Task Concurrency)
     - `QUESTS_FTB_READ_MAX_CONCURRENT` (int): FTBQuests 读取最大并发数，默认 4
     - `QUESTS_FTB_WRITE_MAX_CONCURRENT` (int): FTBQuests 写入最大并发数，默认 4
     - `QUESTS_BQ_READ_MAX_CONCURRENT` (int): BetterQuesting 读取最大并发数，默认 4
@@ -224,7 +248,7 @@ def ImportDictMiniSystemPrompt(File: str, Mode: str = "dense"):
     except Exception:
         return f"发生未知错误:\n{eb.format_exc()}"
 @mcp.tool()
-def ImportDictMiniTranslatorCache(File: str):
+def ImportDictMiniTranslatorCache(File: str, Mode: str = "inedx"):
     """
     ### 工具功能
     导入翻译缓存（仅支持 DictMini.json 文件）, 翻译缓存可用于命中翻译文本。
@@ -236,6 +260,9 @@ def ImportDictMiniTranslatorCache(File: str):
     - `File` (str): **导入文件**。
       - 导入 DictMini.json 文件。
       - 文件来源: https://github.com/CFPATools/i18n-dict。
+    - `Mode` (str): **多译文选择模** (可选)
+      - index: 固定选择第一个文本。
+      - rerank: 通过重排序模型选择相似度最高的文本。
       
     ### 返回内容
     - **成功**: 返回字符串，包含 "函数执行完成" 及详细的处理日志（包含处理信息、文件路径等）。

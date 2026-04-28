@@ -3,11 +3,13 @@ import traceback as eb
 import threading
 import hashlib
 import zipfile
+import sqlite3
 import tomllib
 import asyncio
 import shutil
 import pickle
 import atexit
+import queue
 import json
 import glob
 import time
@@ -18,13 +20,16 @@ import os
 import re
 import io
 
+from types import SimpleNamespace
+from urllib.parse import quote
 from typing import Callable, Dict, Any, Union, Optional, List
 from pathlib import Path, PurePosixPath
+from requests.adapters import HTTPAdapter
 from functools import partial
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import asynccontextmanager
 from collections import defaultdict
 from dataclasses import dataclass, replace
-from concurrent.futures import ThreadPoolExecutor, as_completed
 #需要安装↓
 import numpy
 import faiss
@@ -141,8 +146,10 @@ if uvicorn and fastapi and slowapi:
                     "ssl_certfile": None,
                     "max_concurrent": 4,
                     "current-limiting": "8/minute",
-                    "task_states_file": "task_states.json",
-                    "task_states_save_interval": 30.0
+                    "task_states_file": "task_states.db",
+                    "task_states_save_interval": 30.0,
+                    "task_states_cleanup_hours": 24.0,
+                    "task_states_cleanup_interval": 300.0
                 },
             "keys": []
         }
@@ -157,7 +164,7 @@ if uvicorn and fastapi and slowapi:
    [cyan]╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝
 
 TranslatorMinecraft Core
-[bright_green]Version:[/] Release 1.5 Bata.1
+[bright_green]Version:[/] Release 1.5 Bata.2
 [bright_green]GPU Accelerator:[/] {"True" if GPU_ACC else GPU_ERROR}"""
 Console(force_terminal=True, color_system="auto").print(Panel(Align(显示内容, align="center"),title="[blue]TranslatorMinecraft Core[/blue]",border_style="blue",padding=(1, 2),width=110))
 
@@ -170,4 +177,5 @@ __all__ = [
     "replace", "snbtlib", "time", "shutil", "atexit",
     "GPU_ACC", "FastMCP", "MCPConfig", "numpy", "PurePosixPath",
     "tomllib", "glob", "APIConfig", "Union", "asynccontextmanager",
-    "Optional", "List", "io", "asyncio", "uuid"]
+    "Optional", "List", "io", "asyncio", "uuid",
+    "sqlite3", "HTTPAdapter", "SimpleNamespace", "queue", "quote"]

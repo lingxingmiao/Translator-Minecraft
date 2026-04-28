@@ -8,28 +8,24 @@
 
     "log.core.debug.load.embedded.model": "正在加载嵌入模型: {model}",
     "log.core.load.embedded.model.succeed": "成功加载嵌入模型: {model}",
-    "log.core.load.embedded.model.error": "从 HuggingFace仓库 加载嵌入模型: {model} 出错: {e}",
+    "log.core.load.embedded.model.error": "加载嵌入模型错误: {model} 错误: {e}",
     "log.core.generated.vector.nan": "未生成任何向量: {texts}",
     
     "log.core.debug.vector.range": "向量范围: {range}",
     "log.core.debug.vector.shape": "向量形状: {shape}",
     "log.core.read.vevtor.error": "读取向量出现错误: {e}",
 
-    "log.core.generate.translator.messages.error": "错误:{e}, 内容: {messages}, 提示词: {promptex}",
-    "log.core.generate.translator": "生成翻译 {input} --> {output}",
-    "log.core.debug.request.outputs": "内容: {messages} 翻译: {item} 提示词: {promptex}",
-    "log.core.generate.translator.error": "请求生成翻译出现错误, 达到重试上限, 跳过该向量生成: {e}, {output}",
-    "log.core.generate.translator.retry": "请求生成翻译出现错误, 正在重试: {e}, {output}",
+    "log.core.translator.generate.messages.error": "错误:{e}, 内容: {messages}, 提示词: {promptex}",
+    "log.core.translator.generate": "生成翻译 {input} --> {output}",
+    "log.core.translator.generate.request.outputs.debug": "内容: {messages} 翻译: {item} 提示词: {promptex}",
+    "log.core.translator.generate.error": "请求生成翻译出现错误, 达到重试上限, 跳过该文本: {e}, {output}",
+    "log.core.translator.generate.retry": "请求生成翻译出现错误, 正在重试: {e}, {output}",
 
     "log.core.parsing.parameters.error": "解析参数时出现错误, 跳过该词条: {e}, {index}",
     "log.core.parsing.reference.word.error": "解析参考词时出现错误, 跳过该词条: {e}, {item}",
 
     "log.core.settle.succeed": "处理完成, 导出路径: {path}",
 
-    "log.core.translator.generate.start": "翻译开始, 翻译条目数: {item}",
-    "log.core.translator.generate.end": "翻译结束",
-    "log.core.translator.general.generate.start": "通用翻译开始",
-    "log.core.translator.general.generate.end": "通用翻译结束",
     "log.core.vector.generate.start": "向量生成开始",
     "log.core.vector.generate.end": "向量生成结束",
     "log.core.vector.cache.start": "向量文本文件缓存开始",
@@ -61,6 +57,21 @@
     "log.core.translator.general.modpack.translate.file.no": "整合包无可翻译文件",
     "log.core.translator.general.model": "通用翻译模式: {model}",
     "log.core.translator.general.error.unknown": "未知错误, 停止处理: {e}",
+    "log.core.translator.generate.start": "翻译开始, 翻译条目数: {item}",
+    "log.core.translator.generate.end": "翻译结束",
+    "log.core.translator.general.generate.start": "通用翻译开始",
+    "log.core.translator.general.generate.end": "通用翻译结束",
+    "log.core.translator.general.generate.file.input": "通用翻译文件输入: {file0} {file1}",
+
+    "log.core.translator.cache.generate.start": "选择译文开始",
+    "log.core.translator.cache.generate.end": "选择译文结束",
+    "log.core.translator.cache.locally.error": "本地模型选择文本出现错误, 跳过该文本: {e}",
+    "log.core.translator.cache.generate.error": "请求选择译文出现错误, 达到重试上限, 跳过该文本: {e}, {output}",
+    "log.core.translator.cache.generate.retry": "请求选择译文出现错误, 正在重试: {e}, {output}",
+    "log.core.translator.cache.generate.messages.error": "错误:{e}, 内容: {messages}",
+    "log.core.load.rerank.model.debug": "正在加载重排序模型: {model}",
+    "log.core.load.rerank.model.succeed": "成功加载重排序模型: {model}",
+    "log.core.load.rerank.model.error": "加载重排序模型错误: {model} 错误: {e}",
 
     "log.module.zip.read.error": "读取压缩文件出现错误: {e}",
     "log.module.zip.read.error.c": "读取压缩文件出现错误, 跳过该词条: {e}",
@@ -72,10 +83,13 @@
     "log.module.parsemodid.error": "解析模组ID出现错误: {e}",
     "log.module.parsemodid.file.error": "解析模组文件出现错误: {e}",
     "log.module.quests.write.error": "任务写入出现错误, 跳过该项 文件: {index} 项 {item} 层数 {level} 位置 {position}: {e}",
+    "log.module.logs.encoding.warning": "日志文件编码错误, 已自动更换latin1编码: {file}",
 
     "log.quantization.superposition.error": "向量数据不允许叠加非浮点类型数据",
 
-    "log.api.task.save.error": "保存任务状态出现错误: {e}",
+    "log.api.task.load.error": "任务状态数据库加载错误: {e}",
+    "log.api.task.sync.error": "任务状态数据库同步错误: {e}",
+    "log.api.task.clean.error": "任务状态数据库清理错误: {e}",
     "log.api.task.initialization.start": "任务初始化开始",
     "log.api.task.enqueued": "任务进入队列，等待资源出现",
     "log.api.task.acquiring.resources.success": "发现可用资源，开始执行任务",
@@ -96,16 +110,17 @@
     "tqdm.index.search": "近邻索引",
     "tqdm.index.write": "存储索引",
     "tqdm.index.read": "读取索引",
-    "tqdm.translations.generate": "生成翻译",
-    "tqdm.translations.use": "应用翻译",
-    "tqdm.translations.cache.use": "应用缓存",
+    "tqdm.translator.generate": "生成翻译",
+    "tqdm.translator.cache.generate": "选择译文",
+    "tqdm.translator.use": "应用翻译",
+    "tqdm.translator.cache.use": "应用缓存",
     "tqdm.progress.encoding": "正在编码",
     "tqdm.vectors.quantization": "量化向量",
     "tqdm.vectors.quantization.reverse": "反量化向量",
     "tqdm.scale.quantization": "量化缩放",
     "tqdm.scale.quantization.reverse": "反量化缩放",
-    "tqdm.translations.mod": "翻译模组",
-    "tqdm.translations.resource": "翻译资源"
+    "tqdm.translator.mod": "翻译模组",
+    "tqdm.translator.resource": "翻译资源"
 
 
 

@@ -16,17 +16,56 @@ class DefaultConfig:
     LLM_FP = 0
     LLM_SEED = 42
     LLM_CONTEXTS = False
-    LLM_CONTEXTS_LENGTH = 65536
-    LLM_MAX_WORKERS = 24
     LLM_MAX_BATCH = 1
-    LLM_MAX_RETRY = 20
-    LLM_RETRY_INTERVAL = 5
-    LLM_ORIGINAL_REFERENCE = True
-    LLM_USER_PROMPT = """
-翻译为{LANGUAGE_OUTPUT}（仅输出翻译内容）：{text}
-"""
-    LLM_SYSTEM_PROMPT = """
-你是一位专业的 Minecraft 游戏 {LANGUAGE_OUTPUT} 语母语翻译，需要流畅地将文本翻译成 {LANGUAGE_OUTPUT}。
+    LLM_MAX_WORKERS = 24
+    LLM_MAX_RETRY = 8
+    LLM_TIMEOUT = 300
+    LLM_CONN_TIMEOUT = 3
+    LLM_RETRY_TIME = 5
+    LLM_RETRY_COEF = 1.2
+
+    EMB_API_URL = ""
+    EMB_API_KEY = ""
+    EMB_MODEL = "nomic-ai/nomic-embed-text-v1.5" # string: 嵌入模型/HuggingFace仓库名
+    EMB_MODEL_ACC_MODE = "bfloat16" # string: None, ONNX, float64, float32, float16, bfloat16
+    EMB_MODEL_DEVICE = "cuda:0"
+    EMB_MAX_TOKENS = 2048
+    EMB_TOKENSTOTEXT_RATIO = 3.0
+    EMB_MAX_WORKERS = 24
+    EMB_MAX_RETRY = 8
+    EMB_TIMEOUT = 30
+    EMB_CONN_TIMEOUT = 3
+    EMB_RETRY_TIME = 5
+    EMB_RETRY_COEF = 1.2
+    
+    RERANKER_API_URL = ""
+    RERANKER_API_KEY = ""
+    RERANKER_MODEL = "Qwen/Qwen3-Reranker-0.6B"
+    RERANKER_MODEL_DEVICE = "cuda:0"
+    RERANKER_INSTRUCT = "Which Chinese translation best matches the meaning of the English source? Consider terminology accuracy and completeness."
+    RERANKER_MAX_WORKERS = 24
+    RERANKER_MAX_RETRY = 8
+    RERANKER_TIMEOUT = 30
+    RERANKER_CONN_TIMEOUT = 3
+    RERANKER_RETRY_TIME = 5
+    RERANKER_RETRY_COEF = 1.2
+
+    VEC_INT_DTYPE = ["Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"]
+    VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
+    VEC_FILE_PATH = r"./Vectors"
+    VEC_FILE_NAME = "Vectors"
+    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE 选其中一个
+    VEC_QUANTILE = 0.998
+    VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
+    
+    TRANSLATOR_CACHE_WRITE = True
+    TRANSLATOR_CACHE_READ = True
+    TRANSLATOR_CACHE_PATH = r"./Translator_Cache"
+    TRANSLATOR_CACHE_NAME = "Translator_Cache"
+    TRANSLATOR_ORIGINAL_REFERENCE = True
+    TRANSLATOR_USER_PROMPT = "翻译为{LANGUAGE_OUTPUT}（仅输出翻译内容）：{text}"
+    TRANSLATOR_SYSTEM_PROMPT = """
+你是一位专业的 Minecraft 游戏翻译器，需要流畅准确一致地将文本翻译成 {LANGUAGE_OUTPUT} 语言。
 ## 翻译规则
 1. 仅输出翻译内容，不包含解释或额外内容（如“这是译文：”或“如下所示：”）
 2. 返回的译文必须与原文保持完全相同的段落数和格式
@@ -47,30 +86,6 @@ class DefaultConfig:
 直接翻译，无分隔符
 ## 翻译提示
 """
-
-    EMB_API_URL = ""
-    EMB_API_KEY = ""
-    EMB_MODEL = "nomic-ai/nomic-embed-text-v1.5" # string: 嵌入模型/HuggingFace仓库名
-    EMB_MODEL_ACC_MODE = "bfloat16" # string: None, ONNX, float64, float32, float16, bfloat16
-    EMB_MODEL_DEVICE = "cuda:0"
-    EMB_MAX_TOKENS = 2048
-    EMB_TOKENSTOTEXT_RATIO = 3.0
-    EMB_MAX_WORKERS = 24
-    EMB_MAX_RETRY = 20
-    EMB_RETRY_INTERVAL = 5
-
-    VEC_INT_DTYPE = ["Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"]
-    VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
-    VEC_FILE_PATH = r"./Vectors"
-    VEC_FILE_NAME = "Vectors"
-    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE 选其中一个
-    VEC_QUANTILE = 0.998
-    VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
-    
-    TRANSLATOR_CACHE_WRITE = True
-    TRANSLATOR_CACHE_READ = True
-    TRANSLATOR_CACHE_PATH = r"./Translator_Cache"
-    TRANSLATOR_CACHE_NAME = "Translator_Cache"
 
     PATH_CACHE = r"./Cache"
     DEBUG_MODE = False

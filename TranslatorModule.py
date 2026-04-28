@@ -1,4 +1,4 @@
-from TranslatorLib import os, time, json, uuid, pickle, zipfile, Path, eb, PurePosixPath, glob, tomllib, snbtlib
+from TranslatorLib import os, time, json, uuid, pickle, zipfile, Path, eb, PurePosixPath, glob, tomllib, snbtlib, ast, threading
 from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
 from TranslatorLocale import Locale
 
@@ -13,34 +13,59 @@ class Module:
         tqdm = Self.Locale.Tqdm
         Self.LOGS_FILE_PATH = Self.Config.LOGS_FILE_PATH
         Self.LOGS_FILE_NAME = Self.Config.LOGS_FILE_NAME
-    def 写入日志(Self, text: str, info_level: int = 0, **kwargs):
+        Self._log_locks = {}
+        Self.日志等级映射 = {
+            0: "[INFO]",
+            1: "[WARNING]",
+            2: "[ERROR]",
+            3: "[FATAL]",
+            4: "[DEBUG]",
+        }
+    def 写入日志(Self, text: str, info_level: int = 0, **kwargs): 
         text = Self.Lang(text, **kwargs)
         日志文件名 = Path(Self.LOGS_FILE_PATH) / Self.LOGS_FILE_NAME
         时间 = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
-        日志等级 = "[INFO]"
-        if info_level == 1:
-            日志等级 = "[WARNING]"
-        elif info_level == 2:
-            日志等级 = "[ERROR]"
-        elif info_level == 3:
-            日志等级 = "[FATAL]"
-        elif info_level == 4 and Self.Config.DEBUG_MODE:
-            日志等级 = "[DEBUG]"
-        elif info_level == 4 and (not Self.Config.DEBUG_MODE):
+        
+        日志等级 = Self.日志等级映射[info_level]
+        if info_level == 4 and not Self.Config.DEBUG_MODE:
             return
         写入内容 = f"{时间}{日志等级}{text}\n"
-        if (Path(日志文件名).resolve() != Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()) and Self.Config.LOGS_GLOBAL:
-            Self.写入全局日志(写入内容)
-        with open(f"{日志文件名}.log", "a+", encoding="utf-8") as f:
-            f.write(写入内容)
+        线程 = threading.Thread(target=Self.实时写入日志,args=(写入内容, 日志文件名),daemon=True)
+        线程.start()
+
+    
+
+    def 实时写入日志(Self, 写入内容: str, 日志文件名: Path):
+        写入内容 = str(写入内容).encode('utf-8', errors='replace').decode('utf-8')
+        log_path_str = str(日志文件名.resolve())
+        if log_path_str not in Self._log_locks:
+            Self._log_locks[log_path_str] = threading.Lock()
+        lock = Self._log_locks[log_path_str]
+        with lock:
+            默认日志路径 = Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()
+            日志路径 = 日志文件名.resolve()
+            is_default = (str(日志文件名) == str(Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}")))
+            if (日志路径 != 默认日志路径) and Self.Config.LOGS_GLOBAL and not is_default:
+                Self.写入全局日志(写入内容)
+            with open(f"{日志文件名}.log", "a+", encoding="utf-8") as f:
+                f.write(写入内容)
     def 写入全局日志(Self, text: str):
         with open(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log", "a+", encoding="utf-8") as f:
             f.write(text)
         
     def 读取日志(Self):
         日志文件名 = Path(Self.LOGS_FILE_PATH) / Self.LOGS_FILE_NAME
-        with open(f"{日志文件名}.log", "r", encoding="utf-8") as f:
-            return f.read()
+        log_path = f"{日志文件名}.log"
+        if not Path(log_path).exists():
+            return ""
+        try:
+            with open(log_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except UnicodeDecodeError:
+            with open(log_path, "r", encoding="latin1") as f:
+                content = f.read()
+            Self.写入日志("log.module.logs.encoding.warning", info_level=1)
+            return content
     def 读取单个FTBQ_Snbt文件(Self, index: str):
         文本列表 = []
         SNBT文件 = snbtlib.loads(Path(index).read_text(encoding='utf-8'))
@@ -284,8 +309,14 @@ class Module:
                     清理列表.append(line)
                 f.write("\n".join(清理列表))
             elif Path(file).suffix == ".json":
+                json文件 = {}
                 保存列表 = [line for line in 保存列表 if line.strip() and '=' in line and not line.lstrip().startswith(('//', '#'))]
-                json文件 = {line.split('=', 1)[0]: line.split('=', 1)[1] for line in 保存列表}
+                for index in 保存列表:
+                    k, v = index.split('=', 1)
+                    try:
+                        v = ast.literal_eval(v)
+                    except Exception: pass
+                    json文件[k] = v
                 f.write(json.dumps(json文件, ensure_ascii=False, indent=4))
     def 读取压缩文件(Self, file_path: str, cache_path: str, original_language: str, target_language: str):
         try:
@@ -297,7 +328,7 @@ class Module:
                     if any(name.startswith("shaders") for name in 文件列表):
                         可用文件列表 = [True]
                         f.extractall(文件路径)
-                    for index in [original_language, target_language]:
+                    for index in frozenset([original_language, target_language]):
                         for index1 in 文件列表:
                             index1文件名 = os.path.splitext(index1.split('/')[-1])[0]
                             if index1文件名.lower() == index.lower():
@@ -316,8 +347,8 @@ class Module:
         file2 = ""
         file3 = ""
         输出扩展名 = ""
-        文件0是压缩包 = Path(file0).suffix.lower() in [".zip", ".jar"]
-        文件1是压缩包 = file1 and Path(file1).suffix.lower() in [".zip", ".jar"]
+        文件0是压缩包 = Path(file0).suffix.lower() in frozenset([".zip", ".jar"])
+        文件1是压缩包 = file1 and Path(file1).suffix.lower() in frozenset([".zip", ".jar"])
         if 文件0是压缩包:
             缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
             file2 = Self.读取压缩文件(file0, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
@@ -353,7 +384,7 @@ class Module:
                     if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
                         临时路径 = 条目[1]
                         文件1 += Self.读取语言文件(临时路径)[0]
-        elif Path(file0).suffix.lower() in [".lang", ".json"]:
+        elif Path(file0).suffix.lower() in frozenset([".lang", ".json"]):
             解析数据, 源文件数据 = Self.读取语言文件(file0)
             文件0 += 解析数据
             文件0源文件 = [源文件数据]
@@ -375,7 +406,7 @@ class Module:
                     文件1 += Self.读取语言文件(file1)[0]
         Self.写入日志("log.core.file.read.end", file0=file0, file1=file1)
         return 文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2
-    def 翻译缓存(Self, 输入列表: list = []):
+    def 翻译缓存(Self, 输入列表: list = None):
         文本文件 = []
         try:
             with open(f"{Self.Config.TRANSLATOR_CACHE_PATH}/{Self.Config.TRANSLATOR_CACHE_NAME}.pkl", "rb+") as f:
@@ -383,9 +414,10 @@ class Module:
         except Exception: pass
         if 输入列表:
             文本文件.extend(输入列表)
+            文本文件 = list({item[0]: item for item in 文本文件}.values())
             with open(f"{Self.Config.TRANSLATOR_CACHE_PATH}/{Self.Config.TRANSLATOR_CACHE_NAME}.pkl", "wb+") as f:
                 pickle.dump(文本文件, f)
-        return {item[0]: item[1] for item in 文本文件}, {item[0] for item in 文本文件}
+        return {item[0]: item[1] for item in 文本文件}
     def 从资源包文件夹获取I18n翻译模组ID(Self, 路径: str):
         Self.写入日志("log.core.modid.get.start", info_level=0)
         try:
@@ -453,10 +485,4 @@ class Module:
         Path(path).mkdir(parents=True, exist_ok=True)
         return Path(path).resolve()
     def 列表去重(Self, 列表: list):
-        Set = set()
-        输出列表 = []
-        for index in 列表:
-            if index not in Set:
-                Set.add(index)
-                输出列表.append(index)
-        return 输出列表
+        return list(dict.fromkeys(列表))

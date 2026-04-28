@@ -12,6 +12,31 @@ class Quantization:
         Self.Module = Module(Config=Config)
         Self.Locale = Locale(Config=Config)
         tqdm = Self.Locale.Tqdm
+        Self.拼接键 = ["Vector"]
+        Self.解码映射 = {
+            "Q8_K_X": lambda Self, d: Self.Q8_K_X解码F32(d["Vector"], d["Scale"], d["ZeroPoint"], d["Shape"]),
+            "Q6_K_X": lambda Self, d: Self.Q6_K_X解码F32(d["Vector"], d["Scale"], d["ZeroPoint"], d["Shape"]),
+            "Q4_K_X": lambda Self, d: Self.Q4_K_X解码F32(d["Vector"], d["Scale"], d["ZeroPoint"], d["Shape"]),
+            "Q3_K_X": lambda Self, d: Self.Q3_K_X解码F32(d["Vector"], d["Scale"], d["ZeroPoint"], d["Shape"]),
+            "Q2_K_X": lambda Self, d: Self.Q2_K_X解码F32(d["Vector"], d["Scale"], d["ZeroPoint"], d["Shape"]),
+            "Float8_E4M3": lambda Self, d: Self.FP8_E4M3解码F32(d["Vector"]),
+            "Float16": lambda Self, d: d["Vector"],
+            "BFloat16": lambda Self, d: Self.BF16解码F32(d["Vector"]),
+            "Float16_E0M15": lambda Self, d: Self.F16_E0M15解码F32(d["Vector"]),
+            "Float32": lambda Self, d: d["Vector"],
+        }
+        Self.编码映射 = {
+            "Q8_K_X": lambda Self, arr: Self.F32编码Q8_K_X(arr),
+            "Q6_K_X": lambda Self, arr: Self.F32编码Q6_K_X(arr),
+            "Q4_K_X": lambda Self, arr: Self.F32编码Q4_K_X(arr),
+            "Q3_K_X": lambda Self, arr: Self.F32编码Q3_K_X(arr),
+            "Q2_K_X": lambda Self, arr: Self.F32编码Q2_K_X(arr),
+            "Float8_E4M3": lambda Self, arr: Self.F32编码FP8_E4M3(arr),
+            "Float16": lambda Self, arr: {"Vector": arr.astype(np.float16)},
+            "BFloat16": lambda Self, arr: Self.F32编码BF16(arr),
+            "Float16_E0M15": lambda Self, arr: {"Vector": Self.F32编码F16_E0M15(arr)},
+            "Float32": lambda Self, arr: {"Vector": arr.astype(np.float32)},
+        }
     def F32编码Q8_K_X(Self, 输入数组):
         for _ in tqdm(range(1), desc="tqdm.vectors.quantization"):
             块大小 = Self.Config.VEC_QUANTIZATION_BLOCK_SIZE
@@ -350,62 +375,24 @@ class Quantization:
         for _ in tqdm(range(1), desc=desc):
             整型数值 = 编码数组.view(np.int16)
         return 整型数值.astype(np.float32) / 32768.0
-    def 解码向量(Self, 向量文件, 量化 = None):
-        量化格式 = 量化 if 量化 else Self.Config.VEC_QUANTIZATION 
-        if 量化格式 == "Q8_K_X":
-            向量数组 = Self.Q8_K_X解码F32(向量文件["Vector"], 向量文件["Scale"], 向量文件["ZeroPoint"], 向量文件["Shape"])
-        elif 量化格式 == "Q6_K_X":
-            向量数组 = Self.Q6_K_X解码F32(向量文件["Vector"], 向量文件["Scale"], 向量文件["ZeroPoint"], 向量文件["Shape"])
-        elif 量化格式 == "Q4_K_X":
-            向量数组 = Self.Q4_K_X解码F32(向量文件["Vector"], 向量文件["Scale"], 向量文件["ZeroPoint"], 向量文件["Shape"])
-        elif 量化格式 == "Q3_K_X":
-            向量数组 = Self.Q3_K_X解码F32(向量文件["Vector"], 向量文件["Scale"], 向量文件["ZeroPoint"], 向量文件["Shape"])
-        elif 量化格式 == "Q2_K_X":
-            向量数组 = Self.Q2_K_X解码F32(向量文件["Vector"], 向量文件["Scale"], 向量文件["ZeroPoint"], 向量文件["Shape"])
-        elif 量化格式 == "Float8_E4M3":
-            向量数组 = Self.FP8_E4M3解码F32(向量文件["Vector"])
-        elif 量化格式 == "Float16":
-            向量数组 = 向量文件["Vector"]
-        elif 量化格式 == "BFloat16":
-            向量数组 = Self.BF16解码F32(向量文件["Vector"])
-        elif 量化格式 == "Float16_E0M15":
-            向量数组 = Self.F16_E0M15解码F32(向量文件["Vector"])
-        elif 量化格式 == "Float32":
-            向量数组 = 向量文件["Vector"]
-        向量数组 = np.nan_to_num(向量数组, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
-        return 向量数组
-    def 编码向量(Self, 向量数组, 量化 = None):
-        量化格式 = 量化 if 量化 else Self.Config.VEC_QUANTIZATION 
-        if 量化格式 == "Q8_K_X":
-            向量文件 = Self.F32编码Q8_K_X(向量数组)
-        elif 量化格式 == "Q6_K_X":
-            向量文件 = Self.F32编码Q6_K_X(向量数组)
-        elif 量化格式 == "Q4_K_X":
-            向量文件 = Self.F32编码Q4_K_X(向量数组)
-        elif 量化格式 == "Q3_K_X":
-            向量文件 = Self.F32编码Q3_K_X(向量数组)
-        elif 量化格式 == "Q2_K_X":
-            向量文件 = Self.F32编码Q2_K_X(向量数组)
-        elif 量化格式 == "Float8_E4M3":
-            向量文件 = Self.F32编码FP8_E4M3(向量数组)
-        elif 量化格式 == "Float16":
-            向量文件 = {"Vector": 向量数组.astype(np.float16)}
-        elif 量化格式 == "BFloat16":
-            向量文件 = Self.F32编码BF16(向量数组)
-        elif 量化格式 == "Float16_E0M15":
-            向量文件 = {"Vector": Self.F32编码F16_E0M15(向量数组)}
-        elif 量化格式 == "Float32":
-            向量文件 = {"Vector": 向量数组.astype(np.float32)}
-        return 向量文件
+    def 解码向量(Self, 向量文件, 量化=None):
+        量化格式 = 量化 or Self.Config.VEC_QUANTIZATION
+        解码函数 = Self.解码映射.get(量化格式)
+        向量数组 = 解码函数(Self, 向量文件)
+        return np.nan_to_num(向量数组, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+
+    def 编码向量(Self, 向量数组, 量化=None):
+        量化格式 = 量化 or Self.Config.VEC_QUANTIZATION
+        编码函数 = Self.编码映射.get(量化格式)
+        return 编码函数(Self, 向量数组)
     def 叠加量化向量(Self, 旧字典, 新字典):
-        if "ZeroPoint" in [index for index in 旧字典]:
+        if "ZeroPoint" in 旧字典:
             Self.Module.写入日志("log.quantization.superposition.error", info_level=2)
             返回结果 = [新字典, False]
         else:
             结果字典 = {}
-            拼接键 = ["Vector"]
             形状键 = "Shape"
-            for key in 拼接键:
+            for key in Self.拼接键:
                 if key in 旧字典 and key in 新字典:
                     结果字典[key] = np.concatenate((旧字典[key], 新字典[key]), axis=0)
             if 形状键 in 旧字典 and 形状键 in 新字典:

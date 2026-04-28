@@ -31,9 +31,33 @@ def 获取嵌入模型(Self):
             Self.Module.写入日志("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc(), info_level=3)
             raise RuntimeError(Self.Lang("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc()))
         
+def 获取重排模型(Self):
+    缓存键 = f"{Self.Config.RERANKER_MODEL}|{Self.Config.RERANKER_INSTRUCT}"
+    if 缓存键 in 模型缓存:
+        return 模型缓存[缓存键]
+    with 线程锁:
+        if 缓存键 in 模型缓存:
+            return 模型缓存[缓存键]
+        try:
+            for _ in Self.Locale.Tqdm(range(1), desc=f"tqdm.model.load"):
+                from sentence_transformers import CrossEncoder
+                Self.Module.写入日志("log.core.load.rerank.model.debug", model=Self.Config.RERANKER_MODEL, info_level=0)
+                模型参数 = {}
+                if Self.Config.RERANKER_MODEL_DEVICE:
+                    模型参数["device"] = Self.Config.RERANKER_MODEL_DEVICE
+                if Self.Config.RERANKER_INSTRUCT:
+                    模型参数["prompts"] = {"classification": Self.Config.RERANKER_INSTRUCT}
+                    模型参数["default_prompt_name"] = "classification"
+                模型 = CrossEncoder(Self.Config.RERANKER_MODEL, trust_remote_code=True, **模型参数)
+            模型缓存[缓存键] = 模型
+            Self.Module.写入日志("log.core.load.rerank.model.succeed", model=Self.Config.RERANKER_MODEL, info_level=0)
+            return 模型
+        except Exception:
+            Self.Module.写入日志("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc(), info_level=3)
+            raise RuntimeError(Self.Lang("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc()))
+        
 def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
     检索词 = []
-    pkl文件内容 = []
     待处理文本 = []
     文件路径 = Self.Config.VEC_FILE_PATH
     文件名 = Self.Config.VEC_FILE_NAME
@@ -41,9 +65,7 @@ def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
     if texts:
         if Path(f"{文件路径}/{文件名}.pkl").is_file():
             with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                pkl文件内容.extend(pickle.load(f))
-                for index in pkl文件内容:
-                    检索词.append(index[0])
+                检索词 = [item[0] for item in pickle.load(f)]
         检索词_set = set(检索词)
         待处理文本 = [index for index in texts if index[0] not in 检索词_set]
     elif 缓存键 in 向量文本缓存:
@@ -66,9 +88,9 @@ def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
                 np.savez_compressed(f"{文件路径}/{文件名}.npz", **向量文件)
 
             if Path(f"{文件路径}/{文件名}.pkl").is_file():
+                with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
+                    文本文件 = pickle.load(f)
                 if 叠加状态:
-                    with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                        文本文件 = pickle.load(f)
                     文本文件.extend(文本结果列表)
                     with open(f"{文件路径}/{文件名}.pkl", "wb") as f:
                         pickle.dump(文本文件, f)
