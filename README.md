@@ -111,11 +111,9 @@ conda env remove -n Translator_Minecraft
 - 修复 FTBQ 与 BQ 任务翻译无法传入的问题
 - 删除 额外依赖 ujson
 
-### Release.1.2 Bata.2
+### Release.1.2
 - 修复 单次多词 翻译键值映射问题
 - 更改 单次多词 格式
-
-### Release.1.2
 - 添加 已安装的整合包翻译支持（失败，Release.1.4 Bata.1完成）
 
 ### Release.1.3 Bata.1
@@ -261,7 +259,7 @@ conda env remove -n Translator_Minecraft
 - 添加 SnbtLib依赖
 - 删除 PyHocon依赖
 
-### Release.1.5 Bata.2 (进行中)
+### Release.1.5 Bata.2
 - 添加 API任务状态自动清理
 - 添加 翻译/嵌入HTTP请求超时(含系数)
 - 添加 导入DictMini缓存使用重排序获取译文相似度最高的文本([CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict))(默认模型:[Qwen/Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B))
@@ -291,3 +289,6 @@ conda env remove -n Translator_Minecraft
 - 修改 LLM_SYSTEM_PROMPT为TRANSLATOR_SYSTEM_PROMPT
 - 修改 LLM_CONTEXTS与LLM_CONTEXTS_LENGTH合并为LLM_CONTEXTS
 - 修改 API任务状态持久化为SQLite
+
+### Release.1.5（进行中）
+- ~~修复了一些已知的问题。~~
