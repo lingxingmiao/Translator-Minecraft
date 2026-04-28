@@ -63,7 +63,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
 - [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 69.3分*
 - [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
-- [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分
+- [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
 ### WMT24++ NeMo Evaluator SDK And NeMo Skills
 - [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 88.8分*
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 87.8分
