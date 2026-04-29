@@ -329,3 +329,4 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
 - 修复 多程序日志语言文件无法使用的问题
+- 修复 退出的时候日志写一半没写完的问题（进行中）
