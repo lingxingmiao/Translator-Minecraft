@@ -326,5 +326,5 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 API任务状态持久化为SQLite
 
 ### Release.1.5 MMTQM.1（进行中）
-- 添加 MMTQM评分指标(Minecraft Machine Translation Quality Metrics)
+- 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
