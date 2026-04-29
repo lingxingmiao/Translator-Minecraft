@@ -50,7 +50,7 @@ conda env remove -n Translator_Minecraft
 建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
 WMT24++：不计小于50分 "*"表示强制启用推理链
 ### WMT24++ XCOMET-XXL
-- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分 (公益网站即将更换，测试阶段)
+- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分 (不适合Minecraft翻译)
 - Qwen/Qwen3.6-Plus 84.3分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
