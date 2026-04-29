@@ -82,8 +82,20 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
 
-## 更新日志
+# Minecraft Machine Translation Quality Metrics
+即将推出...<br>
+这是一个用于评估翻译模型/大语言模型翻译质量指标的，类似于 WMT、MQM。<br>
+评分分布：
+- 翻译质量: 70%
+    - 模组: 60%
+    - 任务: 30%
+    - 光影: 10%
+- 占位符: 15%
+- 专有名词: 15%
+
+# 更新日志
 版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
+## Translator Minecraft
 ### Release.1 Alpha.1
 - 添加 语言文件 翻译支持
 - 添加 IndexFlatL2方法RAG检索
