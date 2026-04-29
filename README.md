@@ -86,18 +86,17 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 即将推出...<br>
 这是一个用于评估翻译模型/大语言模型翻译质量指标的，类似于 WMT、MQM。<br>
 评分分布:
-- 语义准确性: 55%
-- 占位符格式代码: 30%
-- 专有名词: 15%<br>
+- 语义准确性: 65%
+- 占位符格式代码: 10%(不如删了)
+- 专有名词: 25%<br>
 
 题目分布:
 - 模组: 55%
 - 任务: 30%
 - 光影: 15%<br>
 
-# 更新日志
+## 更新日志
 版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
-## Translator Minecraft
 ### Release.1 Alpha.1
 - 添加 语言文件 翻译支持
 - 添加 IndexFlatL2方法RAG检索
@@ -326,5 +325,6 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 LLM_CONTEXTS与LLM_CONTEXTS_LENGTH合并为LLM_CONTEXTS
 - 修改 API任务状态持久化为SQLite
 
-### Release.1.5（进行中）
-- ~~修复了一些已知的问题。~~
+### Release.1.5 MMTQM.1（进行中）
+- 添加 MMTQM评分指标(Minecraft Machine Translation Quality Metrics)
+- 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
