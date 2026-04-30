@@ -6,6 +6,11 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题<br>
 
+支持的项目:
+- [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict)
+- [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files)
+
+
 ## 演示
 ### API
 公益API公开测试 https://lingxingmiao.github.io 该API禁止商用/转发<br>
