@@ -331,6 +331,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 API任务状态持久化为SQLite
 
 ### Release.1.5 MMTQM.1（进行中）
+- 添加 导入DictMini提示词可以导入翻译缓存文件
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
 - 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
