@@ -333,6 +333,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
 - 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)(Core配置注入)(进行中)
 - 添加 API翻译任务请求重复文件直接返回错误(老爱有人往我API重复请求)
+- 添加 翻译索引开关
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
 - 修复 多程序日志语言文件无法使用的问题
 - 修复 退出的时候日志写一半没写完的问题
