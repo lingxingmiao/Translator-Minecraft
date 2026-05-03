@@ -86,14 +86,12 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
+- [Z.ai/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)
 
 # Minecraft Machine Translation Quality Metrics
-即将推出...<br>
+即将推出... 预计Q2'26-Q3'26<br>
 这是一个用于评估翻译模型/大语言模型翻译质量指标的，类似于 WMT、MQM。<br>
-评分分布:
-- 语义准确性: 50%
-- 占位符格式代码: 20%(不如删了)
-- 专有名词: 30%<br>(BUG较多)
+从4-12个选项中选择一个
 
 题目分布:
 - 模组: 55%
@@ -333,7 +331,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 ### Release.1.5 MMTQM.1（进行中）
 - 添加 导入DictMini提示词可以导入翻译缓存文件
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
-- 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)
+- 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)(Core配置注入)(进行中)
 - 添加 API翻译任务请求重复文件直接返回错误(老爱有人往我API重复请求)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
 - 修复 多程序日志语言文件无法使用的问题
