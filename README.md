@@ -28,8 +28,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 向量索引 网络请求 Snbt文件 进度显示与艺术
-pip install numpy   faiss  requests snbtlib     rich
+#          向量处理 向量索引 网络请求 Snbt文件 进度显示与艺术 json加速
+pip install numpy   faiss  requests snbtlib     rich       ujson
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 内置向量生成（可选）
@@ -335,6 +335,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 同模组已有翻译索引
 - 添加 API请求翻译实例设置
 - 优化 向量相关操作内存占用
+- 修改 Faiss缓存校验速度
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)(来自公益API的modid:sswaystones翻译请求)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
 - 修复 多程序日志语言文件无法使用的问题
@@ -344,6 +345,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修复 新建翻译实例运行时会重新解码向量导致内存多占一份的问题
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置
+- 修改 json替换为ujson
 - 删除 API请求语言设置
 - 删除 高质量索引(功能被细化)
 - 停止支持 TranslatorMCPServer.py(太没用了)
