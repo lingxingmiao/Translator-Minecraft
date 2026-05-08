@@ -1,4 +1,5 @@
 # Translator Minecraft
+最近中考更新可能或许应该会稍微减少（约5%）
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重写版本，相比原先版本添加了更多功能<br>
 此软件提供MCP与API服务为Minecraft的整合包、光影包、资源包、模组、FTB任务、更好的任务提供便捷的翻译功能<br>
 还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，可以使用这个文件来导出数据集来微调大语言模型<br>
@@ -335,6 +336,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 API翻译任务请求重复文件直接返回错误(老爱有人往我API重复请求)
 - 添加 翻译索引开关, 即INDEX_K=0
 - 添加 高质量索引索引同模组已有翻译(进行中)
+- 添加 API请求翻译实例设置
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)
 - 修复 导入DictMini缓存即使是都是只有一个项也会加载重排序模型的问题
 - 修复 多程序日志语言文件无法使用的问题
@@ -343,3 +345,4 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修复 [oωo-lib](https://www.mcmod.cn/class/5043.html)解析导致翻译任务报错的问题
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置(进行中)
+- 删除 API请求语言设置
