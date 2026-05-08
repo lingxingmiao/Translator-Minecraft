@@ -33,8 +33,6 @@ conda activate Translator_Minecraft
 pip install numpy   faiss  requests snbtlib     rich
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
-# MCP服务器（可选）
-pip install fastmcp
 # 内置向量生成（可选）
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
