@@ -335,6 +335,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 同模组已有翻译索引
 - 添加 API请求翻译实例设置
 - 添加 索引方法 IVPSQ IVPPQ IVPFlat HNSWPQ HNSWFlat FlatL2 FlatIP(文本索引默认HNSWPQ 模组索引默认FlatL2)
+- 添加 翻译词条数超过x后使用另一个API![](https://img.shields.io/badge/状态-进行中-orange)
 - 优化 向量相关操作内存占用
 - 优化 Faiss缓存校验速度
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)(来自公益API的modid:sswaystones翻译请求)
