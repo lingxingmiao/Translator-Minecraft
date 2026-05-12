@@ -335,7 +335,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 同模组已有翻译索引
 - 添加 API请求翻译实例设置
 - 添加 索引方法 IVPSQ IVPPQ IVPFlat HNSWPQ HNSWFlat FlatL2 FlatIP(文本索引默认HNSWPQ 模组索引默认FlatL2)
-- 添加 翻译词条数超过x后使用另一个API![](https://img.shields.io/badge/状态-进行中-orange)
+- 添加 翻译词条数超过x后使用另一个API(单API不变 多API用LLM0, LLM1等数字后缀)
 - 优化 向量相关操作内存占用
 - 优化 Faiss缓存校验速度
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)(来自公益API的modid:sswaystones翻译请求)
@@ -350,6 +350,8 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置
 - 修改 json替换为ujson
+- 修改 LLM_MAX_BATCH改为TRANSLATOR_BATCH
+- 修改 启动标题大标题改为彩色
 - 删除 API请求语言设置
 - 删除 高质量索引(功能被细化)
 - 停止支持 TranslatorMCPServer.py(太没用了)
