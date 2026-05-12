@@ -345,8 +345,8 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修复 通用翻译翻译光影的时候即使正常也会炸的问题
 - 修复 [oωo-lib](https://www.mcmod.cn/class/5043.html)解析导致翻译任务报错的问题
 - 修复 新建翻译实例运行时会重新解码向量导致内存多占一份的问题
-- 修复 翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件会返回资源包的问题![](https://img.shields.io/badge/状态-进行中-orange)
-- 修复 翻译整合包不会翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件的问题![](https://img.shields.io/badge/状态-进行中-orange)
+- 修复 翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件会返回资源包的问题
+- 修复 翻译整合包不会翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件的问题
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置
 - 修改 json替换为ujson
