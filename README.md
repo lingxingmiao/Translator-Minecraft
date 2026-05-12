@@ -326,10 +326,10 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 LLM_CONTEXTS与LLM_CONTEXTS_LENGTH合并为LLM_CONTEXTS
 - 修改 API任务状态持久化为SQLite
 
-### Release.1.5 MMTQM.1（进行中）
+### Release.1.5（进行中）
 - 添加 导入DictMini提示词可以导入翻译缓存文件
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
-- 添加 MMTQM机器翻译质量指标(Minecraft Machine Translation Quality Metrics)(Core配置注入)
+- 添加 MMTQM机器翻译质量指标第一代(Minecraft Machine Translation Quality Metrics)(依赖翻译列表函数，使用配置注入)
 - 添加 API翻译任务请求重复文件直接返回错误(可配置)(老爱有人往我API重复请求)
 - 添加 翻译索引开关, 即INDEX_TEXT_K=0
 - 添加 同模组已有翻译索引
@@ -344,9 +344,15 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修复 通用翻译翻译光影的时候即使正常也会炸的问题
 - 修复 [oωo-lib](https://www.mcmod.cn/class/5043.html)解析导致翻译任务报错的问题
 - 修复 新建翻译实例运行时会重新解码向量导致内存多占一份的问题
+- 修复 翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件会返回资源包的问题![](https://img.shields.io/badge/状态-进行中-orange)
+- 修复 翻译整合包不会翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件的问题![](https://img.shields.io/badge/状态-进行中-orange)
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置
 - 修改 json替换为ujson
 - 删除 API请求语言设置
 - 删除 高质量索引(功能被细化)
 - 停止支持 TranslatorMCPServer.py(太没用了)
+
+### 编辑需要
+- ![](https://img.shields.io/badge/状态-进行中-orange) ![](https://img.shields.io/badge/FF0000-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
+- 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
