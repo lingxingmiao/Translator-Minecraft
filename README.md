@@ -134,10 +134,9 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 思考模型支持（仅为强制思考模型做支持）
 - 修改 IndexFlatL2索引 改为 IndexHNSWSQ索引(SQ8)
 - 修改 ThreadPoolExecutor索引并发 改为 Faiss并行
-- 添加 思考模型支持
 - 修复 翻译语言文件 双文件无法正确处理
 - 修复 无法传入上下文开关参数
-- 添加 额外依赖 ujson, pyhocon
+- 添加 额外依赖 ujson pyhocon
 
 ### Release.1.2
 含2个1版本
