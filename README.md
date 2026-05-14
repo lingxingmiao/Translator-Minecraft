@@ -354,7 +354,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 API翻译任务请求重复文件直接返回错误(可配置)(老爱有人往我API重复请求)
 - 添加 翻译索引开关, 即INDEX_TEXT_K=0
 - 添加 同模组已有翻译索引
-- 添加 API请求翻译实例设置![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
+- 添加 API请求翻译实例设置
 - 添加 索引方法 IVPSQ IVPPQ IVPFlat HNSWPQ HNSWFlat FlatL2 FlatIP(文本索引默认HNSWPQ 模组索引默认FlatL2)
 - 添加 翻译词条数超过x后使用另一个API(单API不变 多API用LLM0, LLM1等数字后缀)
 - 添加 导入DictMini参考词 最大长度限制(可配置)
@@ -382,5 +382,5 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
 ### 编辑需要
-- ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/FF0000-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
+- ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
