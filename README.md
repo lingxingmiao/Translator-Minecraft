@@ -360,7 +360,8 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 翻译词条数超过x后使用另一个API(单API不变 多API用LLM0, LLM1等数字后缀)
 - 添加 导入DictMini参考词 最大长度限制(可配置)
 - 添加 自适应翻译上下文顺序
-- 添加 相同翻译内容合并为一个请求![](https://img.shields.io/badge/状态-进行中-green)
+- 添加 相同翻译内容合并为一个请求
+- 添加 翻译压缩包内含有contenttweaker文件夹是返回全部内容([NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)兼容)
 - 优化 向量相关操作内存占用
 - 优化 Faiss缓存校验速度
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)(来自公益API的modid:sswaystones翻译请求)
@@ -370,10 +371,9 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修复 通用翻译翻译光影的时候即使正常也会炸的问题
 - 修复 [oωo-lib](https://www.mcmod.cn/class/5043.html)解析导致翻译任务报错的问题
 - 修复 新建翻译实例运行时会重新解码向量导致内存多占一份的问题
-- 修复 翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件会返回资源包的问题
 - 修复 翻译整合包不会翻译[NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)插件的问题
 - 修复 翻译没有获取到结果发送日志的时候会二次报错导致程序退出
-- 修复 单文件夹内多个同语言不同扩展名只会翻译一个的问题![](https://img.shields.io/badge/状态-进行中-green)
+- 修复 单文件夹内多个同语言不同扩展名只会翻译一个的问题
 - 修改 任务读取/写入从 计算密集 改为 IO密集
 - 修改 高质量索引拆分为多个配置
 - 修改 json替换为ujson
