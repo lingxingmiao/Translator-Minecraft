@@ -19,7 +19,6 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 当前使用模型: 
 - [Gamma4 26B A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
 - [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
-[![Image](https://github.com/lingxingmiao/Translator-Minecraft/blob/main/Image/Web.png)](https://lingxingmiao.github.io)
 
 ## 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
@@ -33,7 +32,7 @@ conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
 #          向量处理 向量索引 网络请求 Snbt文件 进度显示与艺术 json加速
-pip install numpy   faiss  requests snbtlib     rich       ujson
+pip install numpy   faiss  requests snbtlib      rich       ujson
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 内置向量生成（可选）
@@ -45,7 +44,6 @@ pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheel
 conda install -c conda-forge cupy cuda-version=12.8
 # 打包exe 没有做torch兼容 手动打包cupy不可用
 pip install nuitka
-nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorMCPServer.py
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
 # 退出环境
 conda deactivate
@@ -119,59 +117,41 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 
 ## 更新日志
 版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
-### Release.1 Alpha.1
+### Release.1
+含1个α版本与2个β版本
 - 添加 语言文件 翻译支持
 - 添加 IndexFlatL2方法RAG检索
-- 添加 额外依赖 numpy faiss-cpu
-
-### Release.1 Bata.1
 - 添加 资源包 翻译支持 （光影，模组，资源包）
 - 添加 导出数据集功能
 - 添加 导入参考词功能
-
-### Release.1 Bata.2
-- 修复 上下文 system 位置
-- 修复 系统提示词为 system 时不会添加 user 的问题
 - 添加 最大历史上下文
-
-### Release.1
-- 添加 文件传入参数 （如何使用 这一栏）
-
-### Release.1.1 Bata.1
-- 添加 FTBQ任务 翻译支持
-- 更改 IndexFlatL2索引 改为 IndexHNSWSQ索引(SQ8)
-- 更改 ThreadPoolExecutor索引并发 改为 Faiss并行
-- 添加 额外依赖 pyhocon
-
-### Release.1.1 Bata.2
-- ~~修复了一些已知的问题。~~
-- 修复 IndexHNSWSQ索引 没有训练就构建的错误
-- 添加 BQ任务 翻译支持
-- 添加 思考模型支持（仅为强制思考模型做支持）
+- 添加 文件传入参数
+- 添加 额外依赖 numpy faiss-cpu
 
 ### Release.1.1
+含2个β版本
+- 添加 翻译 FTBQ任务 BQ任务
+- 添加 思考模型支持（仅为强制思考模型做支持）
+- 修改 IndexFlatL2索引 改为 IndexHNSWSQ索引(SQ8)
+- 修改 ThreadPoolExecutor索引并发 改为 Faiss并行
+- 添加 思考模型支持
 - 修复 翻译语言文件 双文件无法正确处理
 - 修复 无法传入上下文开关参数
-- 添加 FTB任务 翻译支持 （选定版本 1.12.2 1.20.1）
-- 添加 BQ任务 翻译支持 （选定版本 1.7.10 1.12.2）
-- 添加 思考模型支持
-- 添加 额外依赖 ujson
+- 添加 额外依赖 ujson, pyhocon
 
-### Release.1.2 Bata.1
+### Release.1.2
+含2个1版本
 - 添加 自动汉化更新 的 I18n词典 导入参考词功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
 - 添加 向量索引缓存功能（SHA3-256校验 .pkl 与 .npy 文件，生成 .faiss-sha3 与 .faiss 文件）
-- 更改 向量存储的格式从 .npy 改为 .npz，格式可选:
+- 修改 单次多词 格式
+- 修改 向量存储的格式从 .npy 改为 .npz，格式可选:
     - Float32
     - Float16_E0M15
     - Uint8+Float16
     - Uint4+Float16
 - 修复 FTBQ 与 BQ 任务翻译无法传入的问题
-- 删除 额外依赖 ujson
-
-### Release.1.2
 - 修复 单次多词 翻译键值映射问题
-- 更改 单次多词 格式
-- 添加 已安装的整合包翻译支持（失败，Release.1.4 Bata.1完成）
+- 删除 额外依赖 ujson
 
 ### Release.1.3 Bata.1
 - 大量修改传入方式
