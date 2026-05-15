@@ -341,6 +341,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 添加 自适应翻译上下文顺序
 - 添加 相同翻译内容合并为一个请求
 - 添加 翻译压缩包内含有contenttweaker文件夹是返回全部内容([NuclearCraft: Overhauled](https://www.mcmod.cn/class/2483.html)兼容)
+- 添加 翻译整合包NeoForge模组ID获取
 - 优化 向量相关操作内存占用
 - 优化 Faiss缓存校验速度
 - 修复 翻译读取资源文件lang文件夹内是文件夹的语言文件会报错的问题(不翻译)(来自公益API的modid:sswaystones翻译请求)
