@@ -365,14 +365,16 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
 ### Release.1.6 Bata.1 (计划中)
-- 添加 数据包翻译
-- 添加 帕秋莉手册翻译
-- 添加 CraftTweaker(displayName/tooltip)翻译
-- 添加 自定义主菜单翻译
-- 添加 起源翻译
-- 添加 困难任务翻译
-- 添加 Lavender手册翻译
-- 添加 CustomNPCs翻译
+- 添加 翻译(看到BBSMC有好多功能想搬了)
+    - 数据包
+    - 帕秋莉手册
+    - Lavender手册
+    - CraftTweaker(displayName/tooltip)
+    - 自定义主菜单
+    - 精致菜单
+    - 起源
+    - 困难任务
+    - CustomNPCs
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
