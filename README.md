@@ -9,7 +9,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 更好的任务
 - 核电工艺重制版附加包
 
-后续将计划支持以下组件(不是大饼)
+后续将支持以下组件(不是大饼)
 - 数据包
 - 帕秋莉手册
 - Lavender手册
@@ -19,6 +19,9 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 起源
 - 困难任务
 - CustomNPCs
+
+后续计划支持以下组件(可能是大饼)
+- KubeJS
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
@@ -130,7 +133,7 @@ conda env remove -n Translator_Minecraft
 ```
 
 ## 更新日志
-版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
+版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
 ### Release.1
 含1个α版本与2个β版本
 - 添加 语言文件 翻译支持
