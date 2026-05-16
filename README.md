@@ -326,7 +326,7 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 修改 LLM_CONTEXTS与LLM_CONTEXTS_LENGTH合并为LLM_CONTEXTS
 - 修改 API任务状态持久化为SQLite
 
-### Release.1.5（进行中）
+### Release.1.5
 - 添加 导入DictMini提示词可以导入翻译缓存文件
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
 - 添加 MMTQM机器翻译质量指标第一代(Minecraft Machine Translation Quality Metrics)(依赖翻译列表函数，使用配置注入)
@@ -364,6 +364,15 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - 删除 导入查看词(文件夹版本, 非Dict Mini)
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
+### Release.1.6 Bata.1 (计划中)
+- 添加 数据包翻译
+- 添加 帕秋莉手册翻译
+- 添加 CraftTweaker(displayName/tooltip)翻译
+- 添加 自定义主菜单翻译
+- 添加 起源翻译
+- 添加 困难任务翻译
+- 添加 Lavender手册翻译
+- 添加 CustomNPCs翻译
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
