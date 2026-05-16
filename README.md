@@ -1,29 +1,107 @@
 # Translator Minecraft
-最近中考更新可能或许应该会稍微减少（约0%）<br>
-Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重写版本，相比原先版本添加了更多功能<br>
-此软件提供MCP与API服务为Minecraft的整合包、光影包、资源包、模组、FTB任务、更好的任务提供便捷的翻译功能<br>
-还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，可以使用这个文件来导出数据集来微调大语言模型<br>
-并且存储的向量还支持多种量化格式，以此来减少存储空间<br>
-此外这个程序还可以通过NVIDIA来加速向量处理与程序内直接生成向量（需要手动配置环境）<br>
-您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题<br>
+Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重构版本，相比原先版本添加了更多功能<br>
+此程序提供API服务为以下Minecraft附加组件提供便捷的翻译功能
+- 整合包
+- 光影包
+- 资源包
+- 模组
+- FTB任务
+- 更好的任务
+- 核电工艺重制版附加包
 
-支持的项目:
+后续将计划支持以下组件(不是大饼)
+- 数据包
+- 帕秋莉手册
+- Lavender手册
+- CraftTweaker(displayName/tooltip)
+- 自定义主菜单
+- 精致菜单
+- 起源
+- 困难任务
+- CustomNPCs
+
+您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
+您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
+
+### 支持的项目
 - [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict)
 - [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files)
 
-
-## 演示
-### API
-公益API公开测试 https://lingxingmiao.github.io 该API禁止商用/转发, 自定义API请求请查看API与Config文件<br>
-
-当前使用模型: 
-- [Gamma4 26B A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
-- [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
-
-## 推荐配置
+### 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
 - 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.8的Volta以上架构 推荐16GB以上内存
 - 内存(程序占用)：最低4GB 推荐8GB
+
+### API
+公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
+公益API当前使用模型: 
+- [Gamma4 26B A4B](https://huggingface.co/google/gemma-4-26B-A4B-it) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
+- [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
+
+### Minecraft Machine Translation Quality Metrics
+即将推出... 预计Q2'26-Q4'26<br>
+这是一个用于评估翻译模型/大语言模型翻译质量指标的。<br>
+从4-12个选项中选择一个
+
+题目分布:
+- 模组: 55%
+- 任务: 30%
+- 光影: 15%
+
+## 推荐模型翻译质量排名
+警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
+建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
+WMT24++：不计小于50分 "*"表示强制启用推理链
+### WMT24++ XCOMET-XXL
+- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分 缺点: 不适合Minecraft翻译
+- Qwen/Qwen3.6-Plus 84.3分
+- [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
+- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
+- Qwen/Qwen3-Max-Thinking 77.6分
+- [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
+- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分
+- [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
+- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 74.4分*
+- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) 72.6分
+- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 69.3分*
+- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 67.8分*
+- [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
+- [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
+- [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
+### WMT24++ NeMo Evaluator SDK And NeMo Skills
+- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 88.8分*
+- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 87.8分
+- [NVIDIA/NVIDIA-Nemotron-3-Super-120B-A12B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) 86.6分
+- [NVIDIA/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) 86.2分
+- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 85.6分*
+- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 83.2分*
+### 未知成绩
+- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 预计 WMT24++ XCOMET-XXL 54±2分
+- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) 预计 WMT24++ XCOMET-XXL 65±2分
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 优点: 预填充快 (当期翻译网站使用模型)
+- [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)
+### 不可用
+- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
+- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
+- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
+- [Z.ai/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)
+
+## 量化类型
+### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
+| RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
+| - | - | - | - | - |
+| 范围 | [-6.3716235, 5.829162] | [-6.3716235, 5.829162] | [-0.27004412, 0.24617423] | [-0.27004412, 0.24617423] |
+| 分位数 | 1.000 | 0.998 | 1.000 | 0.998 |
+| Q8_K_X | 0.0039/0.0000 | 0.0091/0.0001 | 0.0006/0.0001 | 0.0007/0.0002 |
+| Q6_K_X | 0.0156/0.0002 | 0.0175/0.0002 | 0.0007/0.0002 | 0.0008/0.0002 |
+| Q4_K_X | 0.0657/0.0034 | 0.0653/0.0034 | 0.0030/0.0034 | 0.0030/0.0034 |
+| Q3_K_X | 0.1408/0.0153 | 0.1390/0.0150 | 0.0064/0.0153 | 0.0063/0.0150 |
+| Q2_K_X | 0.3221/0.0849 | 0.3193/0.0833 | 0.0149/0.0761 | 0.0147/0.0747 |
+| Float32 | 0.0000/0.0000 | - | 0.0000/0.0000 | - |
+| Float16 | 0.0002/0.0000 | - | 0.0000/0.0000 | - |
+| Float16_E0M15 | 0.2441/0.0355 | - | 0.0000/0.0000 | - |
+| BFloat16 | 0.0026/0.0000 | - | 0.0001/0.0000 | - |
+| Float8_E4M3 | 0.0405/0.0004 | - | 0.0028/0.0020 | - |
 
 ## 编译/环境设置
 ```powershell
@@ -50,73 +128,9 @@ conda deactivate
 # 删除环境
 conda env remove -n Translator_Minecraft
 ```
-## 推荐模型翻译质量排名
-警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
-建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
-WMT24++：不计小于50分 "*"表示强制启用推理链
-### WMT24++ XCOMET-XXL
-- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分 (不适合Minecraft翻译)
-- Qwen/Qwen3.6-Plus 84.3分
-- [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
-- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
-- Qwen/Qwen3-Max-Thinking 77.6分
-- [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
-- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分
-- [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
-- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 74.4分*
-- [Qwen/Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) 72.6分
-- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 69.3分*
-- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 67.8分*
-- [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
-- [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
-- [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
-### WMT24++ NeMo Evaluator SDK And NeMo Skills
-- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 88.8分*
-- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 87.8分
-- [NVIDIA/NVIDIA-Nemotron-3-Super-120B-A12B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) 86.6分
-- [NVIDIA/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) 86.2分
-- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 85.6分*
-- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 83.2分*
-### 未知成绩
-- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 预计 WMT24++ XCOMET-XXL 54±2分
-- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) 预计 WMT24++ XCOMET-XXL 65±2分
-- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
-- [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)
-### 不可用
-- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
-- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
-- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
-- [Z.ai/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)
-
-## 量化类型
-### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
-| RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
-| - | - | - | - | - |
-| 范围 | [-6.3716235, 5.829162] | [-6.3716235, 5.829162] | [-0.27004412, 0.24617423] | [-0.27004412, 0.24617423] |
-| 分位数 | 1.000 | 0.998 | 1.000 | 0.998 |
-| Q8_K_X | 0.0039/0.0000 | 0.0091/0.0001 | 0.0006/0.0001 | 0.0007/0.0002 |
-| Q6_K_X | 0.0156/0.0002 | 0.0175/0.0002 | 0.0007/0.0002 | 0.0008/0.0002 |
-| Q4_K_X | 0.0657/0.0034 | 0.0653/0.0034 | 0.0030/0.0034 | 0.0030/0.0034 |
-| Q3_K_X | 0.1408/0.0153 | 0.1390/0.0150 | 0.0064/0.0153 | 0.0063/0.0150 |
-| Q2_K_X | 0.3221/0.0849 | 0.3193/0.0833 | 0.0149/0.0761 | 0.0147/0.0747 |
-| Float32 | 0.0000/0.0000 | - | 0.0000/0.0000 | - |
-| Float16 | 0.0002/0.0000 | - | 0.0000/0.0000 | - |
-| Float16_E0M15 | 0.2441/0.0355 | - | 0.0000/0.0000 | - |
-| BFloat16 | 0.0026/0.0000 | - | 0.0001/0.0000 | - |
-| Float8_E4M3 | 0.0405/0.0004 | - | 0.0028/0.0020 | - |
-
-# Minecraft Machine Translation Quality Metrics
-即将推出... 预计Q2'26-Q3'26<br>
-这是一个用于评估翻译模型/大语言模型翻译质量指标的，类似于 WMT、MQM。<br>
-从4-12个选项中选择一个
-
-题目分布:
-- 模组: 55%
-- 任务: 30%
-- 光影: 15%<br>
 
 ## 更新日志
-版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版
+版本：我看着差不多更新长度够了就发，看起来差不多没问题并且过了Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
 ### Release.1
 含1个α版本与2个β版本
 - 添加 语言文件 翻译支持
@@ -366,15 +380,16 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 
 ### Release.1.6 Bata.1 (计划中)
 - 添加 翻译(看到BBSMC有好多功能想搬了)
-    - 数据包
-    - 帕秋莉手册
-    - Lavender手册
-    - CraftTweaker(displayName/tooltip)
-    - 自定义主菜单
-    - 精致菜单
-    - 起源
-    - 困难任务
-    - CustomNPCs
+    - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
+    - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
+    - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
+    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-等待中-blue)
+    - 自定义主菜单![](https://img.shields.io/badge/状态-等待中-blue)
+    - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
+    - 起源![](https://img.shields.io/badge/状态-等待中-blue)
+    - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
+    - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 ### 编辑需要
-- ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) ![](https://img.shields.io/badge/0000FF-0000FF) ![](https://img.shields.io/badge/66CCFF-66CCFF)<br> 
+- ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
