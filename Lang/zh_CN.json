@@ -42,6 +42,7 @@
     "log.core.file.quests.read.end": "任务文件读取结束",
     "log.core.file.settle.start": "文件处理开始",
     "log.core.file.settle.end": "文件处理结束",
+    "log.core.file.settle.error": "文件处理出现错误: {e}",
     "log.core.modid.get.start": "获取模组ID开始",
     "log.core.modid.get.end": "获取模组ID结束",
     "log.core.lang.merge.start": "语言文件合并开始",
@@ -73,6 +74,12 @@
     "log.core.load.rerank.model.succeed": "成功加载重排序模型: {model}",
     "log.core.load.rerank.model.error": "加载重排序模型错误: {model} 错误: {e}",
 
+    "log.core.package.zip.hit": "内容被全部命中",
+
+    "log.mmtqm.start": "评估Minecraft翻译质量开始",
+    "log.mmtqm.score": "评估Minecraft翻译质量结束, 得分: {score}",
+    "log.mmtqm.file.not": "未找到指定评估文件",
+
     "log.module.zip.read.error": "读取压缩文件出现错误: {e}",
     "log.module.zip.read.error.c": "读取压缩文件出现错误, 跳过该词条: {e}",
     "log.module.read.file0.not.lang.error": "File0中没有原始语言文件",
@@ -98,9 +105,11 @@
     "log.api.task.error.none_result": "任务返回结果为空",
     "log.api.logs.get.error": "获取日志出现错误: {e}",
     "log.api.error": "发生错误: {e}",
+    "log.api.task.error.file.exists": "任务文件已存在, 请等待上一个任务完成",
 
     "tqdm.file.read": "读取文件",
     "tqdm.file.processing": "处理文件",
+    "tqdm.file.modid.get": "获取模组ID",
     "tqdm.model.load": "加载模型",
     "tqdm.vectors.generate": "生成向量",
     "tqdm.vectors.write": "存储向量",
@@ -120,9 +129,8 @@
     "tqdm.scale.quantization": "量化缩放",
     "tqdm.scale.quantization.reverse": "反量化缩放",
     "tqdm.translator.mod": "翻译模组",
-    "tqdm.translator.resource": "翻译资源"
-
-
-
+    "tqdm.translator.resource": "翻译资源",
+    "tqdm.translator.nuclearcraftaddonspack": "翻译核电工艺重制版附加包",
+    "tqdm.mmtqm": "评估轮数"
 
 }

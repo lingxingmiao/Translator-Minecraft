@@ -56,11 +56,14 @@ def 获取重排模型(Self):
             Self.Module.写入日志("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc(), info_level=3)
             raise RuntimeError(Self.Lang("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc()))
         
-def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
+def 参考词预处理(Self, texts: list = None, uuid = None) -> tuple[np.ndarray, list]:
     检索词 = []
     待处理文本 = []
     文件路径 = Self.Config.VEC_FILE_PATH
-    文件名 = Self.Config.VEC_FILE_NAME
+    if uuid:
+        文件名 = uuid
+    else:
+        文件名 = Self.Config.VEC_FILE_NAME
     缓存键 = f"{文件路径}/{文件名}"
     if texts:
         if Path(f"{文件路径}/{文件名}.pkl").is_file():
@@ -109,33 +112,55 @@ def 参考词预处理(Self, texts: list = None,) -> tuple[np.ndarray, list]:
             Self.Module.写入日志("log.core.read.vevtor.error", e=eb.format_exc(), info_level=2)
             向量文件, 文本文件 = False, False
     Self.Module.写入日志("log.core.vector.cache.end")
+    向量文件 = Self.Quantization.解码向量(向量文件)
     向量文本缓存[缓存键] = [向量文件, 文本文件]
     return 向量文件, 文本文件
 
-def 缓存索引(Self, 向量文件, 文本文件):
-    索引配置 = [Self.Config.INDEX_MODE, Self.Config.INDEX_SQ, Self.Config.INDEX_HNSW_CONSTRUCTION, Self.Config.INDEX_HNSW_SEARCH, Self.Config.INDEX_HNSW_M, Self.Config.INDEX_REFINEFLAT_K_FACTOR]
-    参考词哈希 = hashlib.sha3_256(pickle.dumps((向量文件, 文本文件, 索引配置))).hexdigest()
-    if 参考词哈希 in 索引缓存:
-        return 索引缓存[参考词哈希]
+def 缓存索引(Self, 向量文件, 文本文件, 模式 = None, 存储 = True):
     Self.Module.写入日志("log.core.index.cache.start", info_level=0)
-    if Path(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3").is_file():
-        with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "r") as f:
-            参考词哈希文件 = f.read()
-        if 参考词哈希文件 == 参考词哈希:
-            for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.read"):
-                向量索引 = faiss.read_index(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
+    索引配置 = [
+        Self.Config.INDEX_MODE,
+        Self.Config.INDEX_LANG_MODE,
+        Self.Config.INDEX_SQ,
+        Self.Config.INDEX_PQ_M,
+        Self.Config.INDEX_NLIST,
+        Self.Config.INDEX_NLITS,
+        Self.Config.INDEX_HNSW_M,
+        Self.Config.INDEX_HNSW_CONSTRUCTION,
+        Self.Config.INDEX_HNSW_SEARCH,
+        Self.Config.INDEX_REFINEFLAT_K_FACTOR,
+        Self.Config.INDEX_IVF_NPROBE,
+        Self.Config.INDEX_RE_MINMAX,
+        Self.Config.INDEX_RE_MEANSTD,
+        Self.Config.INDEX_RE_QUANTILES,
+        Self.Config.INDEX_RE_OPTIM
+    ]
+    参考词哈希 = hashlib.md5(pickle.dumps((向量文件, 文本文件, 索引配置))).hexdigest()
+    if not 模式:
+        模式 = Self.Config.INDEX_MODE
+    if 存储:
+        if 参考词哈希 in 索引缓存:
+            return 索引缓存[参考词哈希]
+        if Path(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5").is_file():
+            with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5", "r") as f:
+                参考词哈希文件 = f.read()
+            if 参考词哈希文件 == 参考词哈希:
+                for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.read"):
+                    向量索引 = faiss.read_index(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
+            else:
+                向量索引 = Self.构建索引(向量文件, 模式)
+                for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.write"):
+                    with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5", "w+") as f:
+                        f.write(参考词哈希)
+                    faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
         else:
             向量索引 = Self.构建索引(向量文件)
             for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.write"):
-                with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "w+") as f:
+                with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5", "w+") as f:
                     f.write(参考词哈希)
                 faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
+        索引缓存[参考词哈希] = 向量索引
     else:
-        向量索引 = Self.构建索引(向量文件)
-        for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.write"):
-            with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-sha3", "w+") as f:
-                f.write(参考词哈希)
-            faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
+        向量索引 = Self.构建索引(向量文件, 模式)
     Self.Module.写入日志("log.core.index.cache.end", info_level=0)
-    索引缓存[参考词哈希] = 向量索引
     return 向量索引

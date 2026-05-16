@@ -1,60 +1,54 @@
-from TranslatorLib import os, time, json, uuid, pickle, zipfile, Path, eb, PurePosixPath, glob, tomllib, snbtlib, ast, threading
+from TranslatorLib import queue, json, uuid, pickle, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, logging, RotatingFileHandler, QueueHandler, QueueListener
 from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
 from TranslatorLocale import Locale
 
+class FlushingFileHandler(RotatingFileHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
 
 class Module:
     def __init__(Self, Config: dict = None):
-        global tqdm
         Config = Config or {}
         Self.Config = RuntimeConfig(**Config)
         Self.Locale = Locale(Config=Config)
         Self.Lang = Self.Locale.Lang
-        tqdm = Self.Locale.Tqdm
-        Self.LOGS_FILE_PATH = Self.Config.LOGS_FILE_PATH
-        Self.LOGS_FILE_NAME = Self.Config.LOGS_FILE_NAME
-        Self._log_locks = {}
-        Self.日志等级映射 = {
-            0: "[INFO]",
-            1: "[WARNING]",
-            2: "[ERROR]",
-            3: "[FATAL]",
-            4: "[DEBUG]",
-        }
-    def 写入日志(Self, text: str, info_level: int = 0, **kwargs): 
-        text = Self.Lang(text, **kwargs)
-        日志文件名 = Path(Self.LOGS_FILE_PATH) / Self.LOGS_FILE_NAME
-        时间 = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
-        
-        日志等级 = Self.日志等级映射[info_level]
+        Self.tqdm = Self.Locale.Tqdm
+        Self.启动日志()
+    def 启动日志(Self):
+        日志名称 = f"Translator_{id(Self)}"
+        Self.日志管理器 = logging.getLogger(日志名称)
+        Self.日志管理器.setLevel(logging.DEBUG if Self.Config.DEBUG_MODE else logging.INFO)
+        if Self.日志管理器.handlers:
+            Self.日志管理器.handlers.clear()
+        日志队列 = queue.Queue(-1)
+        队列处理器 = QueueHandler(日志队列)
+        Self.日志管理器.addHandler(队列处理器)
+        日志文件 = Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log").resolve()
+        日志文件.parent.mkdir(parents=True, exist_ok=True)
+        格式化器 = logging.Formatter(fmt='[%(asctime)s][%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        文件处理器 = FlushingFileHandler(str(日志文件), encoding='utf-8', maxBytes=10*1024*1024, backupCount=5)
+        文件处理器.setFormatter(格式化器)
+        处理器列表 = [文件处理器]
+        默认日志 = Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()
+        if Self.Config.LOGS_GLOBAL and 日志文件 != 默认日志:
+            默认日志.parent.mkdir(parents=True, exist_ok=True)
+            全局处理器 = FlushingFileHandler(str(默认日志), encoding='utf-8', maxBytes=10*1024*1024, backupCount=5)
+            全局处理器.setFormatter(格式化器)
+            处理器列表.append(全局处理器)
+        Self._队列监听器 = QueueListener(日志队列, *处理器列表, respect_handler_level=True)
+        Self._队列监听器.start()
+        Self.日志管理器.propagate = False
+    def 写入日志(Self, text: str, info_level: int = 0, **kwargs):
+        等级映射 = {0: logging.INFO, 1: logging.WARNING, 2: logging.ERROR, 3: logging.CRITICAL, 4: logging.DEBUG}
+        等级 = 等级映射.get(info_level, logging.INFO)
         if info_level == 4 and not Self.Config.DEBUG_MODE:
             return
-        写入内容 = f"{时间}{日志等级}{text}\n"
-        线程 = threading.Thread(target=Self.实时写入日志,args=(写入内容, 日志文件名),daemon=True)
-        线程.start()
+        本地化文本 = Self.Lang(text, **kwargs)
+        Self.日志管理器.log(等级, 本地化文本)
 
-    
-
-    def 实时写入日志(Self, 写入内容: str, 日志文件名: Path):
-        写入内容 = str(写入内容).encode('utf-8', errors='replace').decode('utf-8')
-        log_path_str = str(日志文件名.resolve())
-        if log_path_str not in Self._log_locks:
-            Self._log_locks[log_path_str] = threading.Lock()
-        lock = Self._log_locks[log_path_str]
-        with lock:
-            默认日志路径 = Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()
-            日志路径 = 日志文件名.resolve()
-            is_default = (str(日志文件名) == str(Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}")))
-            if (日志路径 != 默认日志路径) and Self.Config.LOGS_GLOBAL and not is_default:
-                Self.写入全局日志(写入内容)
-            with open(f"{日志文件名}.log", "a+", encoding="utf-8") as f:
-                f.write(写入内容)
-    def 写入全局日志(Self, text: str):
-        with open(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log", "a+", encoding="utf-8") as f:
-            f.write(text)
-        
     def 读取日志(Self):
-        日志文件名 = Path(Self.LOGS_FILE_PATH) / Self.LOGS_FILE_NAME
+        日志文件名 = Path(Self.Config.LOGS_FILE_PATH) / Self.Config.LOGS_FILE_NAME
         log_path = f"{日志文件名}.log"
         if not Path(log_path).exists():
             return ""
@@ -140,7 +134,6 @@ class Module:
                                     文本列表.append([[index, ["quests", index1q], ["description", index2q, 返回内容, "text"]], 返回内容["text"]])
                                 elif "translate" in 返回内容[1]:
                                     文本列表.append([[index, ["quests", index1q], ["description", index2q, 返回内容, 1, "translate"]], 返回内容[1]["translate"]])
-                                print(返回内容)
                             except Exception as e:
                                 文本列表.append([[index, ["quests", index1q], ["description", index2q]], index2])
                             
@@ -320,91 +313,83 @@ class Module:
                 f.write(json.dumps(json文件, ensure_ascii=False, indent=4))
     def 读取压缩文件(Self, file_path: str, cache_path: str, original_language: str, target_language: str):
         try:
-            for _ in tqdm(range(1), desc="tqdm.file.read"): 
+            for _ in Self.tqdm(range(1), desc="tqdm.file.read"):
                 with zipfile.ZipFile(file_path, 'r') as f:
-                    可用文件列表 = [False]
                     文件列表 = f.namelist()
-                    文件路径 = f"{cache_path}/{uuid.uuid4().hex}_{Path(file_path).stem}"
-                    if any(name.startswith("shaders") for name in 文件列表):
-                        可用文件列表 = [True]
-                        f.extractall(文件路径)
-                    for index in frozenset([original_language, target_language]):
-                        for index1 in 文件列表:
-                            index1文件名 = os.path.splitext(index1.split('/')[-1])[0]
-                            if index1文件名.lower() == index.lower():
-                                f.extract(index1, path=文件路径)
-                                可用文件列表.append([index, f"{文件路径}/{index1}"])
+                    缓存路径 = cache_path
+                    目标集合 = {"shaders", "contenttweaker"}
+                    存在目标 = any(
+                        p.rstrip('/').split('/')[-1].lower() in 目标集合
+                        for p in 文件列表 if p.rstrip('/').count('/') <= 1
+                    )
+                    可用文件列表 = [存在目标]
+                    if 存在目标:
+                        f.extractall(缓存路径)
+                    待查语言 = {original_language.lower(), target_language.lower()}
+                    for 内部文件 in 文件列表:
+                        if f.getinfo(内部文件).is_dir():
+                            continue
+                        主体 = Path(内部文件).stem.lower()
+                        if 主体 in 待查语言:
+                            完整路径 = f"{缓存路径}/{内部文件}"
+                            if not Path(完整路径).exists():
+                                f.extract(内部文件, path=缓存路径)
+                            可用文件列表.append([主体, 完整路径])
+            return 可用文件列表
         except Exception:
             Self.写入日志("log.module.zip.read.error", e=eb.format_exc(), info_level=3)
             raise FileNotFoundError(eb.format_exc())
-        return 可用文件列表
     def 读取资源文件(Self, file0: str, file1: str = "", read_error: bool = True):
         Self.写入日志("log.core.file.read.start", file0=file0, file1=file1)
-        压缩路径 = ""
-        文件1 = []
-        文件0 = []
-        文件0源文件 = []
-        file2 = ""
-        file3 = ""
-        输出扩展名 = ""
-        文件0是压缩包 = Path(file0).suffix.lower() in frozenset([".zip", ".jar"])
-        文件1是压缩包 = file1 and Path(file1).suffix.lower() in frozenset([".zip", ".jar"])
-        if 文件0是压缩包:
-            缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
-            file2 = Self.读取压缩文件(file0, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
-            压缩路径 = 缓存路径
-            if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_INPUT.lower() for 条目 in file2[1:]):
-                if read_error:
-                    Self.写入日志("log.module.read.file0.not.lang.error", info_level=3)
-                raise FileNotFoundError(Self.Lang("log.module.read.file0.not.lang.error"))
-            if 文件1是压缩包:
-                file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
-                if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower() for 条目 in file3[1:]):
-                    if read_error:
-                        Self.写入日志("log.module.read.file1.not.lang.error", info_level=3)
-                    raise FileNotFoundError(Self.Lang("log.module.read.file1.not.lang.error"))
+        文件0, 文件0源文件, 文件1 = [], [], []
+        压缩路径, 输出扩展名, file2 = "", "", ""
+        语言输入 = Self.Config.LANGUAGE_INPUT.lower()
+        语言输出 = Self.Config.LANGUAGE_OUTPUT.lower()
+        def 解析并追加(路径列表, 目标列表, 源文件列表=None):
+            nonlocal 输出扩展名
+            for fpath in 路径列表:
+                解析数据, 源数据 = Self.读取语言文件(fpath)
+                目标列表.extend(解析数据)
+                if 源文件列表 is not None:
+                    源文件列表.append(源数据)
+                输出扩展名 = Path(fpath).suffix
+
+        def 校验并获取路径(zip_ret, 目标语言, 日志键):
+            匹配路径 = [item[1] for item in zip_ret[1:] if isinstance(item, list) and item[0] == 目标语言]
+            if not 匹配路径 and read_error:
+                Self.写入日志(日志键, info_level=3)
+                raise FileNotFoundError(Self.Lang(日志键))
+            return 匹配路径
+        是压缩包0 = Path(file0).suffix.lower() in {".zip", ".jar"}
+        是压缩包1 = file1 and Path(file1).suffix.lower() in {".zip", ".jar"}
+        if 是压缩包0:
+            实际解压目录 = Path(Self.Config.PATH_CACHE) / f"{uuid.uuid4().hex}_{Path(file0).stem}"
+            压缩路径 = str(实际解压目录)
+            file2 = Self.读取压缩文件(file0, 压缩路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
+            输入路径 = 校验并获取路径(file2, 语言输入, "log.module.read.file0.not.lang.error")
+            解析并追加(输入路径, 文件0, 文件0源文件)
+            if 是压缩包1:
+                实际解压目录1 = Path(Self.Config.PATH_CACHE) / f"{uuid.uuid4().hex}_{Path(file1).stem}"
+                file3 = Self.读取压缩文件(file1, str(实际解压目录1), Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
+                输出路径 = 校验并获取路径(file3, 语言输出, "log.module.read.file1.not.lang.error")
+                解析并追加(输出路径, 文件1)
             elif file1:
-                文件1 += Self.读取语言文件(file1)[0]
-                输出扩展名 = Path(file1).suffix
-            for 条目 in file2[1:]:
-                if 条目[0] == Self.Config.LANGUAGE_INPUT.lower():
-                    临时路径 = 条目[1]
-                    压缩路径 = 临时路径
-                    输出扩展名 = Path(临时路径).suffix
-                    解析数据, 源文件数据 = Self.读取语言文件(临时路径)
-                    文件0 += 解析数据
-                    文件0源文件.append(源文件数据)
-            if file3:
-                for 条目 in file3[1:]:
-                    if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
-                        临时路径 = 条目[1]
-                        文件1 += Self.读取语言文件(临时路径)[0]
-            elif not file1:
-                for 条目 in file2[1:]:
-                    if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
-                        临时路径 = 条目[1]
-                        文件1 += Self.读取语言文件(临时路径)[0]
-        elif Path(file0).suffix.lower() in frozenset([".lang", ".json"]):
-            解析数据, 源文件数据 = Self.读取语言文件(file0)
-            文件0 += 解析数据
-            文件0源文件 = [源文件数据]
-            输出扩展名 = Path(file0).suffix
+                解析并追加([file1], 文件1)
+            else:
+                输出路径 = [item[1] for item in file2[1:] if isinstance(item, list) and item[0] == 语言输出]
+                解析并追加(输出路径, 文件1)
+        elif Path(file0).suffix.lower() in {".lang", ".json"}:
+            解析并追加([file0], 文件0, 文件0源文件)
             if file1:
-                if 文件1是压缩包:
-                    缓存路径 = f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
-                    file3 = Self.读取压缩文件(file1, 缓存路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
-                    压缩路径 = 缓存路径
-                    if not any(isinstance(条目, list) and len(条目) > 0 and 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower() for 条目 in file3[1:]):
-                        if read_error:
-                            Self.写入日志("log.module.read.file1.not.lang.error", info_level=3)
-                        raise FileNotFoundError(Self.Lang("log.module.read.file1.not.lang.error"))
-                    for 条目 in file3[1:]:
-                        if 条目[0] == Self.Config.LANGUAGE_OUTPUT.lower():
-                            临时路径 = 条目[1]
-                            文件1 += Self.读取语言文件(临时路径)[0]
+                if 是压缩包1:
+                    实际解压目录1 = Path(Self.Config.PATH_CACHE) / f"{uuid.uuid4().hex}_{Path(file1).stem}"
+                    压缩路径 = str(实际解压目录1)
+                    file3 = Self.读取压缩文件(file1, 压缩路径, Self.Config.LANGUAGE_INPUT, Self.Config.LANGUAGE_OUTPUT)
+                    输出路径 = 校验并获取路径(file3, 语言输出, "log.module.read.file1.not.lang.error")
+                    解析并追加(输出路径, 文件1)
                 else:
-                    文件1 += Self.读取语言文件(file1)[0]
-        Self.写入日志("log.core.file.read.end", file0=file0, file1=file1)
+                    解析并追加([file1], 文件1)
+        Self.写入日志("log.core.file.read.end", file0=文件0, file1=文件1)
         return 文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2
     def 翻译缓存(Self, 输入列表: list = None):
         文本文件 = []
@@ -421,7 +406,7 @@ class Module:
     def 从资源包文件夹获取I18n翻译模组ID(Self, 路径: str):
         Self.写入日志("log.core.modid.get.start", info_level=0)
         try:
-            with zipfile.ZipFile(glob.glob(os.path.join(f"{路径}/resourcepacks/", "Minecraft-Mod-Language-Modpack*"))[0], 'r') as f:
+            with zipfile.ZipFile(list((Path(路径) / "resourcepacks").glob("Minecraft-Mod-Language-Modpack*")), 'r') as f:
                 模组ID集 = set()
                 for index in f.namelist():
                     Path路径 = PurePosixPath(index)
@@ -439,7 +424,7 @@ class Module:
         Self.写入日志("log.core.modid.get.start", info_level=0)
         所有模组路径 = Path(f"{路径}/{"mods"}").glob('*.jar')
         模组ID列表 = []
-        for 模组文件路径 in 所有模组路径:
+        for 模组文件路径 in Self.tqdm(所有模组路径, desc="tqdm.file.modid.get"):
             try:
                 with zipfile.ZipFile(模组文件路径, 'r') as 压缩文件:
                     文件列表 = 压缩文件.namelist()
@@ -454,6 +439,15 @@ class Module:
                     if "META-INF/mods.toml" in 文件列表 and 模组ID is None:
                         try:
                             with 压缩文件.open("META-INF/mods.toml") as 文件:
+                                数据 = tomllib.load(文件)
+                            模组列表 = 数据.get('mods', [])
+                            if 模组列表:
+                                模组ID = 模组列表[0].get('modId')
+                        except Exception:
+                            Self.写入日志("log.module.parsemodid.error", e=eb.format_exc())
+                    if "META-INF/neoforge.mods.toml" in 文件列表 and 模组ID is None:
+                        try:
+                            with 压缩文件.open("META-INF/neoforge.mods.toml") as 文件:
                                 数据 = tomllib.load(文件)
                             模组列表 = 数据.get('mods', [])
                             if 模组列表:
@@ -486,3 +480,12 @@ class Module:
         return Path(path).resolve()
     def 列表去重(Self, 列表: list):
         return list(dict.fromkeys(列表))
+    def 读取审查文件(Self, file0: str):
+        返回列表 = []
+        with open(file0, 'r', encoding='utf-8') as 文件对象:
+            文件行列表 = 文件对象.read().splitlines()
+        for 单行文本 in 文件行列表:
+            数据字典 = ast.literal_eval(单行文本)
+            for 键名, 键值 in 数据字典.items():
+                返回列表.append([键名, 键值[0], 键值[1]])
+        return 返回列表

@@ -7,6 +7,7 @@ class Locale:
         Self.Config = RuntimeConfig(**Config)
         Self.语言对象: Dict[str, dict] = {}
         Path(Self.Config.LANG_PATH).mkdir(parents=True, exist_ok=True)
+        Self.TQDM刷新率 = 1/Self.Config.TQDM_FPS
         
     def LoadLanguage(Self):
         目标语言 = Self.Config.LANGUAGE
@@ -37,12 +38,20 @@ class Locale:
         语言文件, 中文语言文件 = Self.LoadLanguage()
         指定文本 = 语言文件.get(key, key)
         中文文本 = 中文语言文件.get(key, key)
+        返回值 = ""
         if kwargs:
             try:
-                return 指定文本.format(**kwargs)
+                返回值 = 指定文本.format(**kwargs)
             except KeyError:
-                return 中文文本.format(**kwargs)
-        return 指定文本
+                返回值 = 中文文本.format(**kwargs)
+        else:
+            返回值 = 指定文本
+        if 返回值 == key:
+            if kwargs:
+                返回值 = 中文文本.format(**kwargs)
+            else:
+                返回值 = 中文文本
+        return 返回值
         
     def Tqdm(Self, iterable=None, desc=None, **kwargs):
-        return tqdm(iterable=iterable, desc=Self.Lang(desc), **kwargs)
+        return tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)

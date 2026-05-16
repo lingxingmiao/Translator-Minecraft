@@ -1,3 +1,3 @@
 git add .
-git commit -m "提交R1.5 B2"
+git commit -m "提交R1.5"
 git push origin main

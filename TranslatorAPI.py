@@ -1,4 +1,4 @@
-from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote
+from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote, hashlib, re
 from TranslatorCore import Translator
 #需要安装↓
 from fastapi import FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks
@@ -21,6 +21,7 @@ FastAPI.add_middleware(
 FastAPI.state.limiter = 限流器
 FastAPI.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 请求并行数 = asyncio.Semaphore(APIConfig["api"]["max_concurrent"])
+API翻译器实例 = Translator(APIConfig["server"])
 
 class 持久化状态字典(Dict[str, Any]):
     def __init__(Self, db_path: str = "task_states.db", save_interval: float = 5.0, cleanup_hours: float = 24.0, cleanup_interval: float = 300.0):
@@ -43,7 +44,6 @@ class 持久化状态字典(Dict[str, Any]):
             )
         """)
         Self._conn.commit()
-        Self.临时翻译器 = Translator(APIConfig["server"])
         Self._加载数据库()
         threading.Thread(target=Self._轮询同步, daemon=True).start()
         threading.Thread(target=Self._轮询清理, daemon=True).start()
@@ -56,7 +56,7 @@ class 持久化状态字典(Dict[str, Any]):
                     super().__setitem__(任务ID, 状态数据)
                     Self._创建时间[任务ID] = 创建时间戳
             except Exception as e:
-                print(Self.临时翻译器.Lang("log.api.task.load.error", e=eb.format_exc()))
+                print(API翻译器实例.Lang("log.api.task.load.error", e=eb.format_exc()))
     def _执行同步(Self):
         with Self._lock:
             try:
@@ -73,7 +73,7 @@ class 持久化状态字典(Dict[str, Any]):
                     )
                     Self._conn.commit()
             except Exception as e:
-                print(Self.临时翻译器.Lang("log.api.task.sync.error", e=eb.format_exc()))
+                print(API翻译器实例.Lang("log.api.task.sync.error", e=eb.format_exc()))
     def _执行清理(Self):
         截止时间 = time.time() - (Self._cleanup_hours * 3600)
         with Self._lock:
@@ -86,7 +86,7 @@ class 持久化状态字典(Dict[str, Any]):
                     if super().__contains__(tid):
                         super().__delitem__(tid)
             except Exception as e:
-                print(Self.临时翻译器.Lang("log.api.task.clean.error", e=eb.format_exc()))
+                print(API翻译器实例.Lang("log.api.task.clean.error", e=eb.format_exc()))
     def _轮询同步(Self):
         while not Self._stop_event.wait(Self._save_interval):
             Self._执行同步()
@@ -121,6 +121,7 @@ class 持久化状态字典(Dict[str, Any]):
     cleanup_hours=APIConfig["api"]["task_states_cleanup_hours"],
     cleanup_interval=APIConfig["api"]["task_states_cleanup_interval"]
 )
+文件哈希值 = {}
 
 def 设置时间():
     时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + f"{int((time.time() % 1) * 10000):04d}"
@@ -183,6 +184,7 @@ async def _执行核心任务(task_id: str, 处理函数, 翻译器实例: Trans
                     "error": 翻译器实例.Lang("log.api.task.error.none_result"),
                     "logs": 任务状态字典[task_id].get("logs", []) + [f"[ERROR] {翻译器实例.Lang("log.api.task.error.none_result")}"]
                 })
+                文件哈希值.pop(task_id, None)
             else:
                 final_logs = 翻译器实例.调用额外函数("读取日志")
                 if final_logs:
@@ -197,6 +199,7 @@ async def _执行核心任务(task_id: str, 处理函数, 翻译器实例: Trans
                     "filename": pt(结果).name,
                     "logs": 任务状态字典[task_id].get("logs", []) + [f"[INFO] {翻译器实例.Lang("log.api.task.completed")}"]
                 })
+                文件哈希值.pop(task_id, None)
         except Exception as e:
             任务状态字典[task_id].update({
                 "status": "failed",
@@ -204,6 +207,7 @@ async def _执行核心任务(task_id: str, 处理函数, 翻译器实例: Trans
                 "error": str(e),
                 "logs": 任务状态字典[task_id].get("logs", []) + [f"[ERROR] {翻译器实例.Lang("log.api.error", e=eb.format_exc())}"]
             })
+            文件哈希值.pop(task_id, None)
 def 清理任务缓存(task_id: str):
     """下载完成后或超时后清理缓存目录"""
     if task_id in 任务状态字典:
@@ -211,30 +215,61 @@ def 清理任务缓存(task_id: str):
         if 缓存目录.exists():
             shutil.rmtree(缓存目录, ignore_errors=True)
         del 任务状态字典[task_id]
+        
+def 剔除任务中重复文件(task_id: str, sha: str):
+    if sha in 文件哈希值.values():
+        return True
+    else:
+        文件哈希值[task_id] = sha
+        return False
+def 解析字符串字典(字符串: str = Form(None)) -> dict:
+    if 字符串 is None:
+        return {}
+    try:
+        return json.loads(字符串)
+    except json.JSONDecodeError:
+        raise HTTPException(400, "Invalid JSON in translatorcore")
 
+def 过滤用户配置(用户配置: dict) -> dict:
+    规则 = {
+        "allow_patterns": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_WHITE,
+        "deny_patterns": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_BLACK,
+        "range_checks": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_RANGE
+    }
+    过滤后配置 = {}
+    for 键, 值 in 用户配置.items():
+        if any(re.match(模式, 键) for 模式 in 规则["deny_patterns"]):
+            continue
+        if not any(re.match(模式, 键) for 模式 in 规则["allow_patterns"]):
+            continue
+        for 模式, (最小值, 最大值) in 规则["range_checks"].items():
+            if re.match(模式, 键) and isinstance(值, (int, float)):
+                值 = max(最小值, min(值, 最大值))
+                break
+        过滤后配置[键] = 值
+    return 过滤后配置
 @FastAPI.post("/translate", dependencies=[Depends(验证Key)])
 @限流器.limit(APIConfig["api"]["current-limiting"])
 async def 提交翻译任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, file_name0: str = Form(...),
-    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
+    translatorcore: dict = Depends(解析字符串字典),
     file1: UploadFile = None, file_name1: str = Form(None),
     all_mode: bool = Form(False), export_inspection: bool = Form(False)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    语言设置参数 = {
-    "LANGUAGE_INPUT": input_lang,
-    "LANGUAGE_OUTPUT": output_lang,
-    "LANGUAGE": logs_lang
-    }
-    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
-    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
+    file0_content = await file0.read()
+    file0_hash = hashlib.sha3_256(file0_content).hexdigest()
+    翻译器实例 = Translator(APIConfig["server"] | 过滤用户配置(translatorcore))
+    if APIConfig["api"]["transalator_file_exists_del"] and 剔除任务中重复文件(task_id, file0_hash):
+        任务状态字典[task_id] = {"status": "success", "progress": 0, "result_path": None, "error": 翻译器实例.Lang("log.api.task.error.file.exists"), "logs": []}
+        return {"task_id": task_id, "status": "success", "message": 翻译器实例.Lang("log.api.task.error.file.exists")}
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
     with open(file0_path, "wb") as f:
-        f.write(await file0.read())
+        f.write(file0_content)
     file1_path = ""
     if file1 and file_name1:
         file1_path = 缓存目录 / file_name1
@@ -260,18 +295,12 @@ async def 提交翻译任务(
 async def 提交分离语言更新任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, file_name0: str = Form(...),
-    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
+    translatorcore: dict = Depends(解析字符串字典),
     file1: UploadFile = None, file_name1: str = Form(None)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    语言设置参数 = {
-    "LANGUAGE_INPUT": input_lang,
-    "LANGUAGE_OUTPUT": output_lang,
-    "LANGUAGE": logs_lang
-    }
-    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
-    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
+    翻译器实例 = Translator(APIConfig["server"] | 过滤用户配置(translatorcore))
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -302,19 +331,13 @@ async def 提交分离语言更新任务(
 async def 提交合并语言更新任务(
     request: Request, background_tasks: BackgroundTasks,
     file0: UploadFile, notlang_file: UploadFile,
-    input_lang: str = Form(None), output_lang: str = Form(None), logs_lang: str = Form(None),
+    translatorcore: dict = Depends(解析字符串字典),
     file_name0: str = Form(...), nolang_file_name: str = Form(...),
     file1: UploadFile = None, file_name1: str = Form(None)
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    语言设置参数 = {
-    "LANGUAGE_INPUT": input_lang,
-    "LANGUAGE_OUTPUT": output_lang,
-    "LANGUAGE": logs_lang
-    }
-    语言设置参数 = {k: v for k, v in 语言设置参数.items() if v is not None}
-    翻译器实例 = Translator(APIConfig["server"] | 语言设置参数)
+    翻译器实例 = Translator(APIConfig["server"] | 过滤用户配置(translatorcore))
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
