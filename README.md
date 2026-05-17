@@ -345,6 +345,7 @@ conda env remove -n Translator_Minecraft
 - 修改 API任务状态持久化为SQLite
 
 ### Release.1.5
+BUG太多了不发布
 - 添加 导入DictMini提示词可以导入翻译缓存文件
 - 添加 语言文件对转换DictMini.json(主要用于转换[NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files))
 - 添加 MMTQM机器翻译质量指标第一代(Minecraft Machine Translation Quality Metrics)(依赖翻译列表函数，使用配置注入)
@@ -394,7 +395,11 @@ conda env remove -n Translator_Minecraft
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-green)
-- 修复 翻译语言列表没有翻译参考列表导致的报错(人话: 任务翻译都用不了)
+- 修复 翻译语言列表没有翻译参考列表导致的报错
+- 修复 翻译语言列表键为列表导致的报错
+- 修复 翻译语言列表没有传入使用模型列表列表导致的报错
+- 修复 生成翻译传入列表键导致的报错
+- 修复 上下文管理器传入列表键导致的报错问题
 - 修改 Core的Translator类内的部分函数到其他/新的文件![](https://img.shields.io/badge/状态-进行中-green)
 
 ### 编辑需要
