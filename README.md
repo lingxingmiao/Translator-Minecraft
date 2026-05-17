@@ -394,6 +394,7 @@ conda env remove -n Translator_Minecraft
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-green)
+- 修改 Core的Translator类内的部分函数到其他/新的文件![](https://img.shields.io/badge/状态-进行中-green)
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
