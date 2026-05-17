@@ -384,23 +384,24 @@ BUG太多了不发布
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
 ### Release.1.6 Bata.1 (进行中)
+心情不好等一周再写
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
     - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
-    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-进行中-green)
+    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-测试中-green)
     - 自定义主菜单![](https://img.shields.io/badge/状态-进行中-green)
     - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
-- 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-green)
+- 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 翻译语言列表没有翻译参考列表导致的报错
 - 修复 翻译语言列表键为列表导致的报错
 - 修复 翻译语言列表没有传入使用模型列表列表导致的报错
 - 修复 生成翻译传入列表键导致的报错
 - 修复 上下文管理器传入列表键导致的报错问题
-- 修改 Core的Translator类内的部分函数到其他/新的文件![](https://img.shields.io/badge/状态-进行中-green)
+- 修改 Core的Translator类内的部分函数到其他/新的文件
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
