@@ -382,18 +382,18 @@ conda env remove -n Translator_Minecraft
 - 删除 导入查看词(文件夹版本, 非Dict Mini)
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
-### Release.1.6 Bata.1 (计划中)
+### Release.1.6 Bata.1 (进行中)
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
     - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
-    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-等待中-blue)
-    - 自定义主菜单![](https://img.shields.io/badge/状态-等待中-blue)
+    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-进行中-green)
+    - 自定义主菜单![](https://img.shields.io/badge/状态-进行中-green)
     - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
-- 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 整合包翻译模组当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-green)
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-green) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
