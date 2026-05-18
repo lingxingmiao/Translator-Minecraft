@@ -9,7 +9,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 更好的任务
 - 核电工艺重制版附加包
 
-后续将支持以下组件(不是大饼)
+后续将支持以下组件(不是大饼, API实时更新可直接使用)
 - 数据包
 - 帕秋莉手册
 - Lavender手册
