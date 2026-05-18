@@ -389,7 +389,7 @@ BUG太多了不发布
     - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
     - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
-    - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-测试中-green)
+    - CraftTweaker(displayName/tooltip)
     - 自定义主菜单![](https://img.shields.io/badge/状态-进行中-green)
     - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
