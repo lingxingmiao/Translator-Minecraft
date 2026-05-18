@@ -14,7 +14,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 帕秋莉手册
 - Lavender手册
 - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 自定义主菜单
+- 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单
 - 起源
 - 困难任务
@@ -384,14 +384,14 @@ BUG太多了不发布
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
 ### Release.1.6 Bata.1 (进行中)
-心情不好等一周再写
+想做兽装了想画画了()，这个一天写一个
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
-    - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
+    - 帕秋莉手册![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
     - CraftTweaker(displayName/tooltip)
-    - 自定义主菜单![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
+    - 自定义主菜单
+    - 精致菜单![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
