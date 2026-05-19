@@ -15,7 +15,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - Lavender手册
 - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 精致菜单
+- 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 起源
 - 困难任务
 - CustomNPCs
@@ -113,8 +113,8 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 向量索引 网络请求 Snbt文件 进度显示与艺术 json加速
-pip install numpy   faiss  requests snbtlib      rich       ujson
+#          向量处理 向量索引 网络请求 进度显示与艺术 json加速
+pip install numpy   faiss   requests    rich        ujson
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 内置向量生成（可选）
@@ -391,7 +391,7 @@ BUG太多了不发布
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
     - CraftTweaker(displayName/tooltip)
     - 自定义主菜单
-    - 精致菜单![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 精致菜单
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
     - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
@@ -404,6 +404,7 @@ BUG太多了不发布
 - 修复 通用翻译不能翻译非MultiMC实例
 - 修复 合并语言文件更新打包格式错误的问题
 - 修改 Core的Translator类内的部分函数到其他/新的文件
+- 修改 snbtlib内置进TranslatorLib
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
