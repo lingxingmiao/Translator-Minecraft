@@ -22,6 +22,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
+- Excavated Variants
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
