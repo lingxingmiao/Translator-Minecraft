@@ -397,7 +397,7 @@ BUG太多了不发布
     - 自定义主菜单
     - 精致菜单
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
-    - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
+    - 困难任务![](https://img.shields.io/badge/状态-进行中-brightgreen)(1.7.10自定义二进制文件)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 翻译语言列表没有翻译参考列表导致的报错
