@@ -11,13 +11,13 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 后续将支持以下组件(不是大饼, API实时更新可直接使用)
 - 数据包
-- 帕秋莉手册
+- 帕秋莉手册![](https://img.shields.io/badge/状态-完成-brightgreen)
 - Lavender手册
 - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 起源
-- 困难任务
+- 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
 - CustomNPCs
 
 后续计划支持以下组件(可能是大饼)
@@ -135,7 +135,8 @@ conda env remove -n Translator_Minecraft
 ```
 
 ## 翻译流程
-[![](https://mermaid.ink/img/pako:eNqdlV1rm1Acxr9K-F_bLL6kGim7aEvvcjHWq-KNVJuENVqcYS8h0I2-hHahFpqNldDhGMyLbWHQbQUH-zI5ar7FjJrstD3KYV7p4-9_nsdH5XRh29R0kGFn13y23VQtu7S5rhil-Aj_-NH4fLp_GV54wdvjif-ztLT0MJOj8dfI209lCnxjc3Xi--jEpWBXH1GjW4-jg8tg9IUCXavXo7MRGgxp0tKjwfAaOX305hBnFyJFYSSW2BYJJFVF4kg9kThiScSEBG6RGq_nx6vQO8WpeeRCaJ63EFqELaQ2_hPKe1-4fg9H_XeR690qL_GiAHE9wWOLuIHw-iP6PSwE49zReEABBp4b-gc4iHuUVpKQFx-CvoOc8-nx2YPAGcX3UigdwL2oBnBPugE80oxPPxfUP5oeDtB7j5Ajl7plnkvltEVk74gpeHMyuTmNc4ff3NA5KmTTh08dM3dMwZDFotla9zzy2TtiAkbjX8H31-jT5-zz9Vx0lf0BxFuFD6YYwEDDamkg21ZHZ6CtW211dgndGaGA3dTbugJyfKqp1hMFFKMXz-ypxpZptudjltlpNEHeUXefxledPU219fWW2rDUf4huaLq1ZnYMG2RWqHLJIiB34TnINbEs8cusxPJcTZCkWpWBFyCLXFngq2JFFCVJWBZEocfAy8SVLVcqHB8rvMSxFYmtMaBrLdu06ukWmOyEvb-w58QD?type=png)](https://mermaid-live.nodejs.cn/edit#pako:eNqdlV1rm1Acxr9K-F_bLL6kGim7aEvvcjHWq-KNVJuENVqcYS8h0I2-hHahFpqNldDhGMyLbWHQbQUH-zI5ar7FjJrstD3KYV7p4-9_nsdH5XRh29R0kGFn13y23VQtu7S5rhil-Aj_-NH4fLp_GV54wdvjif-ztLT0MJOj8dfI209lCnxjc3Xi--jEpWBXH1GjW4-jg8tg9IUCXavXo7MRGgxp0tKjwfAaOX305hBnFyJFYSSW2BYJJFVF4kg9kThiScSEBG6RGq_nx6vQO8WpeeRCaJ63EFqELaQ2_hPKe1-4fg9H_XeR690qL_GiAHE9wWOLuIHw-iP6PSwE49zReEABBp4b-gc4iHuUVpKQFx-CvoOc8-nx2YPAGcX3UigdwL2oBnBPugE80oxPPxfUP5oeDtB7j5Ajl7plnkvltEVk74gpeHMyuTmNc4ff3NA5KmTTh08dM3dMwZDFotla9zzy2TtiAkbjX8H31-jT5-zz9Vx0lf0BxFuFD6YYwEDDamkg21ZHZ6CtW211dgndGaGA3dTbugJyfKqp1hMFFKMXz-ypxpZptudjltlpNEHeUXefxledPU219fWW2rDUf4huaLq1ZnYMG2RWqHLJIiB34TnINbEs8cusxPJcTZCkWpWBFyCLXFngq2JFFCVJWBZEocfAy8SVLVcqHB8rvMSxFYmtMaBrLdu06ukWmOyEvb-w58QD)
+- "*"表示 **开发中** 或者 **未完成**
+[![](https://mermaid.ink/img/pako:eNqdll1P2lAYx78KOZcLYsub0Cy7UGN2w4WZV4abRiqQSWu6kr0QErcIosCsiWjmiAvbMkimIy7OEVnil-lpy7dYbUs90NPmIFec5_z-z_tJWgIbQoYDDNjcEl5v5FhRCqwtp_mA8dPuhnr_aLRzph331JM9ZXgTmJt7Zpv1_qXe27HMBPjK2qIyHMKDDgG7uEqMPl9NEbPrL_TdM7V9QYAupVL6YRs2WySVkaNw0NK6df3jvrpfh9UGgUJtXUO5BhsVlHWMBOPAsdhZ4EDcIHAcdgo4EDcCHIftP7YUQs6n85O4c4KVK-X2p3b9Ff5rPbF4_F3gKTKuP--1Xp2Uds_MT6P2Otpw1zKh-TvTtDDltqHffYa1m3l4eapd_FAGv_XuN_Vchp96qGw829lUzqRnk43HNKPKqQzf4alC_KCHvP2o8Xr6Qs5u-lIrj4S83vHUAvu6RX24XMPaqd6ZaLPlgABE7dZjOdkzuuVeSRdo1Kj3m14gkqnXkrtDu0A0GfuVHX9RazKUj0Z7h_Oq3DbuLMgSoEkRCdCYZAI0JXPzzR2Eteqo0nSWfSIPT2oiuCfl0S0sO2W0wMGBMqgbeWu_Oppc9WWt4q2IdnTEgiCOU9uXK4Y3O2U0Qb3_V736AL937e3pdeC5vf_YK9_C0jwIgqyYzwBGEotcEBQ4scDeH0HpnkgDKccVuDRgjL8ZVnyZBmm-bGi2WX5dEApjmSgUsznAbLJbr4xTcTvDStxyns2K7APC8RlOXBKKvASYaJI2fQCmBN4AJk6FIuFEggrTVDS-EI4FwVvA0DQVii3QdDgWTSTpZCIeLwfBOzMoFUpGYlEqHElGIlGaikcNBZfJS4KYsr7mzI-68n920mIU?type=png)](https://mermaid-live.nodejs.cn/edit#pako:eNqdll1P2lAYx78KOZcLYsub0Cy7UGN2w4WZV4abRiqQSWu6kr0QErcIosCsiWjmiAvbMkimIy7OEVnil-lpy7dYbUs90NPmIFec5_z-z_tJWgIbQoYDDNjcEl5v5FhRCqwtp_mA8dPuhnr_aLRzph331JM9ZXgTmJt7Zpv1_qXe27HMBPjK2qIyHMKDDgG7uEqMPl9NEbPrL_TdM7V9QYAupVL6YRs2WySVkaNw0NK6df3jvrpfh9UGgUJtXUO5BhsVlHWMBOPAsdhZ4EDcIHAcdgo4EDcCHIftP7YUQs6n85O4c4KVK-X2p3b9Ff5rPbF4_F3gKTKuP--1Xp2Uds_MT6P2Otpw1zKh-TvTtDDltqHffYa1m3l4eapd_FAGv_XuN_Vchp96qGw829lUzqRnk43HNKPKqQzf4alC_KCHvP2o8Xr6Qs5u-lIrj4S83vHUAvu6RX24XMPaqd6ZaLPlgABE7dZjOdkzuuVeSRdo1Kj3m14gkqnXkrtDu0A0GfuVHX9RazKUj0Z7h_Oq3DbuLMgSoEkRCdCYZAI0JXPzzR2Eteqo0nSWfSIPT2oiuCfl0S0sO2W0wMGBMqgbeWu_Oppc9WWt4q2IdnTEgiCOU9uXK4Y3O2U0Qb3_V736AL937e3pdeC5vf_YK9_C0jwIgqyYzwBGEotcEBQ4scDeH0HpnkgDKccVuDRgjL8ZVnyZBmm-bGi2WX5dEApjmSgUsznAbLJbr4xTcTvDStxyns2K7APC8RlOXBKKvASYaJI2fQCmBN4AJk6FIuFEggrTVDS-EI4FwVvA0DQVii3QdDgWTSTpZCIeLwfBOzMoFUpGYlEqHElGIlGaikcNBZfJS4KYsr7mzI-68n920mIU)
 
 ## 更新日志
 版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
@@ -391,13 +392,13 @@ BUG太多了不发布
 想做兽装了想画画了()，这个一天写一个
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
-    - 帕秋莉手册![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 帕秋莉手册
     - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
     - CraftTweaker(displayName/tooltip)
     - 自定义主菜单
     - 精致菜单
     - 起源![](https://img.shields.io/badge/状态-等待中-blue)
-    - 困难任务![](https://img.shields.io/badge/状态-进行中-brightgreen)(1.7.10自定义二进制文件)
+    - 困难任务(含1.7.10自定义二进制文件)
     - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 翻译语言列表没有翻译参考列表导致的报错
