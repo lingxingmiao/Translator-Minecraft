@@ -10,7 +10,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 核电工艺重制版附加包
 
 后续将支持以下组件(不是大饼, API实时更新可直接使用)
-- 数据包(含起源)
+- 数据包(含起源)![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 帕秋莉手册![](https://img.shields.io/badge/状态-完成-brightgreen)
 - Lavender手册
 - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
@@ -389,7 +389,7 @@ BUG太多了不发布
 ### Release.1.6 Bata.1 (进行中)
 想做兽装了想画画了()，这个一天写一个
 - 添加 翻译(看到BBSMC有好多功能想搬了)
-    - 数据包(含起源)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 数据包(含起源)
     - 帕秋莉手册
     - Lavender手册![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - CraftTweaker(displayName/tooltip)
