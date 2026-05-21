@@ -10,15 +10,13 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 核电工艺重制版附加包
 
 后续将支持以下组件(不是大饼, API实时更新可直接使用)
-- 数据包
+- 数据包(含起源)
 - 帕秋莉手册![](https://img.shields.io/badge/状态-完成-brightgreen)
 - Lavender手册
 - CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 起源
 - 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
-- CustomNPCs
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
@@ -391,15 +389,13 @@ BUG太多了不发布
 ### Release.1.6 Bata.1 (进行中)
 想做兽装了想画画了()，这个一天写一个
 - 添加 翻译(看到BBSMC有好多功能想搬了)
-    - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
+    - 数据包(含起源)![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - 帕秋莉手册
-    - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
+    - Lavender手册![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - CraftTweaker(displayName/tooltip)
     - 自定义主菜单
     - 精致菜单
-    - 起源![](https://img.shields.io/badge/状态-等待中-blue)
     - 困难任务(含1.7.10自定义二进制文件)
-    - CustomNPCs![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 翻译语言列表没有翻译参考列表导致的报错
 - 修复 翻译语言列表键为列表导致的报错
