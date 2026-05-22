@@ -407,6 +407,8 @@ BUG太多了不发布
 - 修复 合并语言文件更新打包格式错误的问题
 - 修改 Core的Translator类内的部分函数到其他/新的文件
 - 修改 snbtlib内置进TranslatorLib
+- 修改 BQ/FTB任务读取/写入改为深度优先搜索
+- 修改 翻译语言列表启用任务模式时也会使用owolib解析(文本组件)
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
