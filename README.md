@@ -27,6 +27,9 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
 别看 R1.5 的 Core 文件末尾了, Key我已经删了哈哈哈, 你拿我也没办法哈哈哈哈哈哈哈哈哈。
 
+### 效果图(EN -> 文言文)
+<img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" />
+
 ### 支持的项目
 - [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict)
 - [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files)
