@@ -17,11 +17,11 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
+- 未知伤亡(非Minecraft)![](https://img.shields.io/badge/状态-API未添加-brightgreen)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
 - Excavated Variants
-- 未知伤亡(非Minecraft)
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
@@ -397,6 +397,7 @@ BUG太多了不发布
     - 自定义主菜单
     - 精致菜单
     - 困难任务(含1.7.10自定义二进制文件)
+    - 未知伤亡(非Minecraft)
 - 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 翻译迭代精炼
 - 修复 翻译语言列表没有翻译参考列表导致的报错
@@ -412,8 +413,6 @@ BUG太多了不发布
 - 修改 翻译语言列表启用任务模式时也会使用owolib解析(文本组件)
 
 ### Release.1.6 Bata.2 (计划中)
-- 添加 翻译
-    - 未知伤亡(非Minecraft)
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
