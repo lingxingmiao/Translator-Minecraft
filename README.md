@@ -1,5 +1,5 @@
 # Translator Minecraft
-Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重构版本，相比原先版本添加了更多功能<br>
+Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重构版本，相比原先版本添加了更多功能(其实只是一个框架, 我想加什么就加什么)<br>
 此程序提供API服务为以下Minecraft附加组件提供便捷的翻译功能
 - 整合包
 - 光影包
@@ -406,6 +406,7 @@ BUG太多了不发布
 - 添加 导入DictMini参考词剔除重复内容
 - 添加 导入DictMini参考词反转模式![](https://img.shields.io/badge/状态-等待中-blue)
 - 优化 翻译极高并发(约256+)导致的API连接超时问题
+- 优化 单次多次翻译返回准确度
 - 修复 翻译语言列表没有翻译参考列表导致的报错
 - 修复 翻译语言列表键为列表导致的报错
 - 修复 翻译语言列表没有传入使用模型列表列表导致的报错
