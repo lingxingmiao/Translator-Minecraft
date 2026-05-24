@@ -56,15 +56,16 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 光影: 15%
 
 ## 推荐模型翻译质量排名
+<details>
+<summary>点击展开/收起</summary>
 警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
 建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
-WMT24++：不计小于50分 "*"表示强制启用推理链
+"*"表示强制启用推理链, 闭源不记入
+
 ### WMT24++ XCOMET-XXL
-- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分 缺点: 不适合Minecraft翻译
-- Qwen/Qwen3.6-Plus 84.3分
+- [xiaomi-research/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
-- Qwen/Qwen3-Max-Thinking 77.6分
 - [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
 - [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分
 - [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
@@ -75,23 +76,26 @@ WMT24++：不计小于50分 "*"表示强制启用推理链
 - [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
 - [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
 - [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
-### WMT24++ NeMo Evaluator SDK And NeMo Skills
-- [OpenAi/gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) 88.8分*
-- [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 87.8分
-- [NVIDIA/NVIDIA-Nemotron-3-Super-120B-A12B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16) 86.6分
-- [NVIDIA/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) 86.2分
-- [Qwen/Qwen3-30B-A3B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Thinking-2507) 85.6分*
-- [OpenAi/gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) 83.2分*
+### WMT25 XCOMET-XXL
+- [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 73.6分
+- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分 当前公益API使用
+- [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 69.4分
+- [DeepSeek/DeepSeek-V4-Pro](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) 66.5分
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 62.0分
+- [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 61.6分
+- [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 60.0分
+- [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
+- [DeepSeek/DeepSeek-V3.2](https://huggingface.co/deepseek-ai/DeepSeek-V3.2) 50.1分
 ### 未知成绩
 - [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 预计 WMT24++ XCOMET-XXL 54±2分
 - [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) 预计 WMT24++ XCOMET-XXL 65±2分
-- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 优点: 预填充快 (当期翻译网站使用模型)
 - [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)
 ### 不可用
 - [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
 - [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
 - [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
 - [Z.ai/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)
+</details>
 
 ## 量化类型
 ### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
