@@ -411,7 +411,7 @@ BUG太多了不发布
     - 精致菜单
     - 困难任务(含1.7.10自定义二进制文件)
     - 未知伤亡(非Minecraft)
-- 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 翻译迭代精炼
 - 添加 导入DictMini参考词剔除重复内容
 - 添加 导入DictMini参考词反转模式![](https://img.shields.io/badge/状态-等待中-blue)
