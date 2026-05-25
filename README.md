@@ -432,6 +432,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 snbtlib内置进TranslatorLib
 - 修改 BQ/FTB任务读取/写入改为深度优先搜索
 - 修改 翻译语言列表启用任务模式时也会使用owolib解析(文本组件)
+- 修改 合并已有翻译从翻译语言文件移动至翻译语言列表![](https://img.shields.io/badge/状态-睡觉中-brightgreen)
 
 ### Release.1.6 Bata.2 (计划中)
 
