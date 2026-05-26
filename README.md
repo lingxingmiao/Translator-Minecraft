@@ -437,7 +437,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 合并已有翻译从翻译语言文件移动至翻译语言列表
 
 ### Release.1.6 Bata.2 (计划中)
-
+- 修改 分离TranslatorModule到新的文件
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
