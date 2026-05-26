@@ -17,11 +17,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 未知伤亡(非Minecraft)![](https://img.shields.io/badge/状态-API未添加-brightgreen)
+- 未知伤亡语言文件(非Minecraft)![](https://img.shields.io/badge/状态-API未添加-brightgreen)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
 - Excavated Variants
+- 未知伤亡dll模组(非Minecraft)
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
@@ -409,7 +410,8 @@ AI给我加了一堆BUG所以不发布
     - 自定义主菜单
     - 精致菜单
     - 困难任务(含1.7.10自定义二进制文件)
-    - 未知伤亡(非Minecraft)
+    - 未知伤亡语言文件(非Minecraft)
+    - 未知伤亡dll模组(非Minecraft)![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 整合包翻译当参考词传入接下来的其他类型翻译提示词![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 翻译迭代精炼
 - 添加 导入DictMini参考词剔除重复内容
@@ -432,7 +434,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 snbtlib内置进TranslatorLib
 - 修改 BQ/FTB任务读取/写入改为深度优先搜索
 - 修改 翻译语言列表启用任务模式时也会使用owolib解析(文本组件)
-- 修改 合并已有翻译从翻译语言文件移动至翻译语言列表![](https://img.shields.io/badge/状态-睡觉中-brightgreen)
+- 修改 合并已有翻译从翻译语言文件移动至翻译语言列表![](https://img.shields.io/badge/状态-测试中-brightgreen)
 
 ### Release.1.6 Bata.2 (计划中)
 
