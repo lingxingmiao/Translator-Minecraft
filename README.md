@@ -29,7 +29,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 别看 R1.5 的 Core 文件末尾了, Key我已经删了哈哈哈, 你拿我也没办法哈哈哈哈哈哈哈哈哈。
 
 ### 效果图(EN -> 文言文)
-<img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" />
+| <img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" /> | <img width="1920" height="1080" alt="a5aad0b184166381f8cb7987ded62f6f" src="https://github.com/user-attachments/assets/160bc955-5665-40ad-9418-72ee3e5d4880" /> |
+| - | - |
 
 ### 支持的项目
 - [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict)
@@ -43,7 +44,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ### API
 公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
 公益API当前使用模型: 
-- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
 - [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
 
 ### Minecraft Machine Translation Quality Metrics
@@ -85,10 +86,10 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
 ### WMT25 XCOMET-XXL 46语言
 - [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 73.6分
-- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分 当前公益API使用
+- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 69.4分
 - [DeepSeek/DeepSeek-V4-Pro](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) 66.5分
-- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 62.0分
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 62.0分 当前公益API使用
 - [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 61.6分
 - [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 60.0分
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
@@ -105,6 +106,9 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 </details>
 
 ## 量化类型
+<details>
+<summary>点击展开/收起</summary>
+
 ### 使用 nomic-ai/nomic-embed-text-v1.5 生成 DictMini.json 的向量
 | RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
 | - | - | - | - | - |
@@ -120,8 +124,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 | Float16_E0M15 | 0.2441/0.0355 | - | 0.0000/0.0000 | - |
 | BFloat16 | 0.0026/0.0000 | - | 0.0001/0.0000 | - |
 | Float8_E4M3 | 0.0405/0.0004 | - | 0.0028/0.0020 | - |
+</details>
 
 ## 编译/环境设置
+<details>
+<summary>点击展开/收起</summary>
+
 ```powershell
 # 创建环境
 conda create -n Translator_Minecraft python=3.12 -y
@@ -146,10 +154,15 @@ conda deactivate
 # 删除环境
 conda env remove -n Translator_Minecraft
 ```
+</details>
 
 ## 翻译流程
+<details>
+<summary>点击展开/收起</summary>
+
 - "*"表示 **开发中** 或者 **未完成**
 [![](https://mermaid.ink/img/pako:eNqdll1P2lAYx78KOZcLYsub0Cy7UGN2w4WZV4abRiqQSWu6kr0QErcIosCsiWjmiAvbMkimIy7OEVnil-lpy7dYbUs90NPmIFec5_z-z_tJWgIbQoYDDNjcEl5v5FhRCqwtp_mA8dPuhnr_aLRzph331JM9ZXgTmJt7Zpv1_qXe27HMBPjK2qIyHMKDDgG7uEqMPl9NEbPrL_TdM7V9QYAupVL6YRs2WySVkaNw0NK6df3jvrpfh9UGgUJtXUO5BhsVlHWMBOPAsdhZ4EDcIHAcdgo4EDcCHIftP7YUQs6n85O4c4KVK-X2p3b9Ff5rPbF4_F3gKTKuP--1Xp2Uds_MT6P2Otpw1zKh-TvTtDDltqHffYa1m3l4eapd_FAGv_XuN_Vchp96qGw829lUzqRnk43HNKPKqQzf4alC_KCHvP2o8Xr6Qs5u-lIrj4S83vHUAvu6RX24XMPaqd6ZaLPlgABE7dZjOdkzuuVeSRdo1Kj3m14gkqnXkrtDu0A0GfuVHX9RazKUj0Z7h_Oq3DbuLMgSoEkRCdCYZAI0JXPzzR2Eteqo0nSWfSIPT2oiuCfl0S0sO2W0wMGBMqgbeWu_Oppc9WWt4q2IdnTEgiCOU9uXK4Y3O2U0Qb3_V736AL937e3pdeC5vf_YK9_C0jwIgqyYzwBGEotcEBQ4scDeH0HpnkgDKccVuDRgjL8ZVnyZBmm-bGi2WX5dEApjmSgUsznAbLJbr4xTcTvDStxyns2K7APC8RlOXBKKvASYaJI2fQCmBN4AJk6FIuFEggrTVDS-EI4FwVvA0DQVii3QdDgWTSTpZCIeLwfBOzMoFUpGYlEqHElGIlGaikcNBZfJS4KYsr7mzI-68n920mIU?type=png)](https://mermaid-live.nodejs.cn/edit#pako:eNqdll1P2lAYx78KOZcLYsub0Cy7UGN2w4WZV4abRiqQSWu6kr0QErcIosCsiWjmiAvbMkimIy7OEVnil-lpy7dYbUs90NPmIFec5_z-z_tJWgIbQoYDDNjcEl5v5FhRCqwtp_mA8dPuhnr_aLRzph331JM9ZXgTmJt7Zpv1_qXe27HMBPjK2qIyHMKDDgG7uEqMPl9NEbPrL_TdM7V9QYAupVL6YRs2WySVkaNw0NK6df3jvrpfh9UGgUJtXUO5BhsVlHWMBOPAsdhZ4EDcIHAcdgo4EDcCHIftP7YUQs6n85O4c4KVK-X2p3b9Ff5rPbF4_F3gKTKuP--1Xp2Uds_MT6P2Otpw1zKh-TvTtDDltqHffYa1m3l4eapd_FAGv_XuN_Vchp96qGw829lUzqRnk43HNKPKqQzf4alC_KCHvP2o8Xr6Qs5u-lIrj4S83vHUAvu6RX24XMPaqd6ZaLPlgABE7dZjOdkzuuVeSRdo1Kj3m14gkqnXkrtDu0A0GfuVHX9RazKUj0Z7h_Oq3DbuLMgSoEkRCdCYZAI0JXPzzR2Eteqo0nSWfSIPT2oiuCfl0S0sO2W0wMGBMqgbeWu_Oppc9WWt4q2IdnTEgiCOU9uXK4Y3O2U0Qb3_V736AL937e3pdeC5vf_YK9_C0jwIgqyYzwBGEotcEBQ4scDeH0HpnkgDKccVuDRgjL8ZVnyZBmm-bGi2WX5dEApjmSgUsznAbLJbr4xTcTvDStxyns2K7APC8RlOXBKKvASYaJI2fQCmBN4AJk6FIuFEggrTVDS-EI4FwVvA0DQVii3QdDgWTSTpZCIeLwfBOzMoFUpGYlEqHElGIlGaikcNBZfJS4KYsr7mzI-68n920mIU)
+</details>
 
 ## 更新日志
 版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
