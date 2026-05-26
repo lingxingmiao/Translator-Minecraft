@@ -64,11 +64,11 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
 "*"表示强制启用推理链, 闭源不记入
 
-### WMT24++ XCOMET-XXL 46语言
+### WMT24++ XCOMET-XXL
 - [XiaomiResearch/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分
-- [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 85.7分 31语言
+- [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 85.7分
 - [Google/translategemma-12b-it](https://huggingface.co/google/translategemma-12b-it) 85.5分
-- [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 85.3分 31语言
+- [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 85.3分
 - [XiaomiResearch/MiLMMT-46-4B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-4B-v0.1) 84.8分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
@@ -84,7 +84,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
 - [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
 - [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
-### WMT25 XCOMET-XXL 46语言
+### WMT25 XCOMET-XXL
 - [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 73.6分
 - [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 69.4分
