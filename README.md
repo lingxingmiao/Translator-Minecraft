@@ -28,7 +28,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
 别看 R1.5 的 Core 文件末尾了, Key我已经删了哈哈哈, 你拿我也没办法哈哈哈哈哈哈哈哈哈。
 
-### 画廊
+### 画廊 (双击Ctrl放大)
 | <img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" /> | <img width="1920" height="1080" alt="e30bc972ed445694c1cec45840e46281" src="https://github.com/user-attachments/assets/cced0c18-aa21-426f-bd23-9d1d60784677" /> | <img width="1920" height="1080" alt="ffa09f4b557e0fca9c74f89b8d630853" src="https://github.com/user-attachments/assets/26417c40-398c-4e6c-9500-caa2c349fcaf" /> |
 | - | - | - |
 
