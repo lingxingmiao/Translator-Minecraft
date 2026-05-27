@@ -135,8 +135,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 向量索引 网络请求 进度显示与艺术 json加速
-pip install numpy   faiss   requests    rich        ujson
+#          向量处理 向量索引 网络请求 进度显示与艺术 json加速 dll解析
+pip install numpy   faiss   requests    rich        ujson   dnfile
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 内置向量生成（可选）
