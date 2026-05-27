@@ -19,6 +19,7 @@ class DefaultConfig:
     LLM_MAX_WORKERS = 24 # 请求最大并发数
     LLM_MIN_COUNT = 0 # 多模型最低启用翻译条目数
     LLM_TIER_INTERLEAVE = False # 多模型混合分布请求API
+    LLM_TIER_DYNAMIC = False
     LLM_TIER_CASCADE = False # 级联衰减开关
     LLM_TIER_CASCADE_RATIO = 0.7 # 级联衰减比例
     LLM_TIER_MULTI_OVERLAP = False # 特定比例开关
@@ -63,7 +64,7 @@ class DefaultConfig:
     VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
     VEC_FILE_PATH = r"./Vectors"
     VEC_FILE_NAME = "Vectors"
-    VEC_QUANTIZATION = "Q4_K_X" # string: VEC_INT_DTYPE VEC_FLOAT_DTYPE 选其中一个
+    VEC_QUANTIZATION = "Q6_K_X" # string: VEC_INT_DTYPE VEC_FLOAT_DTYPE 选其中一个
     VEC_QUANTILE = 0.998
     VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
     
@@ -71,30 +72,43 @@ class DefaultConfig:
     TRANSLATOR_CACHE_READ = True
     TRANSLATOR_CACHE_PATH = r"./Translator_Cache"
     TRANSLATOR_CACHE_NAME = "Translator_Cache"
+    TRANSLATOR_REFINE_ROUNDS = 0
     TRANSLATOR_BATCH = 1
     TRANSLATOR_ORIGINAL_REFERENCE = False
-    TRANSLATOR_USER_PROMPT = "翻译为{LANGUAGE_OUTPUT}（仅输出翻译内容）：{text}"
-    TRANSLATOR_SYSTEM_PROMPT = """
+    TRANSLATOR_USER_PROMPT = ["翻译为{LANGUAGE_OUTPUT}(仅输出翻译内容):{text}", "翻译为{LANGUAGE_OUTPUT}(总计{count}个词条,仅输出翻译内容):{text}"]
+    TRANSLATOR_SYSTEM_PROMPT = ["""
 你是一位专业的 Minecraft 游戏翻译器，需要流畅准确一致地将文本翻译成 {LANGUAGE_OUTPUT} 语言。
 ## 翻译规则
 1. 仅输出翻译内容，不包含解释或额外内容（如“这是译文：”或“如下所示：”）
 2. 返回的译文必须与原文保持完全相同的段落数和格式
 3. 对于不应翻译的内容（如专有名词，按键操作等），保留原文。
 4. 单个符号需要翻译（遇到&或§或%需要保留后一位符号不做翻译）
+5. 保留所有HTML标签（如`<br>``<span>``<a href="">`等）和Markdown语法，仅翻译标签/语法内的可读文本内容，不修改标签结构或语法符号本身
 ## 输出格式：
-- **单段落输入** → 直接输出译文（无分隔符，无额外文本）
-- **多段落输入** → 多个译文严格使用 Python list 对象格式
+- 列表输入 → 多个译文严格使用 Python list 对象格式
 ## 示例
-### 多段落输入：
+### 多文本输入：
 ['原文A', '原文B', '原文C']
-### 多段落输出：
+### 多文本输出：
 ['译文A', '译文B', '译文C']
-### 单段落输入：
-单段落内容
-### 单段落输出：
-直接翻译，无分隔符
 ## 翻译提示
-"""
+""", """
+你是一位专业的 Minecraft 游戏翻译器，需要流畅准确一致地将文本翻译成 {LANGUAGE_OUTPUT} 语言。
+## 翻译规则
+1. 仅输出翻译内容，不包含解释或额外内容（如“这是译文：”或“如下所示：”）
+2. 返回的译文必须与原文保持完全相同的段落数和格式
+3. 对于不应翻译的内容（如专有名词，按键操作等），保留原文。
+4. 单个符号需要翻译（遇到&或§或%需要保留后一位符号不做翻译）
+5. 保留所有HTML标签（如`<br>``<span>``<a href="">`等）和Markdown语法，仅翻译标签/语法内的可读文本内容，不修改标签结构或语法符号本身
+## 输出格式：
+- 译文输入 → 译文直接输出译文（无分隔符，无额外文本）
+## 示例
+### 单文本输入：
+原文
+### 单文本输出：
+译文
+## 翻译提示
+"""]
 
     PATH_CACHE = r"./Cache"
     DEBUG_MODE = False
@@ -105,13 +119,31 @@ class DefaultConfig:
     LANGUAGE = r"zh_CN"
     TQDM_FPS = 2
     
-    QUESTS_FTB_READ_MAX_CONCURRENT = 4
-    QUESTS_FTB_WRITE_MAX_CONCURRENT = 4
-    QUESTS_BQ_READ_MAX_CONCURRENT = 4
-    QUESTS_BQ_WRITE_MAX_CONCURRENT = 4
+    QUESTS_READ_MAX_CONCURRENT = 4
+    QUESTS_WRITE_MAX_CONCURRENT = 4
+    SCRIPT_READ_MAX_CONCURRENT = 4
+    SCRIPT_WRITE_MAX_CONCURRENT = 4
+    MENU_READ_MAX_CONCURRENT = 4
+    MENU_WRITE_MAX_CONCURRENT = 4
+    BOOK_READ_MAX_CONCURRENT = 4
+    BOOK_WRITE_MAX_CONCURRENT = 4
+    DATA_READ_MAX_CONCURRENT = 4
+    DATA_WRITE_MAX_CONCURRENT = 4
+    LANG_READ_MAX_CONCURRENT = 4
+    LANG_WRITE_MAX_CONCURRENT = 4
+    DLL_READ_MAX_CONCURRENT = 4
+    DLL_WRITE_MAX_CONCURRENT = 4
+    SCRIPT_CRT_WRITE_UNICODE = True
     
-    PACK_META_TEMPLATE_TRANSLATE = "{name} {lang} 语言资源包\n制作: {author}, 翻译：{model}"
+    MONO_CECIL_DLL_PATH = r"dll"
+    MONO_CECIL_DLL_NAME = "Mono.Cecil.dll"
+    
+    DATA_COMMAND_PATH = r"./DataPack_Command"
+    DATA_COMMAND_FILE = "DataPack_Command.txt"
+    
+    PACK_META_TEMPLATE_TRANSLATE = "{name} {lang} 语言资源包\n制作: {author}, 翻译模型：{model}"
     PACK_META_TEMPLATE_MERGE = "{name} {lang} 语言资源包\n制作: {author}, 工具自动合并"
+    PACK_META_TEMPLATE_CASUALTIESUNKNOWN = "{lang} 语言文件\n制作: <color=\"yellow\">{author}</color>, 翻译模型：<color=\"blue\">{model}" # 未知伤亡
     PACK_AUTHOR = ""
 
     INDEX_TEXT_K = 2
@@ -152,6 +184,7 @@ class DefaultConfig:
 3. 格式严格对齐：选出的译文必须与原文保持完全相同的段落数和排版结构。
 4. 特殊内容保留：若原文包含按键操作、变量、代码占位符或控制符号（如 &、§、% 及其后紧跟的字符），必须确保选中选项完整保留这些内容，未丢失、错位或篡改。
 5. 若所有选项均有瑕疵，请挑选相对最优的一项，切勿自行修改、拼接或重新生成。
+6. 保留所有HTML标签（如`<br>``<span>``<a href="">`等）和Markdown语法（如`**粗体**``*斜体*``[链接](url)``# 标题`等），仅翻译标签/语法内的可读文本内容，不修改标签结构或语法符号本身
 
 ## 输出格式（含答案标号）：
 - **单段落输入** → 输出格式：`选中译文 <大写字母>`，示例：`A`

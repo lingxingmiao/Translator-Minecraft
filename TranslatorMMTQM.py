@@ -1,7 +1,5 @@
 from TranslatorLib import random, json, Path
 from TranslatorConfig import RuntimeConfig
-from TranslatorLocale import Locale
-from TranslatorModule import Module
 from TranslatorCore import Translator
 
 class MMTQM:
@@ -13,13 +11,14 @@ class MMTQM:
         Config["TRANSLATOR_CACHE_READ"] = False
         Config["TRANSLATOR_ORIGINAL_REFERENCE"] = False
         Config["TRANSLATOR_BATCH"] = 1
-        Config["TRANSLATOR_SYSTEM_PROMPT"] = Self.Config.MMTQM_SYSTEM_PROMPT
-        Config["TRANSLATOR_USER_PROMPT"] = Self.Config.MMTQM_USER_PROMPT
+        Config["TRANSLATOR_SYSTEM_PROMPT"] = [Self.Config.MMTQM_SYSTEM_PROMPT, Self.Config.MMTQM_SYSTEM_PROMPT]
+        Config["TRANSLATOR_USER_PROMPT"] = [Self.Config.MMTQM_USER_PROMPT, Self.Config.MMTQM_USER_PROMPT]
         Path(Self.Config.MMTQM_PATH).mkdir(parents=True, exist_ok=True)
-        Self.Module = Module(Config=Config)
-        Self.Locale = Locale(Config=Config)
-        Self.Translator = Translator(Config=Config)
-        Self.Lang = Self.Locale.Lang
+        Self.Translator = Translator(Config=Config or {})
+        Self.Config = Self.Translator.Config
+        Self.Module = Self.Translator.Module
+        Self.Locale = Self.Translator.Locale
+        Self.Lang = Self.Translator.Locale.Lang
         Self.日志 = Self.Module.写入日志
         Self.tqdm = Self.Locale.Tqdm
         random.seed(Self.Config.MMTQM_SEED)
@@ -54,7 +53,7 @@ class MMTQM:
             raise FileNotFoundError(Self.Lang("log.mmtqm.file.not"))
         Self.日志("log.mmtqm.score", score=得分, info_level=0)
             
-测试 = True
+测试 = False
 if __name__ == "__main__" and 测试:
     参数 = {
         "LLM_API_URL": "http://127.0.0.1:25564/v1/chat/completions",

@@ -35,20 +35,24 @@ class Locale:
             return 中文语言文件, 中文语言文件
             
     def Lang(Self, key: str = None, **kwargs) -> str:
+        class SafeDict(dict):
+            def __missing__(self, key):
+                return ""
         语言文件, 中文语言文件 = Self.LoadLanguage()
         指定文本 = 语言文件.get(key, key)
         中文文本 = 中文语言文件.get(key, key)
         返回值 = ""
+        safe_kwargs = SafeDict(kwargs)
         if kwargs:
             try:
-                返回值 = 指定文本.format(**kwargs)
-            except KeyError:
-                返回值 = 中文文本.format(**kwargs)
+                返回值 = 指定文本.format_map(safe_kwargs)
+            except Exception:
+                返回值 = 中文文本.format_map(safe_kwargs)
         else:
             返回值 = 指定文本
         if 返回值 == key:
             if kwargs:
-                返回值 = 中文文本.format(**kwargs)
+                返回值 = 中文文本.format_map(safe_kwargs)
             else:
                 返回值 = 中文文本
         return 返回值

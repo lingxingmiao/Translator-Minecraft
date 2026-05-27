@@ -1,10 +1,11 @@
-from TranslatorLib import eb, threading, Path, pickle, numpy, np, hashlib, faiss
+from TranslatorLib import eb, threading, Path, pickle, numpy, np, hashlib, faiss, GPU_ACC
 
 模型缓存 = {}
 向量文本缓存 = {}
 索引缓存 = {}
+数据包指令缓存 = {}
 线程锁 = threading.Lock()
-def 获取嵌入模型(Self):
+def 获取嵌入模型(Self): #Module
     缓存键 = f"{Self.Config.EMB_MODEL}|{Self.Config.EMB_MODEL_ACC_MODE}"
     if 缓存键 in 模型缓存:
         return 模型缓存[缓存键]
@@ -14,7 +15,7 @@ def 获取嵌入模型(Self):
         try:
             for _ in Self.Locale.Tqdm(range(1), desc=f"tqdm.model.load"):
                 from sentence_transformers import SentenceTransformer
-                Self.Module.写入日志("log.core.debug.load.embedded.model", model=Self.Config.EMB_MODEL, info_level=0)
+                Self.写入日志("log.core.debug.load.embedded.model", model=Self.Config.EMB_MODEL, info_level=0)
                 if Self.Config.EMB_MODEL_ACC_MODE == "onnx":
                     模型 = SentenceTransformer(Self.Config.EMB_MODEL, trust_remote_code=True, backend="onnx")
                 else:
@@ -25,13 +26,13 @@ def 获取嵌入模型(Self):
                         模型参数["device"] = Self.Config.EMB_MODEL_DEVICE
                     模型 = SentenceTransformer(Self.Config.EMB_MODEL, trust_remote_code=True, model_kwargs=模型参数)
             模型缓存[缓存键] = 模型
-            Self.Module.写入日志("log.core.load.embedded.model.succeed", model=Self.Config.EMB_MODEL, info_level=0)
+            Self.写入日志("log.core.load.embedded.model.succeed", model=Self.Config.EMB_MODEL, info_level=0)
             return 模型
         except Exception:
-            Self.Module.写入日志("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc(), info_level=3)
+            Self.写入日志("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc(), info_level=3)
             raise RuntimeError(Self.Lang("log.core.load.embedded.model.error", model=Self.Config.EMB_MODEL, e=eb.format_exc()))
         
-def 获取重排模型(Self):
+def 获取重排模型(Self): #Module
     缓存键 = f"{Self.Config.RERANKER_MODEL}|{Self.Config.RERANKER_INSTRUCT}"
     if 缓存键 in 模型缓存:
         return 模型缓存[缓存键]
@@ -41,7 +42,7 @@ def 获取重排模型(Self):
         try:
             for _ in Self.Locale.Tqdm(range(1), desc=f"tqdm.model.load"):
                 from sentence_transformers import CrossEncoder
-                Self.Module.写入日志("log.core.load.rerank.model.debug", model=Self.Config.RERANKER_MODEL, info_level=0)
+                Self.写入日志("log.core.load.rerank.model.debug", model=Self.Config.RERANKER_MODEL, info_level=0)
                 模型参数 = {}
                 if Self.Config.RERANKER_MODEL_DEVICE:
                     模型参数["device"] = Self.Config.RERANKER_MODEL_DEVICE
@@ -50,13 +51,13 @@ def 获取重排模型(Self):
                     模型参数["default_prompt_name"] = "classification"
                 模型 = CrossEncoder(Self.Config.RERANKER_MODEL, trust_remote_code=True, **模型参数)
             模型缓存[缓存键] = 模型
-            Self.Module.写入日志("log.core.load.rerank.model.succeed", model=Self.Config.RERANKER_MODEL, info_level=0)
+            Self.写入日志("log.core.load.rerank.model.succeed", model=Self.Config.RERANKER_MODEL, info_level=0)
             return 模型
         except Exception:
-            Self.Module.写入日志("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc(), info_level=3)
+            Self.写入日志("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc(), info_level=3)
             raise RuntimeError(Self.Lang("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc()))
         
-def 参考词预处理(Self, texts: list = None, uuid = None) -> tuple[np.ndarray, list]:
+def 参考词预处理(Self, texts: list = None, uuid = None) -> tuple[np.ndarray, list]: #Core
     检索词 = []
     待处理文本 = []
     文件路径 = Self.Config.VEC_FILE_PATH
@@ -75,7 +76,7 @@ def 参考词预处理(Self, texts: list = None, uuid = None) -> tuple[np.ndarra
         return 向量文本缓存[缓存键][0], 向量文本缓存[缓存键][1]
     Self.Module.写入日志("log.core.vector.cache.start")
     if 待处理文本 and Self.Config.EMB_MODEL:
-        返回内容向量 = Self.并行生成向量(待处理文本)
+        返回内容向量 = Self.Module.并行生成向量(待处理文本)
         向量结果列表 = 返回内容向量[0]
         Self.Module.写入日志("log.core.debug.vector.range", range=(向量结果列表.min(), 向量结果列表.max()), info_level=4)
         文本结果列表 = [[返回内容向量[1][0][i], 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][0]))]
@@ -116,7 +117,7 @@ def 参考词预处理(Self, texts: list = None, uuid = None) -> tuple[np.ndarra
     向量文本缓存[缓存键] = [向量文件, 文本文件]
     return 向量文件, 文本文件
 
-def 缓存索引(Self, 向量文件, 文本文件, 模式 = None, 存储 = True):
+def 缓存索引(Self, 向量文件, 文本文件, 模式 = None, 存储 = True): #Module
     Self.Module.写入日志("log.core.index.cache.start", info_level=0)
     索引配置 = [
         Self.Config.INDEX_MODE,
@@ -148,19 +149,80 @@ def 缓存索引(Self, 向量文件, 文本文件, 模式 = None, 存储 = True)
                 for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.read"):
                     向量索引 = faiss.read_index(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
             else:
-                向量索引 = Self.构建索引(向量文件, 模式)
+                向量索引 = Self.Module.构建索引(向量文件, 模式)
                 for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.write"):
                     with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5", "w+") as f:
                         f.write(参考词哈希)
                     faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
         else:
-            向量索引 = Self.构建索引(向量文件)
+            向量索引 = Self.Module.构建索引(向量文件)
             for _ in Self.Locale.Tqdm(range(1), desc="tqdm.index.write"):
                 with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss-md5", "w+") as f:
                     f.write(参考词哈希)
                 faiss.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.faiss")
         索引缓存[参考词哈希] = 向量索引
     else:
-        向量索引 = Self.构建索引(向量文件, 模式)
+        向量索引 = Self.Module.构建索引(向量文件, 模式)
     Self.Module.写入日志("log.core.index.cache.end", info_level=0)
     return 向量索引
+
+def 缓存数据包指令表(Self): #Module
+    缓存键 = f"{Self.Config.DATA_COMMAND_PATH}/{Self.Config.DATA_COMMAND_FILE}"
+    Path(缓存键).parent.mkdir(parents=True, exist_ok=True)
+    if 缓存键 in 数据包指令缓存:
+        return 数据包指令缓存[缓存键]
+    with 线程锁:
+        if 缓存键 in 数据包指令缓存:
+            return 数据包指令缓存[缓存键]
+        规则列表 = []
+        try:
+            Self.写入日志("log.core.command.rule.load.start", info_level=0)
+            文件路径 = Path(Self.Config.DATA_COMMAND_PATH) / Self.Config.DATA_COMMAND_FILE
+            if 文件路径.is_file():
+                with open(文件路径, "r", encoding="utf-8") as f:
+                    for 行 in f:
+                        行 = 行.strip()
+                        if 行 and not 行.startswith("#"):
+                            规则列表.append(行)
+            数据包指令缓存[缓存键] = 规则列表
+            Self.写入日志("log.core.command.rule.load.succeed", count=len(规则列表), info_level=0)
+        except Exception:
+            Self.写入日志("log.core.command.rule.load.error", e=eb.format_exc(), info_level=3)
+        return 规则列表
+    
+def 获取会话(Self, api_url, api_key, model, 最大并发, 避退指数, 重试次数): #Core Module
+    缓存键 = (api_url, api_key, model)
+    if 缓存键 in Self.会话.缓存:
+        return Self.会话.缓存[缓存键]
+    with Self.会话锁:
+        if 缓存键 in Self.会话.缓存:
+            return Self.会话.缓存[缓存键]
+        新会话 = Self.Module.高并发会话(api_key, 最大并发, 避退指数, 重试次数)
+        if not Self.会话.缓存:
+            Self.会话.缓存 = {}
+        Self.会话.缓存[缓存键] = 新会话
+        return 新会话
+
+def 增量索引(Self, 翻译参考列表, 索引ID): #Core
+    if 索引ID not in Self.增量索引缓存:
+        Self.增量索引缓存[索引ID] = {
+            "faiss_index": None,
+            "texts": [],
+            "key": [],
+            "ids": []}
+    缓存 = Self.增量索引缓存[索引ID]
+    for index in 翻译参考列表:
+        缓存["texts"].append(index[0])
+        缓存["key"].append(index[1])
+        缓存["ids"].append(index[2])
+    if 翻译参考列表 and Self.Config.INDEX_LANG_K != 0:
+        生成结果 = Self.Module.并行生成向量(翻译参考列表)
+        新向量 = np.asarray(生成结果[0], dtype=np.float32)
+        if 新向量.ndim == 1:
+            新向量 = 新向量.reshape(1, -1)
+        if GPU_ACC:
+            新向量 = 新向量.get()
+        if 缓存["faiss_index"] is None:
+            缓存["faiss_index"] = Self.Module.构建索引(新向量, Self.Config.INDEX_LANG_MODE)
+        缓存["faiss_index"].add(新向量)
+    return 缓存["faiss_index"], 缓存["key"], 缓存["texts"], 缓存["ids"]
