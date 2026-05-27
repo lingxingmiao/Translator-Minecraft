@@ -448,7 +448,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 单次多词提示词与单次单词提示词分离
 
 ### Release.1.6 Bata.2 (进行中)
-- 添加 Q2_NF量化方法,相比Q2_K的RMSE下降60%-70%
+- 添加 Q2_NF量化方法,相比Q2_K的RMSE下降至原先的60%-70%
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 
