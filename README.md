@@ -17,8 +17,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
 - 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 未知伤亡语言文件(非Minecraft)![](https://img.shields.io/badge/状态-API未添加-brightgreen)
-- 未知伤亡dll模组(非Minecraft)![](https://img.shields.io/badge/状态-API未添加-brightgreen)
+- 未知伤亡语言文件(非Minecraft)![](https://img.shields.io/badge/状态-完成-brightgreen)
+- 未知伤亡dll模组(非Minecraft)![](https://img.shields.io/badge/状态-完成-brightgreen)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
