@@ -410,8 +410,7 @@ AI给我加了一堆BUG所以不发布
 - 删除 导入查看词(文件夹版本, 非Dict Mini)
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
-### Release.1.6 Bata.1 (进行中)
-想做兽装了想画画了()，这个一天写一个
+### Release.1.6 Bata.1
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包(含起源)
     - 帕秋莉手册
@@ -448,8 +447,8 @@ AI给我加了一堆BUG所以不发布
 - 修改 合并已有翻译从翻译语言文件移动至翻译语言列表
 - 修改 单次多词提示词与单次单词提示词分离
 
-### Release.1.6 Bata.2 (计划中)
-- 修改 分离TranslatorModule到新的文件
+### Release.1.6 Bata.2 (进行中)
+- 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
