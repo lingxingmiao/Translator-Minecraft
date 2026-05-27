@@ -8,21 +8,18 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - FTB任务
 - 更好的任务
 - 核电工艺重制版附加包
-
-后续将支持以下组件(不是大饼, API实时更新可直接使用)
-- 数据包(含起源)![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 帕秋莉手册![](https://img.shields.io/badge/状态-完成-brightgreen)
-- Lavender手册
-- CraftTweaker(displayName/tooltip)![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 自定义主菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 精致菜单![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 困难任务![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 未知伤亡语言文件(非Minecraft)![](https://img.shields.io/badge/状态-完成-brightgreen)
-- 未知伤亡dll模组(非Minecraft)![](https://img.shields.io/badge/状态-完成-brightgreen)
+- 数据包(含起源)
+- 帕秋莉手册
+- CraftTweaker(displayName/tooltip)
+- 自定义主菜单
+- 精致菜单
+- 困难任务
+- 未知伤亡语言文件(非Minecraft)
+- 未知伤亡dll模组(非Minecraft)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
-- Excavated Variants
+- Lavender手册(没什么模组用暂时就不做了)
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
@@ -418,7 +415,6 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译(看到BBSMC有好多功能想搬了)
     - 数据包(含起源)
     - 帕秋莉手册
-    - Lavender手册![](https://img.shields.io/badge/状态-等待中-blue)
     - CraftTweaker(displayName/tooltip)
     - 自定义主菜单
     - 精致菜单
