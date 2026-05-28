@@ -449,6 +449,7 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.6 Bata.2 (进行中)
 - 添加 Q2_NF量化方法,Q2_NF的RMSE相比Q2_K的下降至原先的60%-70%
+- 添加 Q2_NF_H量化方法,相较于Q2_NF量化RMSE通常下降,但Recall@10提升[-0.01, 0.01] (人话:看脸)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 
