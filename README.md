@@ -478,6 +478,8 @@ AI给我加了一堆BUG所以不发布
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
 - 修复 翻译流程通用参数互相打架导致报错的问题
+- 修复 应用dll翻译读取文件路径不对导致报错
+- 修复 保存翻译审查文件出现越界索引的错误
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
