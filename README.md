@@ -105,6 +105,9 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ## 量化类型
 <details>
 <summary>点击展开/收起</summary>
+    
+## 类型
+- _K 无实质性意义
 - _NF 无法使用分位数，块大小32出现比特率大幅上升
 - _H 使用Hadamard变换，向量过多可能导致召回率下降(BAAI/bge-large-en Q2_NF_H前500个向量召回率可达93.8%)
 
