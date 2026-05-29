@@ -105,11 +105,14 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ## 量化类型
 <details>
 <summary>点击展开/收起</summary>
+该区域/技术由AI管理
     
 ## 类型
 - _K 无实质性意义
-- _NF 无法使用分位数，块大小32出现比特率大幅上升
-- _H 使用Hadamard变换，向量过多可能导致召回率下降(BAAI/bge-large-en Q2_NF_H前500个向量召回率可达93.8%)
+- _NF 表示使用固定[-1.512, -0.453, 0.453, 1.512]质心，无法使用分位数，块大小32出现比特率大幅上升
+- _H 表示使用Hadamard变换，向量过多可能导致召回率下降(BAAI/bge-large-en Q2_NF_H前500个向量召回率可达93.8%)
+- _SVD 表示使用了SVD学习最优旋转，该步骤耗时较长
+- _LM 表示使用了Lloyd-Max学习专属质心
 
 ### 使用 nomic-ai/nomic-embed-text-v1.5
 | RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
@@ -140,6 +143,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 | Q2_K | 0.0148/0.1005/85.2% | 0.0129/0.0779/87.2% | 0.0145/0.0970/85.6% | 0.0128/0.0767/87.4% |
 | Q2_NF | 0.0092/0.0438/91.7% | 0.0086/0.0382/92.5% |
 | Q2_NF_H | 0.0094/0.0463/90.6% | 0.0088/0.0404/91.0% |
+| Q2_NF_SVD_LM | 0.0073/0.0274/92.1% | 0.0070/0.0252/91.7% |
 | Float32 | 0.0000/0.0000/100.0% |
 | Float16 | 0.0000/0.0000/100.0% |
 | Float16_E0M15 | 0.0000/0.0000/100.0% |
@@ -472,8 +476,10 @@ AI给我加了一堆BUG所以不发布
 - 修改 单次多词提示词与单次单词提示词分离
 
 ### Release.1.6 Bata.2 (进行中)
-- 添加 Q2_NF量化方法,Q2_NF的RMSE相比Q2_K的下降至原先的60%-70%
-- 添加 Q2_NF_H量化方法,相较于Q2_NF量化RMSE通常下降,但Recall@10提升[-0.01, 0.01] (小数据量使用)
+- 添加 量化方法
+    - Q2_NF(Q2_NF的RMSE相比Q2_K的下降至原先的60%-70%)
+    - Q2_NF_H(相较于Q2_NF量化RMSE通常下降, 但Recall@10提升 [-0.01, 0.02] )
+    - Q2_NF_SVD_LM(对比Q2_NF时Recall@10提升 (0.0, 0.01] , 但量化耗时较长)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
