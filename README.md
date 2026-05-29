@@ -145,8 +145,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 | Float8_E4M3 | 0.0405/0.0004 | - | 0.0028/0.0020 |
 
 ### 使用 BAAI/bge-large-en
-| RMSE/余弦相似度损失/Recall@10 | Llama.cpp | Llama.cpp | Llama.cpp | Llama.cpp |
-| - | - | - | - | - |
+| RMSE/余弦相似度损失/Recall@10 | Llama.cpp | Llama.cpp | Llama.cpp | Llama.cpp | Llama.cpp |
+| - | - | - | - | - | - |
 | 范围 | Min.-0.16313092 | Max.0.3503784 |
 | 分位数 | 1.000 | 1.000 | 1.000 | 0.998 | 0.998 |
 | 块大小 | 128 | 64 | 32 | 64 | 32 |
