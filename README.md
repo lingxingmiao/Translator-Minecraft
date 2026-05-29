@@ -480,6 +480,7 @@ AI给我加了一堆BUG所以不发布
     - Q2_NF(Q2_NF的RMSE相比Q2_K的下降至原先的60%-70%)
     - Q2_NF_H(相较于Q2_NF量化RMSE通常下降, 但Recall@10提升 [-0.01, 0.02] )
     - Q2_NF_SVD_LM(对比Q2_NF时Recall@10提升 (0.0, 0.01] , 但量化耗时较长)
+    - TQ1_SVD(预计90%召回率)![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
@@ -489,6 +490,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 未知伤亡模组prosthetics V38无法应用翻译的问题
 - 修复 保存翻译审查文件出现越界索引的错误
 - 修复 命中缓存还会翻译的问题
+- 修复 翻译光影包压缩路径不对的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)(太困了先睡觉)
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
