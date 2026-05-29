@@ -495,7 +495,7 @@ AI给我加了一堆BUG所以不发布
     - Q2_NF(Q2_NF的RMSE相比Q2_K的下降至原先的60%-70%)
     - Q2_NF_H(相较于Q2_NF量化RMSE通常下降, 但Recall@10提升 [-0.01, 0.02] )
     - Q2_NF_SVD_LM(对比Q2_NF时Recall@10提升 (0.0, 0.01] , 但量化耗时较长)
-    - TQ1_SVD([-0.16313092, 0.3503784]范围Recall@10 87%-90%)
+    - TQ1_SVD([-0.16313092, 0.3503784]范围Recall@10 87.1%-88.1%)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
