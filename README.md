@@ -510,6 +510,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 保存翻译审查文件出现越界索引的错误
 - 修复 命中缓存还会翻译的问题
 - 修复 过滤dll文本多处漏过滤导致出现游戏报错的问题
+- 修复 单次多词和单次单词提示词写反导致单次多词无法正常工作的问题
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
