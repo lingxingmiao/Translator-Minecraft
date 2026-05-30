@@ -509,6 +509,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 未知伤亡模组prosthetics V38无法应用翻译的问题
 - 修复 保存翻译审查文件出现越界索引的错误
 - 修复 命中缓存还会翻译的问题
+- 修复 过滤dll文本多处漏过滤导致出现游戏报错的问题
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
