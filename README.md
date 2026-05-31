@@ -523,7 +523,7 @@ AI给我加了一堆BUG所以不发布
     - Q2_E_SVD_LM(Q2_SVD_LM优化版, Q3_K代替品)
     - TQ1_SVD(三值高压缩，Q2_K代替品)
     - Q1_K_M(二值极高压缩, Q2_K代替品)
-- 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-等待中-blue)
+- 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
 - 修复 翻译流程通用参数互相打架导致报错的问题
@@ -534,6 +534,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 命中缓存还会翻译的问题
 - 修复 过滤dll文本多处漏过滤导致出现游戏报错的问题
 - 修复 单次多词和单次单词提示词写反导致单次多词无法正常工作的问题
+- 修复 通用翻译文件翻译.json文件进入未知伤亡匹配的if的dict in str写反导致的报错
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
