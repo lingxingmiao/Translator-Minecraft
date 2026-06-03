@@ -536,6 +536,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 过滤dll文本多处漏过滤导致出现游戏报错的问题
 - 修复 单次多词和单次单词提示词写反导致单次多词无法正常工作的问题
 - 修复 通用翻译文件翻译.json文件进入未知伤亡匹配的if的dict in str写反导致的报错
+- 修复 DictMini导出Alpaca数据集多出一个字段的问题
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
