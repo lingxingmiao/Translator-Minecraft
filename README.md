@@ -41,7 +41,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ### API
 公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
 公益API当前使用模型: 
-- Gemma4-E4B-Minecraft-MT-en-zh-6400步(训练完成发布) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
+- [Q1ngMang/Gemma-4-E4B-it-Minecraft-MT-en-zh](https://huggingface.co/Q1ngMang/Gemma-4-E4B-it-Minecraft-MT-en-zh) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
 - [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
 
 ### Minecraft Machine Translation Quality Metrics
