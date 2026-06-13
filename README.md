@@ -543,6 +543,8 @@ AI给我加了一堆BUG所以不发布
 
 ### 计划
 - 添加 所有库懒加载
+- 添加 翻译耗时预测器
+- 修改 Core文件传入方式与翻译方法
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
