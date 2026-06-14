@@ -526,9 +526,13 @@ AI给我加了一堆BUG所以不发布
     - Q1_K_M(二值极高压缩, Q2_K代替品)
 - 添加 DictMini转换数据集随机排布
 - 添加 DictMini转换数据集 Alpaca 格式加强版(Alpaca-EX)
-- 添加 翻译流程支持的类型新增DictMini导出(**警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**
+- 添加 翻译流程支持的类型新增DictMini导出
+    - **警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**
+    - [未知伤亡](https://store.steampowered.com/app/4576490/)语言文件是保留所有权利我也不敢用
+- 优化 单次多词我换另一种说法让ast.literal_eval改为ujson.loads
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
+- 修改 单次多词核爆太多次退回到单次单词![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
 - 修复 翻译流程通用参数互相打架导致报错的问题
 - 修复 应用dll翻译读取文件路径不对导致报错
@@ -542,9 +546,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 DictMini导出Alpaca数据集多出一个字段的问题
 
 ### 计划
-- 添加 所有库懒加载
+- 添加 所有库懒加载(等待Python 3.15)
 - 添加 翻译耗时预测器
-- 修改 Core文件传入方式与翻译方法
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
