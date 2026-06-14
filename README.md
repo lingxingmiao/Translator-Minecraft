@@ -305,7 +305,6 @@ conda env remove -n Translator_Minecraft
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
 
 ### Release.1.4 Bata.1
-- 添加 OAuth2.0 格式 API 调用（失败）
 - 添加 调用大语言模型额外参数传入
 - 添加 已安装的整合包翻译支持（支持 KJS FTBQ BQ 资源文件夹 模组，支持 I18n翻译剔除）
 - 添加 FTB任务与BQ任务翻译自动剔除键与滚木
@@ -526,13 +525,12 @@ AI给我加了一堆BUG所以不发布
     - Q1_K_M(二值极高压缩, Q2_K代替品)
 - 添加 DictMini转换数据集随机排布
 - 添加 DictMini转换数据集 Alpaca 格式加强版(Alpaca-EX)
-- 添加 翻译流程支持的类型新增DictMini导出
-    - **警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**
-    - [未知伤亡](https://store.steampowered.com/app/4576490/)语言文件是保留所有权利我也不敢用
+- 添加 翻译流程支持的类型新增DictMini导出(**警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**)
 - 优化 单次多词我换另一种说法让ast.literal_eval改为ujson.loads
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修改 单次多词核爆太多次退回到单次单词![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 翻译思维链剔除改为预编译正则表达式
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
 - 修复 翻译流程通用参数互相打架导致报错的问题
 - 修复 应用dll翻译读取文件路径不对导致报错
@@ -544,6 +542,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 单次多词和单次单词提示词写反导致单次多词无法正常工作的问题
 - 修复 通用翻译文件翻译.json文件进入未知伤亡匹配的if的dict in str写反导致的报错
 - 修复 DictMini导出Alpaca数据集多出一个字段的问题
+- 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 
 ### 计划
 - 添加 所有库懒加载(等待Python 3.15)
