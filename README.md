@@ -548,6 +548,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 通用翻译文件翻译.json文件进入未知伤亡匹配的if的dict in str写反导致的报错
 - 修复 DictMini导出Alpaca数据集多出一个字段的问题
 - 修复 翻译整合包 pack.metadata 文件没有使用配置里面的值
+- 修复 log.core.translator.generate.start使用位置条目数不正确的问题
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 
 ### 计划
