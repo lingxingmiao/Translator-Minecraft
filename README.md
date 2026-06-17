@@ -528,10 +528,11 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译流程支持的类型新增DictMini导出(**警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**)
 - 添加 翻译上下文去重
 - 添加 翻译模型重复惩罚配置
-- 添加 构建索引函数train()随机采样
+- 添加 构建索引函数train()随机采样(Float32设置百分比 Int32设置值)
 - 添加 基础索引函数用于构建索引函数的IVF与Refine等方法
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
+- 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
 - 优化 批量翻译我换另一种说法让ast.literal_eval改为ujson.loads
 - 优化 模型路由器的 动态执行包装 函数性能
 - 优化 上下文管理器的 .get 性能
