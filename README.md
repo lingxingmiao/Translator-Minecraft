@@ -537,6 +537,7 @@ AI给我加了一堆BUG所以不发布
 - 优化 模型路由器的 动态执行包装 函数性能
 - 优化 上下文管理器的 .get 性能
 - 优化 翻译整合包删除缓存性能
+- 优化 量化器在cupy下的性能![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修改 批量翻译核爆太多次退回到逐条翻译
