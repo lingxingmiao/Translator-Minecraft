@@ -534,11 +534,12 @@ AI给我加了一堆BUG所以不发布
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
 - 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
 - 添加 翻译任务夜间进行(部分API 8折)![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 量化器Numba支持![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 优化 批量翻译我换另一种说法让ast.literal_eval改为ujson.loads
 - 优化 模型路由器的 动态执行包装 函数性能
 - 优化 上下文管理器的 .get 性能
 - 优化 翻译整合包删除缓存性能
-- 优化 量化器在cupy下的性能![](https://img.shields.io/badge/状态-等待中-blue)
+- 优化 量化器性能与内存![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修改 批量翻译核爆太多次退回到逐条翻译
