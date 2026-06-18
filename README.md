@@ -207,8 +207,9 @@ pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-tran
 pip install einops
 pip install uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
-# 向量处理加速（可选 要打包环境别安）
-conda install -c conda-forge cupy cuda-version=12.8
+# 向量处理加速（可选）
+conda install -c conda-forge cupy cuda-version=12.8 # GPU 要打包别安
+pip install numba # CPU
 # 打包exe 没有做torch兼容 手动打包cupy不可用
 pip install nuitka
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
