@@ -574,7 +574,10 @@ AI给我加了一堆BUG所以不发布
 - 修复 翻译整合包 pack.metadata 文件没有使用配置里面的值
 - 修复 log.core.translator.generate.start使用位置条目数不正确的问题
 - 修复 动态分配翻译任务进度条是键的问题
-- 修复 内置snbtlib的正则表达式匹MULTILINE配不对的问题
+- 修复 内置snbtlib的_tokenize函数
+    - MULTILINE报错
+    - FTBQ注释缩进报错
+    - 类型后缀导致的奔溃
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 
 ### 计划
