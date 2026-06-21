@@ -548,6 +548,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译任务夜间进行(部分API 8折)![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 量化器Numba支持
 - 添加 量化器_LM计算早停配置添加进配置项
+- 添加 翻译请求池![](https://img.shields.io/badge/状态-等待中-blue)
 - 优化 批量翻译我换另一种说法让ast.literal_eval改为ujson.loads
 - 优化 模型路由器的 动态执行包装 函数性能
 - 优化 上下文管理器的 .get 性能
@@ -589,7 +590,6 @@ AI给我加了一堆BUG所以不发布
 
 ### 计划
 - 添加 翻译耗时预测器
-- 添加 统一翻译池
 - 修改 自定义tqdm
 
 ### 编辑需要
