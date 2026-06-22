@@ -534,7 +534,7 @@ AI给我加了一堆BUG所以不发布
     - TQ1_SVD(三值高压缩，Q2_K代替品)
     - Q1_K_M(二值极高压缩, Q2_K代替品)
     - GSQ_K系列(GSQ_0改进版, 涵盖2-8bit, 平均为同bit顶尖水平)
-- 添加 向量重排(仅QSG_K有效, 8位最高100% 6位最高99.9% 4位最高99.5% 3位最高98.4% 2位最高93.9%)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 向量重排(仅QSG_K有效, 同步移植至[IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/))![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 DictMini转换数据集随机排布
 - 添加 DictMini转换数据集 Alpaca 格式加强版(Alpaca-EX)
 - 添加 翻译流程支持的类型新增DictMini导出(**警告**:[未知伤亡](https://store.steampowered.com/app/4576490/)含暴力、血腥以及抑郁和自残内容，**若此类内容占比大于5%则严禁投喂AI**)
