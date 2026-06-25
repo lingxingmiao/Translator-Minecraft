@@ -527,7 +527,6 @@ AI给我加了一堆BUG所以不发布
 - 修改 批量翻译提示词与逐条翻译提示词分离
 
 ### Release.1.6 Bata.2 (进行中)
-微调模型(Qwen3 VL 8B)暂停开发, 预计7月恢复更新
 - 添加 量化方法
     - Q4_K_H Q4_SVD_LM GSQ4_0(Q4_K优化版, 代替Q4_K)
     - Q2_NF Q2_E_NF Q2_SVD_LM Q2_E_SVD_LM(Q2_K优化版, Q3_K代替品)
@@ -549,7 +548,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 量化器Numba支持
 - 添加 量化器_LM计算早停配置添加进配置项
 - 添加 翻译请求池![](https://img.shields.io/badge/状态-等待中-blue)
-- 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) 超低内存索引(召回率:2bit 90%>,8bit 99.9999%>)
+- 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) 超低内存索引(Fast召回率:2bit 90%>,8bit 99.9999%>, 还有速度内存召回率都要的MoE版本)
 - 优化 批量翻译我换另一种说法让ast.literal_eval改为ujson.loads
 - 优化 模型路由器的 动态执行包装 函数性能
 - 优化 上下文管理器的 .get 性能
