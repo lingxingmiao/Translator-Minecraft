@@ -547,7 +547,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
 - 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
-- 添加 翻译任务夜间进行(部分API 8折)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 翻译任务夜间进行(部分API 8折)
 - 添加 量化器Numba支持
 - 添加 量化器_LM计算早停配置添加进配置项
 - 添加 翻译请求池![](https://img.shields.io/badge/状态-进行中-brightgreen)
