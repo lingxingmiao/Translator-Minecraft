@@ -544,10 +544,10 @@ AI给我加了一堆BUG所以不发布
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
 - 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
-- 添加 翻译任务夜间进行(部分API 8折)![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 翻译任务夜间进行(部分API 8折)![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 量化器Numba支持
 - 添加 量化器_LM计算早停配置添加进配置项
-- 添加 翻译请求池![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 翻译请求池![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) 超低内存索引(Fast召回率:2bit 90%>,8bit 99.9999%>, 还有速度内存召回率都要的MoE版本)
 - 优化 批量翻译我换另一种说法让ast.literal_eval改为ujson.loads
 - 优化 模型路由器的 动态执行包装 函数性能
@@ -577,6 +577,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 动态分配翻译任务进度条是键的问题
 - 修复 使用模型添加null的索引越界报错
 - 修复 rich.tqdm多线程核爆的问题
+- 修复 反量化后的向量会一直占内存的问题
 - 修复 整合包保存语言文件时文件消失的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修复 FTBQ写入
     - 写入时索引写成切片的报错
