@@ -544,7 +544,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译模型重复惩罚配置
 - 添加 构建索引函数train()随机采样(Float32设置百分比 Int32设置值)
 - 添加 基础索引函数用于构建索引函数的IVF与Refine等方法
-- 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(还要CuPy兼容不是很好整)
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
 - 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
 - 添加 翻译任务夜间进行(部分API 8折)
@@ -557,7 +557,7 @@ AI给我加了一堆BUG所以不发布
 - 优化 上下文管理器的 .get 性能
 - 优化 翻译整合包删除缓存性能
 - 优化 量化器性能与内存
-- 修改 分离TranslatorModule到新的文件![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 分离TranslatorModule到新的文件
 - 修改 删除所有量化方法的"_X" 示例:Q2_K_X -> Q2_K
 - 修改 批量翻译核爆太多次退回到逐条翻译
 - 修改 翻译思维链剔除改为预编译正则表达式
