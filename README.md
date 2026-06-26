@@ -16,6 +16,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 困难任务
 - 未知伤亡语言文件(非Minecraft)
 - 未知伤亡dll模组(非Minecraft)
+- [模组翻译](https://www.mcmod.cn/class/27911.html)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
@@ -527,6 +528,8 @@ AI给我加了一堆BUG所以不发布
 - 修改 批量翻译提示词与逐条翻译提示词分离
 
 ### Release.1.6 Bata.2 (进行中)
+- 添加 翻译
+    - [模组翻译](https://www.mcmod.cn/class/27911.html)![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 量化方法
     - Q4_K_H Q4_SVD_LM GSQ4_0(Q4_K优化版, 代替Q4_K)
     - Q2_NF Q2_E_NF Q2_SVD_LM Q2_E_SVD_LM(Q2_K优化版, Q3_K代替品)
