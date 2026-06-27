@@ -1,4 +1,4 @@
-from TranslatorLib import dataclass, replace, re
+from TranslatorLib import dataclass, replace, re, numpy
 
 @dataclass
 class DefaultConfig:
@@ -13,11 +13,14 @@ class DefaultConfig:
     LLM_TOP_K = 30 
     LLM_TOP_P = 0.95
     LLM_TEMP = 0.30
+    LLM_RP = 1.1
     LLM_PP = 0
     LLM_FP = 0
     LLM_SEED = 42
     LLM_MAX_WORKERS = 24 # 请求最大并发数
     LLM_MIN_COUNT = 0 # 多模型最低启用翻译条目数
+    LLM_ACTIVE_TIME_START = "" # 活跃时间开始 (格式 "HH:MM"，如 "00:00"，留空则全天可用)
+    LLM_ACTIVE_TIME_END = ""   # 活跃时间结束 (格式 "HH:MM"，如 "08:00"，支持跨天)
     LLM_TIER_INTERLEAVE = False # 多模型混合分布请求API
     LLM_TIER_DYNAMIC = False
     LLM_TIER_CASCADE = False # 级联衰减开关
@@ -60,21 +63,65 @@ class DefaultConfig:
     RERANKER_RETRY_TIME = 5
     RERANKER_RETRY_COEF = 1.2
 
-    VEC_INT_DTYPE = ["Q8_K_X", "Q6_K_X", "Q4_K_X", "Q3_K_X", "Q2_K_X"]
-    VEC_FLOAT_DTYPE = ["Float32", "Float16", "Float16_E0M15", "BFloat16", "Float8_E4M3"]
+    VEC_INT_DTYPE = ["Q8_K", "GSQ8_K",#256值 8比特
+                     "Q6_K", "GSQ6_K", #64值 6比特
+                     "Q4_K", "Q4_K_H", "Q4_SVD_LM", "GSQ4_0", "GSQ4_K", #16值 4比特
+                     "Q3_K", "GSQ3_K", #8值 3比特
+                     "Q2_K", "Q2_E_NF", "Q2_NF", "Q2_SVD_LM", "Q2_E_SVD_LM", "GSQ2_K", #4值 2比特
+                     "TQ1_SVD", #3值 1.6比特
+                     "Q1_K_M", #2值 1比特
+                     ]
+    VEC_FLOAT_DTYPE = ["Float32", #32比特
+                       "Float16", "BFloat16", "Float16_E0M15", #16比特
+                       "Float12_E0M11", #12比特
+                       "Float8_E4M3", "Float8_E0M7", #8比特
+                       ]
     VEC_FILE_PATH = r"./Vectors"
     VEC_FILE_NAME = "Vectors"
-    VEC_QUANTIZATION = "Q6_K_X" # string: VEC_INT_DTYPE VEC_FLOAT_DTYPE 选其中一个
-    VEC_QUANTILE = 0.998
+    VEC_CACHE = False
+    VEC_QUANTIZATION = "GSQ4_K" # string: VEC_INT_DTYPE VEC_FLOAT_DTYPE 选其中一个
+    VEC_QUANTILE = 0.998 # 分位数裁切
+    VEC_QUANTIZATION_ITRS_SVD = 50 # _SVD步数
+    VEC_QUANTIZATION_SPL_SVD = 10000000 #  _SVD采样数
+    VEC_QUANTIZATION_ITRS_LM = 200 # _LM步数
+    VEC_QUANTIZATION_SPL_LM = 10000000 # _LM采样数
+    VEC_QUANTIZATION_ES_LM  = 1e-6 # _LM早停 两步之间小于该值退出
     VEC_QUANTIZATION_BLOCK_SIZE = 32 # int: 2的倍数 最小2 最大256 默认32
+    VEC_QUANTIZATION_SCALE_TYPE = "Float16_E0M15" # string: VEC_FLOAT_DTYPE 选其中一个
+    
+    
+    # 向量重排 仅支持GSQ_K量化与GSQ索引
+    VEC_RERANKER = True
+    VEC_RERANKER_INDEX_RERANKER_BLOCK_SIZE = 128 #向量重排块大小(聚类)
+    VEC_RERANKER_INDEX_FACTOR = 4
+    VEC_RERANKER_INDEX_BASE_MODE = "IP" # 填入基础模式
+    VEC_RERANKER_INDEX_MODE = "IVF" # 基础模式: HNSWSQ HNSWPQ HNSW L2 IP 高级模式: Refine IVFSQ IVFPQ IVF
+    VEC_RERANKER_INDEX_BASE_SQ = "Q8" # string: Q4, Q6, Q8, F16, BF16
+    VEC_RERANKER_INDEX_SQ = "Q8" 
+    VEC_RERANKER_INDEX_RE_MINMAX = False
+    VEC_RERANKER_INDEX_RE_MEANSTD = False
+    VEC_RERANKER_INDEX_RE_QUANTILES = False
+    VEC_RERANKER_INDEX_RE_OPTIM = False
+    VEC_RERANKER_INDEX_HNSW_M = 128
+    VEC_RERANKER_INDEX_HNSW_CONSTRUCTION = 720
+    VEC_RERANKER_INDEX_HNSW_SEARCH = 480
+    VEC_RERANKER_INDEX_HNSW_NBITS = 8
+    VEC_RERANKER_INDEX_HNSW_PQ_M = 8
+    VEC_RERANKER_INDEX_IVF_NPROBE = 10
+    VEC_RERANKER_INDEX_IVF_NLITS = 8
+    VEC_RERANKER_INDEX_IVF_PQ_M = 8
+    VEC_RERANKER_INDEX_IVF_RQ = True
+    VEC_RERANKER_INDEX_REFINEFLAT_K_FACTOR = 6.0
     
     TRANSLATOR_CACHE_WRITE = True
     TRANSLATOR_CACHE_READ = True
     TRANSLATOR_CACHE_PATH = r"./Translator_Cache"
     TRANSLATOR_CACHE_NAME = "Translator_Cache"
-    TRANSLATOR_REFINE_ROUNDS = 0
-    TRANSLATOR_BATCH = 1
-    TRANSLATOR_ORIGINAL_REFERENCE = False
+    TRANSLATOR_REFINE_ROUNDS = 0 # 翻译精炼次数 Tokens以乘数+上下文Tokens增长
+    TRANSLATOR_BATCH = 3 # 单次请求翻译文本数
+    TRANSLATOR_BATCH_RETRY = 2 # TRANSLATOR_BATCH不为1重试次数 如果还是失败则退回TRANSLATOR_BATCH=1
+    TRANSLATOR_ORIGINAL_REFERENCE = False # 文本对照 Input:UV False:紫外线 True:紫外线(UV)
+    TRANSLATOR_MODPACK_MOD_CONCURRENT = 8 # 翻译整合包时翻译模组并发数
     TRANSLATOR_USER_PROMPT = ["翻译为{LANGUAGE_OUTPUT}(仅输出翻译内容):{text}", "翻译为{LANGUAGE_OUTPUT}(总计{count}个词条,仅输出翻译内容):{text}"]
     TRANSLATOR_SYSTEM_PROMPT = ["""
 你是一位专业的 Minecraft 游戏翻译器，需要流畅准确一致地将文本翻译成 {LANGUAGE_OUTPUT} 语言。
@@ -85,13 +132,13 @@ class DefaultConfig:
 4. 单个符号需要翻译（遇到&或§或%需要保留后一位符号不做翻译）
 5. 保留所有HTML标签（如`<br>``<span>``<a href="">`等）和Markdown语法，仅翻译标签/语法内的可读文本内容，不修改标签结构或语法符号本身
 ## 输出格式：
-- 列表输入 → 多个译文严格使用 Python list 对象格式
+- 列表输入 → 多个译文严格使用 JSON list 对象格式
 ## 示例
 ### 多文本输入：
-['原文A', '原文B', '原文C']
+["原文A", "原文B", "原文C"]
 ### 多文本输出：
-['译文A', '译文B', '译文C']
-## 翻译提示
+["译文A", "译文B", "译文C"]
+## 下文为翻译提示
 """, """
 你是一位专业的 Minecraft 游戏翻译器，需要流畅准确一致地将文本翻译成 {LANGUAGE_OUTPUT} 语言。
 ## 翻译规则
@@ -107,7 +154,7 @@ class DefaultConfig:
 原文
 ### 单文本输出：
 译文
-## 翻译提示
+## 下文为翻译提示
 """]
 
     PATH_CACHE = r"./Cache"
@@ -150,12 +197,13 @@ class DefaultConfig:
     INDEX_WORD_K = 2
     INDEX_LANG_K = 2
     INDEX_QUESTS_BASIC_WORDS = []
-    INDEX_MODE = "HNSWPQ" # RefineFlat IVFSQ IVFPQ IVFFlat HNSWSQ HNSWPQ HNSWFlat FlatL2 FlatIP # 100%召回选RefineFlat 测试选FlatL2,FlatIP 部署选HNSW,IVF
-    INDEX_LANG_MODE = "FlatL2"
-    INDEX_SQ = "Q8" # string: Q4, Q6, Q8, F16, BF16
-    INDEX_PQ_M = 8
-    INDEX_NLIST = 100
-    INDEX_NLITS = 8
+    INDEX_BASE_MODE = "HNSWPQ" # 填入基础模式
+    INDEX_MODE = "Refine" # 基础模式: HNSWSQ HNSWPQ HNSW L2 IP 高级模式: Refine IVFSQ IVFPQ IVF 自研低内存模式: GSQ GSQFast GSQMoE GSQMoEPlus 又要内存又要速度又要召回率选 GSQMoEPlus(GSQ3+) 不要召回率选 HNSWPQ IVFPQ 不要速度选 GSQFast 不要内存选 Refine+HNSWPQ/IVFPQ
+    INDEX_LANG_MODE = "IP" # L2 IP
+    INDEX_BASE_SQ = "Q8" # string: faiss: Q4, Q6, Q8, F16, BF16 indexgsq: GSQ2 GSQ3 GSQ4 GSQ8 (GSQ系列必须选)
+    INDEX_SQ = "Q8"
+    INDEX_SAMPLING = numpy.float32(0.05) # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
+    INDEX_SAMPLING_MIN = 1
     INDEX_RE_MINMAX = False
     INDEX_RE_MEANSTD = False
     INDEX_RE_QUANTILES = False
@@ -163,8 +211,27 @@ class DefaultConfig:
     INDEX_HNSW_M = 128
     INDEX_HNSW_CONSTRUCTION = 720
     INDEX_HNSW_SEARCH = 480
-    INDEX_REFINEFLAT_K_FACTOR = 2.0
+    INDEX_HNSW_NBITS = 8
+    INDEX_HNSW_PQ_M = 8
     INDEX_IVF_NPROBE = 10
+    INDEX_IVF_NLITS = 8
+    INDEX_IVF_PQ_M = 8
+    INDEX_IVF_RQ = True
+    INDEX_REFINEFLAT_K_FACTOR = 6.0
+    INDEX_GSQ_RERANKER_BLOCK_SIZE = 128 # 向量重排块大小(聚类)
+    INDEX_GSQ_RERANKER_FACTOR = 4 # 向量重排检索的向量倍数(向量越多向量重排块缩放越高重排倍数越高耗时越久)
+    INDEX_GSQ_BLOCK_SIZE = 128 # 向量块大小
+    INDEX_GSQ_MOE_BLOCK_SIZE = 64 # 专家矩阵量化块大小(Q4_SVD_LM_SVD_LM)
+    INDEX_GSQ_MOE_EXP = numpy.float32(0.01) # 就是nprobe float百分比激活专家数 uint激活专家数 float1时激活100% uint1时1专家 类型32位
+    INDEX_GSQ_MOE_SPL_SVD = 5
+    INDEX_GSQ_MOE_SPL_LM = 20
+    INDEX_GSQ_MOE_KM_LM = 16
+    INDEX_CPU_COUNT = numpy.float32(0.8) #float百分比线程 uint线程数 float1时线程100% uint1时1线程 类型32位
+    INDEX_CONFIG = ["INDEX_BASE_MODE", "INDEX_MODE", "INDEX_BASE_SQ", "INDEX_SQ",
+                    "INDEX_RE_MINMAX", "INDEX_RE_MEANSTD", "INDEX_RE_QUANTILES", "INDEX_RE_OPTIM",
+                    "INDEX_HNSW_M", "INDEX_HNSW_CONSTRUCTION", "INDEX_HNSW_SEARCH", "INDEX_HNSW_NBITS", "INDEX_HNSW_PQ_M",
+                    "INDEX_IVF_NPROBE", "INDEX_IVF_NLITS", "INDEX_IVF_PQ_M", "INDEX_IVF_RQ", "INDEX_REFINEFLAT_K_FACTOR"]
+
     
     API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE$"}
     API_TRANSLATOR_CORE_CONFIG_BLACK = {}
@@ -188,11 +255,11 @@ class DefaultConfig:
 
 ## 输出格式（含答案标号）：
 - **单段落输入** → 输出格式：`选中译文 <大写字母>`，示例：`A`
-- **多段落输入** → 输出格式：Python list，每项为 `译文 <大写选项>`，示例：`["A", "B", "C", "D", "E"]`
+- **多段落输入** → 输出格式：JSON list，每项为 `译文 <大写选项>`，示例：`["A", "B", "C", "D", "E"]`
 
 ## 示例
 ### 多段落输入：
-['原文1\nA:选项A\nB:选项B', '原文2\nA:选项A\nB:选项B']
+["原文1\nA:选项A\nB:选项B", "原文2\nA:选项A\nB:选项B"]
 ### 多段落输出：
 ["<选项1>", "<选项2>"]
 
@@ -244,6 +311,7 @@ class RuntimeConfig:
             "temperature": float(cfg.get("temperature", self.LLM_TEMP)),
             "top_p": float(cfg.get("top_p", self.LLM_TOP_P)),
             "top_k": int(cfg.get("top_k", self.LLM_TOP_K)),
+            "repeat_penalty": float(cfg.get("repetition_penalty", self.LLM_RP)),
             "presence_penalty": float(cfg.get("presence_penalty", self.LLM_PP)),
             "frequency_penalty": float(cfg.get("frequency_penalty", self.LLM_FP)),
             "seed": int(cfg.get("seed", self.LLM_SEED)),
@@ -255,6 +323,8 @@ class RuntimeConfig:
             "max_workers": int(cfg.get("max_workers", self.LLM_MAX_WORKERS)),
             "min_count": int(cfg.get("min_count", self.LLM_MIN_COUNT)),
             "weight": float(cfg.get("weight", self.LLM_TIER_MULTI_WEIGHT)),
+            "active_time_start": cfg.get("active_time_start", self.LLM_ACTIVE_TIME_START),
+            "active_time_end": cfg.get("active_time_end", self.LLM_ACTIVE_TIME_END),
         }
 
     def get_active_tiers(self):

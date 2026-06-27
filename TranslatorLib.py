@@ -1,5 +1,11 @@
+from __future__ import annotations 
+
+__lazy_modules__ = ["traceback", "threading", "hashlib", "zipfile", "sqlite3", "tomllib", "asyncio", "logging", "shutil", "locale", "bisect", "pickle", "random", "atexit", "heapq", "queue", "shlex", "time", "uuid", "math", "ast", "re", "io", "json", "enum", "types", "typing", "urllib.parse", "urllib3.util.retry", "logging.handlers", "pathlib", "requests.adapters", "functools", "concurrent.futures", "contextlib", "collections", "dataclasses",
+                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os"]
+
 import traceback as eb
 import threading
+import datetime
 import hashlib
 import zipfile
 import sqlite3
@@ -13,21 +19,23 @@ import bisect
 import pickle
 import random
 import atexit
-import dnfile
+import heapq
 import queue
 import shlex
 import time
 import uuid
 import math
 import ast
+import os
 import re
 import io
 
 from io import BytesIO
-from re import compile as _re_compile, sub as _re_sub
+from re import compile as _re_compile, sub as _re_sub, MULTILINE
 from json import dumps as _json_dumps, loads as _json_loads
 from enum import IntEnum
-from types import SimpleNamespace
+from types import SimpleNamespace, MethodType
+from typing import TYPE_CHECKING 
 from urllib.parse import quote
 from typing import Callable, Dict, Any, Union, Optional, List, TextIO
 from urllib3.util.retry import Retry
@@ -42,9 +50,6 @@ from collections import defaultdict, deque, OrderedDict
 from dataclasses import dataclass, replace
 #需要安装↓
 import numpy
-import faiss
-import ujson as json
-import dnfile
 #需要安装↓
 from rich.console import Console
 from rich.panel import Panel
@@ -53,15 +58,37 @@ from rich.text import Text
 from rich.style import Style
 from rich.color import Color
 from tqdm.rich import tqdm
-#from tqdm import tqdm
+from tqdm import tqdm as ttqdm
 #Codna需要安装↓
 import requests
 #可选服务安装↓
 try:
     import uvicorn, fastapi, slowapi
+    from fastapi import FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks
+    from fastapi.responses import FileResponse, PlainTextResponse
+    from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+    from fastapi.middleware.cors import CORSMiddleware
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
 except ImportError:
     uvicorn, fastapi, slowapi = None, None, None
     
+NOT_IMPORT = []
+try:
+    import faiss
+except:
+    faiss = None
+    NOT_IMPORT.append("faiss")
+try:
+    import ujson as json
+except:
+    import json
+try:
+    import dnfile
+except:
+    dnfile = None
+    NOT_IMPORT.append("dnfile")
 ConfigFile = Path("config.cfg").resolve()
 ConfigFile.parent.mkdir(parents=True, exist_ok=True)
 if ConfigFile.is_file():
@@ -75,51 +102,45 @@ else:
     with open(ConfigFile, "w+", encoding="utf-8") as f:
         json.dump(Config, f, indent=4)
         
-GPU_ACC = False
-GPU_ERROR = None
-HARDWARE_INFO = {"device_count": "1", "device_id": None}
+CPU_ACC, GPU_ACC = False, False
+gpu_error, numba_error = "", ""
 try:
     if not Config["GPU_Accelerator"]:
         raise ValueError("GPU_ACC is set to False")
-    
-    import cupy as np
+
+    import cupy as np  # type: ignore
     if Config["GPU_Device_ID"] is not None:
         np.cuda.runtime.setDevice(Config["GPU_Device_ID"])
-    
+
     np.dot(np.random.rand(2, 2), np.random.rand(2, 2))
     if not np.cuda.is_available():
         raise ValueError("CUDA not available")
-    
-    HARDWARE_INFO = {
-        "type": "GPU",
-        "version": np.__version__,
-        "device_count": np.cuda.runtime.getDeviceCount(),
-        "device_id": np.cuda.runtime.getDevice(),
-        "error": ""
-    }
-    
+
     GPU_ACC = True
 except ValueError:
     np = numpy
-    HARDWARE_INFO = {
-        "type": "CPU",
-        "version": np.__version__,
-        "device_count": None,
-        "device_id": None,
-        "error": ""
-    }
-    GPU_ERROR = False
 except Exception as e:
     np = numpy
-    HARDWARE_INFO = {
-        "type": "CPU",
-        "version": np.__version__,
-        "device_count": None,
-        "device_id": None,
-        "error": e
-    }
-    
-    GPU_ERROR = e
+    gpu_error = e
+try:
+    import numba  # type: ignore
+    from numba import njit  # type: ignore
+    CPU_ACC = True
+except Exception as e:
+    numba = None
+    numba_error = e
+    def njit(*a, **kw):
+        def _wrap(f): return f
+        return _wrap(a[0]) if a and callable(a[0]) else _wrap
+HARDWARE_INFO = {
+    "type": "GPU" if GPU_ACC else "CPU",
+    "acc_type": "CuPy" if GPU_ACC else ("Numba" if CPU_ACC else "None"),
+    "version": numpy.__version__,
+    "acc_version": numba.__version__ if CPU_ACC else ("CuPy" if GPU_ACC else "None"),
+    **({"device_count": np.cuda.runtime.getDeviceCount(),
+        "device_id": np.cuda.runtime.getDevice()} if GPU_ACC else {}),
+    "error": "None" if GPU_ACC else (numba_error if not CPU_ACC else gpu_error)
+}
 if uvicorn and fastapi and slowapi:
     APIConfigFile = Path("config-api.cfg").resolve()
     APIConfigFile.parent.mkdir(parents=True, exist_ok=True)
@@ -186,18 +207,26 @@ class snbtlib:
     @staticmethod
     def _tokenize(text: str) -> List[Dict[str, Any]]:
         text = text.replace('\r', '')
-        text = _re_sub(_re_compile(r'^\s+?//.*$', _re_compile.MULTILINE), '', text)
-        text = _re_sub(_re_compile(r'^\s+?#.*$', _re_compile.MULTILINE), '', text)
+        text = _re_sub(_re_compile(r'^\s*//.*$', MULTILINE), '', text)
+        text = _re_sub(_re_compile(r'^\s*#.*$', MULTILINE), '', text)
         
         tokens, i, n = [], 0, len(text)
         while i < n:
             ch = text[i]
             if ch.isspace() and ch != '\n': i += 1; continue
             if ch in '{[:]}:,': tokens.append(snbtlib._mk_token(ch, ch)); i += 1; continue
+            
             if ch in '-0123456789':
                 j = i
-                while j < n and (text[j] in '-0123456789.eE' or (text[j] in '+-' and j > i and text[j-1] in 'eE')): j += 1
-                tokens.append({'type': 'NUMBER', 'value': '$number$' + text[i:j]}); i = j; continue
+                while j < n and (text[j] in '-0123456789.eE' or (text[j] in '+-' and j > i and text[j-1] in 'eE')): 
+                    j += 1
+                
+                if j < n and text[j].lower() in 'bslfd':
+                    j += 1
+                    
+                tokens.append({'type': 'NUMBER', 'value': '$number$' + text[i:j]})
+                i = j
+                continue
             if ch == '"':
                 j, buf = i + 1, []
                 while j < n:
@@ -1304,6 +1333,12 @@ hqmlib = hqmlib()
 snbtlib = snbtlib()
 fancymenulib = fancymenulib()
 
+def CleanVRAM():
+    if GPU_ACC:
+        np.get_default_memory_pool().free_all_blocks()
+        np.get_default_pinned_memory_pool().free_all_blocks()
+    
+
 def 彩色文本(文本: str, 颜色序列: list[str] | None = None) -> Text:
     if 颜色序列 is None:
         颜色序列 = ["#5555FF", "#AA55FF", "#FF5555", "#FFAA00", "#FFFF55", "#55FF55"]
@@ -1331,6 +1366,16 @@ def 彩色文本(文本: str, 颜色序列: list[str] | None = None) -> Text:
         结果文本.append('\n')
     return 结果文本
 
+if GPU_ACC:
+    加速方法 = "CuPy"
+    加速版本 = np.__version__
+elif CPU_ACC:
+    加速方法 = "Numba"
+    加速版本 = numba.__version__
+else:
+    加速方法 = "None"
+    加速版本 = ""
+
 #Pagga
 文本 = 彩色文本("""████████╗██████╗  █████╗ ███╗   ██╗███████╗██╗      █████╗ ███╗   ███╗ ██████╗
 ╚══██╔══╝██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ██╔══██╗████╗ ████║██╔════╝
@@ -1341,8 +1386,8 @@ def 彩色文本(文本: str, 颜色序列: list[str] | None = None) -> Text:
 
 信息文本 = Text.from_markup(f"""
 [bold]TranslatorMinecraft Core[/bold]
-[bright_green]Version:[/] Release 1.6 Bata 1
-[bright_green]GPU Accelerator:[/] {"True" if GPU_ACC else GPU_ERROR}""")
+[bright_green]Version:[/] Release 1.6 Bata 2
+[bright_green]NumPy Accelerator:[/] {加速方法} {加速版本}""")
 
 总文本 = Text.assemble(文本, 信息文本)
 
@@ -1356,18 +1401,87 @@ Console(force_terminal=True, color_system="auto").print(
     )
 )
 __all__ = [
-    'np', "threading", "eb", "hashlib",
-    "zipfile", "pickle", "json", "ast", "fancymenulib",
-    "re", "partial", "defaultdict", "Path", 'HARDWARE_INFO',
-    "ThreadPoolExecutor", "as_completed", "Callable", "Dict", "Any",
-    "requests", "math", "tqdm", "dataclass", "faiss",
-    "replace", "time", "shutil", "atexit",
-    "GPU_ACC", "numpy", "PurePosixPath", "random", "deque",
-    "APIConfig", "Union", "asynccontextmanager",
-    "Optional", "List", "io", "asyncio", "uuid",
-    "sqlite3", "HTTPAdapter", "SimpleNamespace", "queue", "quote",
-    "logging", "QueueHandler", "QueueListener", "RotatingFileHandler", 
-    "shlex", "FileHandler", "Retry", "locale", "bisect",
-    "System", "dnfile", #Unity
-    "tomllib", "snbtlib", "hqmlib" #Minecraft
-] 
+    "APIConfig", "Any", "as_completed", "ast", "asynccontextmanager", "asyncio", "atexit",  # A
+    "bisect",  # B
+    "Callable",  # C
+    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime",  # D
+    "eb",  # E
+    "faiss", "fancymenulib", "FileHandler",  # F
+    "GPU_ACC",  # G
+    "HARDWARE_INFO", "hashlib", "hqmlib", "HTTPAdapter", "heapq",  # H
+    "io",  # I
+    "json",  # J
+    # K (无)
+    "List", "locale", "logging",  # L
+    "math", "MethodType",  # M
+    "np", "numpy", "njit", "numba", "NOT_IMPORT", # N
+    "Optional", "os",  # O
+    "partial", "Path", "pickle", "PurePosixPath",  # P
+    "queue", "QueueHandler", "QueueListener", "quote",  # Q
+    "random", "re", "replace", "requests", "Retry", "RotatingFileHandler",  # R
+    "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "System",  # S
+    "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm", "ttqdm", # T
+    "Union", "uuid",  # U
+    # V, W, X, Y (无)
+    "zipfile",  # Z
+]
+
+if all(v is not None for v in [uvicorn, fastapi, slowapi]):
+    __all__.extend(["FastAPI", "UploadFile", "HTTPException", "status", "Depends", "Security", "Form", "Request", "BackgroundTasks", "FileResponse", "PlainTextResponse", "HTTPBearer", "HTTPAuthorizationCredentials", "CORSMiddleware", "Limiter", "_rate_limit_exceeded_handler", "get_remote_address", "RateLimitExceeded"])
+
+
+#你懂互相导入的艺术吗
+if TYPE_CHECKING:
+    import TranslatorCore
+    import TranslatorFile
+    import TranslatorTool
+    import TranslatorModule
+    import TranslatorLog
+    import TranslatorQuantization
+    import TranslatorLocale
+    import TranslatorBuilder
+    import TranslatorIndex
+    
+import TranslatorIndexGSQ as IndexGSQ
+import TranslatorPersistence
+from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
+
+def Locale(Config: dict = None) -> "TranslatorLocale.Locale":
+    from TranslatorLocale import Locale as _Class
+    return _Class(Config or {})
+
+def Quantization(Config: dict = None) -> "TranslatorQuantization.Quantization":
+    from TranslatorQuantization import Quantization as _Class
+    return _Class(Config or {})
+
+def Log(Config: dict = None) -> "TranslatorLog.Log":
+    from TranslatorLog import Log as _Class
+    return _Class(Config or {})
+
+def Module(Config: dict = None) -> "TranslatorModule.Module":
+    from TranslatorModule import Module as _Class
+    return _Class(Config or {})
+
+def File(Config: dict = None) -> "TranslatorFile.File":
+    from TranslatorFile import File as _Class
+    return _Class(Config or {})
+
+def Translator(Config: dict = None) -> "TranslatorCore.Translator":
+    from TranslatorCore import Translator as _Class
+    return _Class(Config or {})
+
+def Tool(Config: dict = None) -> "TranslatorTool.Tool":
+    from TranslatorTool import Tool as _Class
+    return _Class(Config or {})
+
+def Builder(Config: dict = None) -> "TranslatorBuilder.Builder":
+    from TranslatorBuilder import Builder as _Class
+    return _Class(Config or {})
+
+def Index(模块实例) -> "TranslatorIndex.Index":
+    from TranslatorIndex import Index as _Class
+    return _Class(模块实例)
+
+__all__.extend([
+    "Translator", "TranslatorPersistence", "RuntimeConfig", "DEFAULT_CONFIG", "Module", "Quantization", "File", "Locale", "Log", "Tool", "Builder", "Index", "IndexGSQ", "TranslatorBuilder"
+])

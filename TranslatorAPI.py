@@ -1,14 +1,6 @@
-from TranslatorLib import APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote, hashlib, re
-from TranslatorCore import Translator
-from TranslatorTool import TranslatorTool
-#需要安装↓
-from fastapi import FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks
-from fastapi.responses import FileResponse, PlainTextResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from TranslatorLib import (APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote, hashlib, re,
+                           Translator, Tool,
+                           FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks, FileResponse, PlainTextResponse, HTTPBearer, HTTPAuthorizationCredentials, CORSMiddleware, Limiter, _rate_limit_exceeded_handler, get_remote_address, RateLimitExceeded)
 
 FastAPI = FastAPI(title="TranslationMinecraft")
 FastAPI.add_middleware(
@@ -147,7 +139,7 @@ def _捕获任务日志(翻译器实例: Translator, task_id: str, interval: flo
     def _日志轮询():
         while task_id in 任务状态字典 and 任务状态字典[task_id]["status"] not in ["completed", "failed"]:
             try:
-                logs_text = 翻译器实例.Module.读取日志()
+                logs_text = 翻译器实例.Log.读取日志()
                 if logs_text and task_id in 任务状态字典:
                     all_lines = logs_text.strip().split('\n')
                     new_lines = all_lines[已捕获行数[0]:]
@@ -187,7 +179,7 @@ async def _执行核心任务(task_id: str, 处理函数, 翻译器实例: Trans
                 })
                 文件哈希值.pop(task_id, None)
             else:
-                final_logs = 翻译器实例.Module.读取日志()
+                final_logs = 翻译器实例.Log.读取日志()
                 if final_logs:
                     任务状态字典[task_id]["logs"].extend(
                         [line for line in final_logs.strip().split('\n') if line.strip()][-20:]
@@ -301,7 +293,7 @@ async def 提交分离语言更新任务(
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = TranslatorTool(APIConfig["server"] | 过滤用户配置(translatorcore))
+    翻译器实例 = Tool(APIConfig["server"] | 过滤用户配置(translatorcore))
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -338,7 +330,7 @@ async def 提交合并语言更新任务(
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = TranslatorTool(APIConfig["server"] | 过滤用户配置(translatorcore))
+    翻译器实例 = Tool(APIConfig["server"] | 过滤用户配置(translatorcore))
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0

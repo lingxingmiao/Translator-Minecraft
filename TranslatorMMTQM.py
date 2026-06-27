@@ -1,6 +1,5 @@
-from TranslatorLib import random, json, Path
-from TranslatorConfig import RuntimeConfig
-from TranslatorCore import Translator
+from TranslatorLib import (random, json, Path,
+                           RuntimeConfig, Translator)
 
 class MMTQM:
     def __init__(Self, Config: dict = None):

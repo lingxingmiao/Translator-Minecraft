@@ -1,5 +1,4 @@
-from TranslatorLib import json, Path, Dict, tqdm
-from TranslatorConfig import RuntimeConfig
+from TranslatorLib import json, Path, Dict, tqdm, RuntimeConfig, ttqdm
 
 class Locale:
     def __init__(Self, Config):
@@ -59,3 +58,5 @@ class Locale:
         
     def Tqdm(Self, iterable=None, desc=None, **kwargs):
         return tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+    def tTqdm(Self, iterable=None, desc=None, **kwargs):
+        return ttqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
