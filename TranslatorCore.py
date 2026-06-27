@@ -1067,11 +1067,10 @@ class Translator:
         return 返回内容.resolve()
         
         
-测试 = True
+测试 = False
 if __name__ == "__main__" and 测试:
     参数 = {
         "LLM1_API_URL": "https://api.deepseek.com/chat/completions",
-        "LLM1_API_KEY": "sk-cc4d86115c8d4b1cbbb94c556b1f458e",
         "LLM1_MODEL": "deepseek-v4-flash",
         "LLM1_API_KWARGS": {"extra_body": {"thinking": {"type": "disabled"}}},
         "LLM1_MAX_WORKERS": 2500,
