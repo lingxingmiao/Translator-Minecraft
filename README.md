@@ -214,10 +214,12 @@ conda create -n Translator_Minecraft python=3.12 -y
 # conda create -n Translator_Minecraft python=3.15 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 网络请求 进度显示与艺术
-pip install numpy  requests     rich
+#          向量处理 网络请求 进度显示与艺术 进度显示
+pip install numpy  requests     rich        tqdm
 # 索引构建与搜索（仅在使用IndexGSQ非构建时可无需安装）
 pip install faiss
+# 量化器处理加速（使用IndexGSQ时强制安装）
+pip install numba
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 性能优化（可选）
@@ -272,7 +274,7 @@ conda env remove -n Translator_Minecraft
 - 修改 批量翻译 格式
 - 修改 向量存储的格式从 .npy 改为 .npz，格式可选:
     - Float32
-    - Float16_E0M15
+    - Float16 E0M15
     - Q8_K
     - Q4_K
 - 修复 FTBQ 与 BQ 任务翻译无法传入的问题
@@ -329,7 +331,7 @@ conda env remove -n Translator_Minecraft
 - 添加 自动汉化更新 的 I18n词典 导入翻译缓存功能（[CFPATools/i18n-dict Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
 - 添加 翻译对照功能，返回示例：想妈妈了(think ma ma le)
 - 添加/修改 向量量化存储相关: (神经)
-    - 添加 Float8_E4M3
+    - 添加 Float8 E4M3
     - 修改添加 非对称量化（Q系列量化）
     - 修改添加 分位数裁剪（Q系列量化）
     - 修改 向量叠加只能叠加浮点数据
@@ -534,6 +536,7 @@ AI给我加了一堆BUG所以不发布
     - TQ1_SVD(三值高压缩，Q2_K代替品)
     - Q1_K_M(二值极高压缩, Q2_K代替品)
     - GSQ_K系列(GSQ_0改进版, 涵盖2-8bit, 平均为同bit顶尖水平)
+    - Float12 E0M11 Float8 E0M7
 - 添加 向量重排(仅QSG_K有效, 索引库[IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/))
 - 添加 DictMini转换数据集随机排布
 - 添加 DictMini转换数据集 Alpaca 格式加强版(Alpaca-EX)
@@ -547,6 +550,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译任务夜间进行(部分API 8折)
 - 添加 量化器Numba支持
 - 添加 量化器_LM计算早停配置添加进配置项
+- 添加 量化器块缩放类型格式可选
 - 添加 翻译请求池
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) 超低内存索引(Fast召回率:2bit 90%>,8bit 99.9999%>, 还有速度内存召回率都要的MoE版本)
 - 添加 翻译整合包模组并行翻译模组
@@ -593,7 +597,7 @@ AI给我加了一堆BUG所以不发布
     - FTBQ注释缩进报错
     - 类型后缀导致的奔溃
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
-- 添加 tqdm 依赖
+- 添加 tqdm numba 依赖
 
 ### Release.1.6
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy兼容不是很好整)
