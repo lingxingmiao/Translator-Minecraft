@@ -242,14 +242,6 @@ conda env remove -n Translator_Minecraft
 ```
 </details>
 
-## 翻译流程
-<details>
-<summary>点击展开/收起</summary>
-
-- "*"表示 **开发中** 或者 **未完成**
-[![](https://mermaid.ink/img/pako:eNqdll1P2lAYx78KOZcLKm_doFl2ocbshgszrww3ja1ABtR0kL0QErfIiwITE9HMEQ2bG2RTmYtzBEz8Mj1t-RYrPaUe4LQ5jISEPuf3P89zzvN_GrJgQ-QFwILNhPh6I8ZJadfaciTl0j_qfV_rHAy2T9TDtnJUlPu3rrm5Z2ZY61xq7W0UpsBX1hblfh_uNSnYxVVq9PlqmJpdf6HtnCiNCwp0KRzW9huwWqc5GT0Ku3W1VdY-7iq7ZVioUCiU-g2slWAlT8X-UqpXlGzjh3r2Tb47l3vNGTuJS_lEQmk31f4OrrNqpnALiSVahQSSfELiiCYhgSSHkDiiPYhHoeQcjDGOW08wfy33fqo3X-Bd_RHiyWuup1jr_rxX22VaerpnThrkAxTC67e6iTC5V9HuP8PS7QK8PFYvvsvd31rrq3Jag5_auMzq2Wyy0YXPpiJaesbE1jHJ1z3uWEfo4ehO1MirjpBlVEdq5T8h26G2ebk47k_ugaNi9L5zpCZGy5G1KRaFYelYa47bxtiAAsTjaIyPinrrpodlCtQvXOtU7UCsUrvxm049BeLFmPN_eKaUarB2MCjuLyi1hr6GICTAi6IS4DnpBHhJxhgaAwFLhUG-ak3eWB221FhyW8rmtojsRBCB3T25W9brVq-aaq3gyKLDo4xmdiyCIdam5l5TOezZiaABap2_yvUHeN4y3dNuwlPT_8Qlx4NFUsANolKcB2xayghukBSkJDd8BNkhEQHpmJAUIoDVf_Kc9DICIqmcrtniUuuimBzJJDETjQF2k0u80p8yWzyXFpbjXFTiHhAhxQvSkphJpQEb8IWMPQCbBW8Ay3jmGU-QYXxMwB8Ihjx-N3gLWG_gsR5mmKD-9Yc8Qe-TnBu8M7J65736ik-XeLyBoMc7VAh8PC1KYfQ_2Pg7nPsH2-oheg?type=png)](https://mermaid-live.nodejs.cn/edit#pako:eNqdll1P2lAYx78KOZcLKm_doFl2ocbshgszrww3ja1ABtR0kL0QErfIiwITE9HMEQ2bG2RTmYtzBEz8Mj1t-RYrPaUe4LQ5jISEPuf3P89zzvN_GrJgQ-QFwILNhPh6I8ZJadfaciTl0j_qfV_rHAy2T9TDtnJUlPu3rrm5Z2ZY61xq7W0UpsBX1hblfh_uNSnYxVVq9PlqmJpdf6HtnCiNCwp0KRzW9huwWqc5GT0Ku3W1VdY-7iq7ZVioUCiU-g2slWAlT8X-UqpXlGzjh3r2Tb47l3vNGTuJS_lEQmk31f4OrrNqpnALiSVahQSSfELiiCYhgSSHkDiiPYhHoeQcjDGOW08wfy33fqo3X-Bd_RHiyWuup1jr_rxX22VaerpnThrkAxTC67e6iTC5V9HuP8PS7QK8PFYvvsvd31rrq3Jag5_auMzq2Wyy0YXPpiJaesbE1jHJ1z3uWEfo4ehO1MirjpBlVEdq5T8h26G2ebk47k_ugaNi9L5zpCZGy5G1KRaFYelYa47bxtiAAsTjaIyPinrrpodlCtQvXOtU7UCsUrvxm049BeLFmPN_eKaUarB2MCjuLyi1hr6GICTAi6IS4DnpBHhJxhgaAwFLhUG-ak3eWB221FhyW8rmtojsRBCB3T25W9brVq-aaq3gyKLDo4xmdiyCIdam5l5TOezZiaABap2_yvUHeN4y3dNuwlPT_8Qlx4NFUsANolKcB2xayghukBSkJDd8BNkhEQHpmJAUIoDVf_Kc9DICIqmcrtniUuuimBzJJDETjQF2k0u80p8yWzyXFpbjXFTiHhAhxQvSkphJpQEb8IWMPQCbBW8Ay3jmGU-QYXxMwB8Ihjx-N3gLWG_gsR5mmKD-9Yc8Qe-TnBu8M7J65736ik-XeLyBoMc7VAh8PC1KYfQ_2Pg7nPsH2-oheg)
-</details>
-
 ## 更新日志
 版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
 ### Release.1
@@ -281,8 +273,8 @@ conda env remove -n Translator_Minecraft
 - 修改 向量存储的格式从 .npy 改为 .npz，格式可选:
     - Float32
     - Float16_E0M15
-    - Uint8+Float16
-    - Uint4+Float16
+    - Q8_K
+    - Q4_K
 - 修复 FTBQ 与 BQ 任务翻译无法传入的问题
 - 修复 批量翻译 翻译键值映射问题
 - 删除 额外依赖 ujson
@@ -293,9 +285,7 @@ conda env remove -n Translator_Minecraft
 - 添加 翻译资源文件 单文件传入键值自动补全
 - 添加 模糊匹配语言代码
 - 添加 日志功能（目前只有 翻译资源文件、翻译语言文件、生成翻译 有写入日志）
-- 更改 向量存储的格式从 Uint4/8 量化的 块缩放 格式从 Float16 改为 Float16_E0M15：
-    - Uint8+Float16_S1M15
-    - Uint4+Float16_S1M15
+- 更改 向量存储的格式从 Q8_K/Q4_K 量化的 块缩放 格式从 Float16 改为 Float16_E0M15：
 
 ### Release.1.3 Bata.2
 - 添加 翻译解析/向量生成 错误重试功能
@@ -309,9 +299,9 @@ conda env remove -n Translator_Minecraft
 - 添加 向量存储格式:
     - Float16
     - BFloat16
-    - Uint6+Float16_S1M15
-    - Uint3+Float16_S1M15
-    - Uint2+Float16_S1M15
+    - Q6_K
+    - Q3_K
+    - Q2_K
 - 修复 Json 语言文件解析错误
 - 修复 批量翻译 参考词仅传入一个的问题
 - 修复 增加向量 时发生的错误
