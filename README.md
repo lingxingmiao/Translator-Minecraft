@@ -210,12 +210,20 @@ RMSE不代表Recall@10
 ```powershell
 # 创建环境
 conda create -n Translator_Minecraft python=3.12 -y
+# Python3.15时懒加载库可用
+# conda create -n Translator_Minecraft python=3.15 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 向量索引 网络请求 进度显示与艺术 json加速 dll解析
-pip install numpy   faiss   requests    rich        ujson   dnfile
+#          向量处理 网络请求 进度显示与艺术
+pip install numpy  requests     rich
+# 索引构建与搜索（仅在使用IndexGSQ非构建时可无需安装）
+pip install faiss
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
+# 性能优化（可选）
+pip install ujson
+# 未知伤亡DLL模组解析（可选）
+pip install dnfile
 # 内置向量生成（可选）
 pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
 pip install einops
@@ -527,7 +535,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 合并已有翻译从翻译语言文件移动至翻译语言列表
 - 修改 批量翻译提示词与逐条翻译提示词分离
 
-### Release.1.6 Bata.2 (进行中)
+### Release.1.6 Bata.2
 - 添加 翻译
     - [模组翻译](https://www.mcmod.cn/class/27911.html)(Roo Code + DeepSeek V4 Pro太强了)
 - 添加 量化方法
@@ -544,7 +552,6 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译模型重复惩罚配置
 - 添加 构建索引函数train()随机采样(Float32设置百分比 Int32设置值)
 - 添加 基础索引函数用于构建索引函数的IVF与Refine等方法
-- 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(还要CuPy兼容不是很好整)
 - 添加 所有库懒加载(需要Python版本 >= Python 3.15.0a7)
 - 添加 Faiss线程设置(Float32设置百分比 Int32设置值)
 - 添加 翻译任务夜间进行(部分API 8折)
@@ -566,6 +573,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 删除了INDEX MODE的Flat文本
 - 修改 API顶部的库导入移动到Lib(不安装依旧不会影响Core文件使用)
 - 修改 faiss dnfile ujson不再为强制安装
+- 修改 嵌入模型请求与重排模型仅允许一个进程同时使用
 - 修复 LANG索引第一次生成索引add完再add导致越界索引
 - 修复 翻译流程通用参数互相打架导致报错的问题
 - 修复 应用dll翻译读取文件路径不对导致报错
@@ -596,6 +604,10 @@ AI给我加了一堆BUG所以不发布
     - 类型后缀导致的奔溃
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 - 添加 tqdm 依赖
+
+### Release.1.6
+- 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy兼容不是很好整)
+- 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy与Numba-Cuda兼容不是很好整)
 
 ### 计划
 - 添加 翻译耗时预测器
