@@ -200,22 +200,40 @@ class TranslatorTool:
         if mode == "Alpaca-EX":
             文本列表, 参考列表 = Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True)
             提示词 = Self.Translator.Config.TRANSLATOR_SYSTEM_PROMPT[1].format(LANGUAGE_OUTPUT=Self.Translator.Config.LANGUAGE_OUTPUT)
-            新待处理列表 = []
+            所有翻译对 = []
             for 源文本, 目标参考 in zip(文本列表, 参考列表):
-                源文本列表 = 源文本 if isinstance(源文本, list) else [源文本]
-                目标文本 = 目标参考[0]
-                目标文本列表 = 目标文本 if isinstance(目标文本, list) else [目标文本]
-                最小长度 = min(len(源文本列表), len(目标文本列表))
-                if 最小长度 == 0:
-                    continue
-                抽样数量 = random.randint(1, min(16, 最小长度))
-                随机索引列表 = random.sample(range(最小长度), 抽样数量)
-                选中的源文本 = [源文本列表[i] for i in 随机索引列表]
-                选中的目标文本 = [目标文本列表[i] for i in 随机索引列表]
-                源文本字符串 = 选中的源文本[0] if 抽样数量 == 1 else json.dumps(选中的源文本, ensure_ascii=False)
-                目标文本字符串 = 选中的目标文本[0] if 抽样数量 == 1 else json.dumps(选中的目标文本, ensure_ascii=False)
-                术语表原始数据 = 目标参考[1][1] if isinstance(目标参考[1][1], list) else []
-                术语表文本 = "\n".join([f"{术语[0]} --> {术语[1]}" for 术语 in 术语表原始数据])
+                src = 源文本 if isinstance(源文本, str) else str(源文本)
+                tgt = 目标参考[0] if isinstance(目标参考[0], str) else str(目标参考[0])
+                # 安全获取术语表
+                术语表原始数据 = 目标参考[1][1] if len(目标参考) > 1 and isinstance(目标参考[1][1], list) else []
+                所有翻译对.append({"src": src, "tgt": tgt, "glossary": 术语表原始数据})
+            random.shuffle(所有翻译对)
+            新待处理列表 = []
+            i = 0
+            while i < len(所有翻译对):
+                剩余数量 = len(所有翻译对) - i
+                抽样数量 = random.randint(1, min(16, 剩余数量))
+                当前批次 = 所有翻译对[i : i + 抽样数量]
+                i += 抽样数量
+                选中的源文本 = [item["src"] for item in 当前批次]
+                选中的目标文本 = [item["tgt"] for item in 当前批次]
+                合并术语表 = []
+                见过的术语 = set()
+                for item in 当前批次:
+                    for 术语 in item["glossary"]:
+                        if isinstance(术语, (list, tuple)) and len(术语) >= 2:
+                            术语键 = f"{术语[0]} --> {术语[1]}"
+                            if 术语键 not in 见过的术语:
+                                见过的术语.add(术语键)
+                                合并术语表.append(术语)
+                            
+                术语表文本 = "\n".join([f"{术语[0]} --> {术语[1]}" for 术语 in 合并术语表])
+                if 抽样数量 == 1:
+                    源文本字符串 = 选中的源文本[0]
+                    目标文本字符串 = 选中的目标文本[0]
+                else:
+                    源文本字符串 = json.dumps(选中的源文本, ensure_ascii=False)
+                    目标文本字符串 = json.dumps(选中的目标文本, ensure_ascii=False)
                 if 术语表文本:
                     输入字符串 = f"{源文本字符串}\n\n术语参考：\n{术语表文本}"
                 else:
@@ -349,7 +367,9 @@ if __name__ == "__main__" and 测试:
         "EMB_API_URL": "http://127.0.0.1:25564/v1/embeddings",
         "EMB_MODEL": "text-embedding-bge-large-en-v1.5",
         "LANGUAGE": "zh_CN",
-        "VEC_FILE_NAME": "Vectors1",
+        "VEC_FILE_NAME": "Vectors2",
+        "TRANSLATOR_CACHE_READ": False,
+        "VEC_QUANTIZATION": "Float32",
         "EMB_MAX_WORKERS": 2,
         "DEBUG_MODE": True,
         "EMB_MAX_TOKENS": 512
@@ -358,4 +378,4 @@ if __name__ == "__main__" and 测试:
     #翻译.语言文件对转DictMini(r"C:\Users\FengMang\Downloads\Minecraft-Shaders-zh_CN-Lang-Files-Surisen.zip", r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.导入未知伤亡语言文件DictMini(r"C:\Users\FengMang\Downloads\EN.json") #byd保留所有权利不敢用
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", mode="Alpaca")
+    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", mode="Alpaca-EX")
