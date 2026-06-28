@@ -599,7 +599,7 @@ AI给我加了一堆BUG所以不发布
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 - 添加 tqdm numba 依赖
 
-### Release.1.6
+### Release.1.6（进行中）
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
 - 添加 Faiss GPU支持
