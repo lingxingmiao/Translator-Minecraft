@@ -602,12 +602,13 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
-- 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-进行中-brightgreen)(CuPy兼容不是很好整)
+- 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存
 - 添加 日志保存时间间隔
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
+- 修复 构建索引的向量重排模式没有使用的问题
 - 修改 翻译并发使用方式
 - 添加 aiohttp 依赖
 
