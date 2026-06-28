@@ -24,15 +24,14 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
 您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
-别看 R1.5 的 Core 文件末尾了, Key我已经删了哈哈哈, 你拿我也没办法哈哈哈哈哈哈哈哈哈。
 
 ### 画廊 (双击Ctrl放大)
 | <img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" /> | <img width="1920" height="1080" alt="e30bc972ed445694c1cec45840e46281" src="https://github.com/user-attachments/assets/cced0c18-aa21-426f-bd23-9d1d60784677" /> | <img width="1920" height="1080" alt="ffa09f4b557e0fca9c74f89b8d630853" src="https://github.com/user-attachments/assets/26417c40-398c-4e6c-9500-caa2c349fcaf" /> |
 | - | - | - |
 
 ### 支持的项目
-- [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict)
-- [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files)
+- [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
+- [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
 
 ### 推荐配置
 - 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
@@ -41,12 +40,22 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 ### API
 公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
-公益API当前使用模型: 
-- [Q1ngMang/Gemma-4-E4B-it-Minecraft-MT-en-zh](https://huggingface.co/Q1ngMang/Gemma-4-E4B-it-Minecraft-MT-en-zh) (条目数大于2500时 20%分配到这里, 不满足该条件全部分配到这里)
-- [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) (条目数大于2500时 80%分配到这里)
+公益API当前使用模型: [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+
+### 许可证
+本项目的源代码采用 **GNU Affero General Public License v3.0** 许可证开源。您可以自由使用、修改和分发本代码，但需遵守该协议的相关开源义务。完整协议文本请见项目根目录的 `LICENSE` 文件。
+#### 模型依赖与商业使用警告
+本项目在默认状态下运行时需要依赖第三方 AI 模型：**[LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M)**。<br>
+为了保持本代码的开源纯洁性并避免许可证冲突，**本项目代码库中不包含任何模型权重文件**。程序将在首次运行时通过 Hugging Face API 自动下载该模型。<br>
+**请注意，该模型受其自身的 [LFM Open License v1.0](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M/blob/main/LICENSE) 管辖，与本项目的代码许可证完全独立。在将本系统用于任何商业部署前，请务必阅读并遵守模型协议，特别是以下营收限制：**
+- **非商业与研究用途**：完全免费开放。
+- **中小企业商业使用**：年度总营收低于 **1000万美元 ($10,000,000 USD)** 的企业/实体，可免费用于商业目的。
+- **大型企业限制**：**年度总营收超过 1000万美元的企业/实体，严禁将此模型用于任何直接或间接的商业用途。** 大型企业如需商用，必须自行联系 Liquid AI 获取单独的商业授权或更换模型。<br>
+
+**免责声明**：本项目作者不对用户因违反模型许可证（LFM Open License v1.0）而产生的任何法律纠纷或商业损失负责。用户需自行评估其业务营收规模是否符合模型的商用条件。
 
 ### Minecraft Machine Translation Quality Metrics
-即将推出... 预计Q2'26-Q4'26<br>
+即将推出... 预计Q4'26-Q4'27<br>
 这是一个用于评估翻译模型/大语言模型翻译质量指标的。<br>
 从4-12个选项中选择一个
 
@@ -619,7 +628,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 动态分配模型不会分配层级配置的问题
 - 修复 Tool缺少一个正则表达式预编译变量的问题
 - 修复 MMTQM日志变量没有及时更新的问题
-- 修改 翻译并发使用方式
+- 修改 翻译并发使用库aiohttp
+- 修改 修改默认嵌入模型为LiquidAI/LFM2.5-Embedding-350M
 - 添加 aiohttp 依赖
 
 ### 计划
