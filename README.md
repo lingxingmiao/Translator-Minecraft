@@ -491,7 +491,7 @@ AI给我加了一堆BUG所以不发布
 - 停止支持 TranslatorMCPServer.py(太没用了)
 
 ### Release.1.6 Bata.1
-- 添加 翻译(看到BBSMC有好多功能想搬了)
+- 添加 翻译类型支持(看到BBSMC有好多功能想搬了)
     - 数据包(含起源)
     - 帕秋莉手册
     - CraftTweaker(displayName/tooltip)
@@ -528,7 +528,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 批量翻译提示词与逐条翻译提示词分离
 
 ### Release.1.6 Bata.2
-- 添加 翻译
+- 添加 翻译类型支持
     - [模组翻译](https://www.mcmod.cn/class/27911.html)(Roo Code + DeepSeek V4 Pro太强了)
 - 添加 量化方法
     - Q4_K_H Q4_SVD_LM GSQ4_0(Q4_K优化版, 代替Q4_K)
@@ -600,9 +600,11 @@ AI给我加了一堆BUG所以不发布
 - 添加 tqdm numba 依赖
 
 ### Release.1.6
+- 添加 翻译类型支持
+    - 更好的任务/resources![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy兼容不是很好整)
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy与Numba-Cuda兼容不是很好整)
-- 添加 检索生成向量缓存![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 检索生成向量缓存![](https://img.shields.io/badge/状态-进行中-brightgreen)
 
 ### 计划
 - 添加 翻译耗时预测器
