@@ -610,6 +610,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
 - 修复 Faiss的IVF索引VEC_RERANKER_INDEX_IVF_NLIST与INDEX_IVF_NLIST没有定义的问题
+- 修复 INDEX_GSQ系列配置没有加入INDEX_CONFIG导致的修改参数不会构建的问题
 - 修改 翻译并发使用方式
 - 添加 aiohttp 依赖
 
