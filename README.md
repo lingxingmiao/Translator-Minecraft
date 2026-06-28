@@ -604,7 +604,7 @@ AI给我加了一堆BUG所以不发布
     - 更好的任务/resources (!?SiO_O114514?!)
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
-- 添加 检索生成向量缓存(Float32 无上限 含衰减与宽限期)
+- 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
 - 添加 日志保存时间间隔
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
