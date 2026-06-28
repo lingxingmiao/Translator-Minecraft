@@ -605,6 +605,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 Faiss GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy兼容不是很好整)
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持![](https://img.shields.io/badge/状态-等待中-blue)(CuPy与Numba-Cuda兼容不是很好整)
 - 添加 检索生成向量缓存![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修复 翻译并发被强制硬编码限速的问题
 
 ### 计划
 - 添加 翻译耗时预测器
