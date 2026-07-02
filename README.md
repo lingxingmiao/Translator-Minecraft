@@ -633,6 +633,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 MMTQM日志变量没有及时更新的问题
 - 修复 获取嵌入/重排模型传入参数不对导致的报错问题
 - 修复 LLM基础层级无法使用的问题
+- 修复 IndexGSQ的6bit找不键导致的报错问题
 - 修改 翻译并发使用库aiohttp
 - 修改 修改默认嵌入模型为LiquidAI/LFM2.5-Embedding-350M
 - 添加 aiohttp 依赖
