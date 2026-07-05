@@ -638,13 +638,13 @@ AI给我加了一堆BUG所以不发布
 - 修复 LLM基础层级无法使用的问题
 - 修复 IndexGSQ的6bit找不键导致的报错问题
 - 修复 Tool的类命名错误导致无法使用的问题
+- 删除 IndexGSQ Fast以外的所有方法
 - 修改 翻译并发使用库aiohttp
 - 修改 修改默认嵌入模型为LiquidAI/LFM2.5-Embedding-350M
 - 添加 aiohttp 依赖
 
 ### 计划
 - 添加 翻译耗时预测器
-- 修改 自定义tqdm
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
