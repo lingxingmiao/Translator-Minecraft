@@ -626,9 +626,10 @@ AI给我加了一堆BUG所以不发布
 - 修复 LLM基础层级无法使用的问题
 - 修复 IndexGSQ的6bit找不键导致的报错问题
 - 修复 Tool的类命名错误导致无法使用的问题
+- 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
 - 删除 IndexGSQ Fast以外的所有方法
 - 修改 翻译并发使用库aiohttp
-- 修改 修改默认嵌入模型为BAAI/bge-small-en-v1.5
+- 修改 修改默认嵌入模型为onnx-community/bge-small-en-v1.5-ONNX
 - 添加 aiohttp 依赖
 
 ### 计划
