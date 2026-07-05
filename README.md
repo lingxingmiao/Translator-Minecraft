@@ -42,18 +42,6 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
 公益API当前使用模型: [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
 
-### 许可证
-本项目的源代码采用 **GNU Affero General Public License v3.0** 许可证开源。您可以自由使用、修改和分发本代码，但需遵守该协议的相关开源义务。完整协议文本请见项目根目录的 `LICENSE` 文件。
-#### 模型依赖与商业使用警告
-本项目在默认状态下运行时需要依赖第三方 AI 模型：**[LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M)**。<br>
-为了保持本代码的开源纯洁性并避免许可证冲突，**本项目代码库中不包含任何模型权重文件**。程序将在首次运行时通过 Hugging Face API 自动下载该模型。<br>
-**请注意，该模型受其自身的 [LFM Open License v1.0](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M/blob/main/LICENSE) 管辖，与本项目的代码许可证完全独立。在将本系统用于任何商业部署前，请务必阅读并遵守模型协议，特别是以下营收限制：**
-- **非商业与研究用途**：完全免费开放。
-- **中小企业商业使用**：年度总营收低于 **1000万美元 ($10,000,000 USD)** 的企业/实体，可免费用于商业目的。
-- **大型企业限制**：**年度总营收超过 1000万美元的企业/实体，严禁将此模型用于任何直接或间接的商业用途。** 大型企业如需商用，必须自行联系 Liquid AI 获取单独的商业授权或更换模型。<br>
-
-**免责声明**：本项目作者不对用户因违反模型许可证（LFM Open License v1.0）而产生的任何法律纠纷或商业损失负责。用户需自行评估其业务营收规模是否符合模型的商用条件。
-
 ### Minecraft Machine Translation Quality Metrics
 即将推出... 预计Q4'26-Q4'27<br>
 这是一个用于评估翻译模型/大语言模型翻译质量指标的。<br>
@@ -640,7 +628,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 Tool的类命名错误导致无法使用的问题
 - 删除 IndexGSQ Fast以外的所有方法
 - 修改 翻译并发使用库aiohttp
-- 修改 修改默认嵌入模型为LiquidAI/LFM2.5-Embedding-350M
+- 修改 修改默认嵌入模型为BAAI/bge-small-en-v1.5
 - 添加 aiohttp 依赖
 
 ### 计划
