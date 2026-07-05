@@ -618,6 +618,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 缓存间隔清理
 - 添加 内置嵌入模型解码参数归一化与提示词名称
 - 添加 使用API的GUI程序 [TranslatorMinecraftAPP](https://github.com/lingxingmiao/TranslatorMinecraftApp)
+- 添加 构建索引与搜索时统一归一化
 - 修改 MMTQM改为GTNH评测集余弦相似度![](https://img.shields.io/badge/状态-方案评估中-blue)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修复 翻译并发被强制硬编码限速的问题
