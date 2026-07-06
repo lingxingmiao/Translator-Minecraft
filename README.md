@@ -529,7 +529,7 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.6 Bata.2
 - 添加 翻译类型支持
-    - [模组翻译](https://www.mcmod.cn/class/27911.html)(Roo Code + DeepSeek V4 Pro太强了)
+    - [模组翻译](https://www.mcmod.cn/class/27911.html) .json格式 (Roo Code + DeepSeek V4 Pro太强了)
 - 添加 量化方法
     - Q4_K_H Q4_SVD_LM GSQ4_0(Q4_K优化版, 代替Q4_K)
     - Q2_NF Q2_E_NF Q2_SVD_LM Q2_E_SVD_LM(Q2_K优化版, Q3_K代替品)
@@ -602,6 +602,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6（进行中）
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
+    - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
