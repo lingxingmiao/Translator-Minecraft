@@ -211,12 +211,8 @@ conda create -n Translator_Minecraft python=3.12 -y
 # conda create -n Translator_Minecraft python=3.15 -y
 # 激活环境
 conda activate Translator_Minecraft
-#          向量处理 网络请求 进度显示与艺术 进度显示
-pip install numpy  requests     rich        tqdm
-# 索引构建与搜索（仅在使用IndexGSQ非构建时可无需安装）
-pip install faiss
-# 量化器处理加速（使用IndexGSQ时强制安装）
-pip install numba
+#          向量处理     网络请求   进度显示与艺术 搜索文本
+pip install numpy  requests aiohttp rich tqdm    faiss
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
 # 性能优化（可选）
@@ -224,13 +220,19 @@ pip install ujson
 # 未知伤亡DLL模组解析（可选）
 pip install dnfile
 # 内置向量生成（可选）
-pip install -U "sentence-transformers[onnx]" # 或 pip install -U "sentence-transformers[onnx-gpu]"
+# FastEmbed （强烈推荐用这个）
+pip install fastembed # pip install fastembed-gpu
+# SentenceTransformer ONNX
+pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transformers[onnx-gpu]"
+# SentenceTransformer OpenVINO 需要英特尔处理器
+pip install -U "sentence-transformers[openvino]"
+# SentenceTransformer 修改GPU 推荐自己再安装一个FA2
 pip install einops
 pip install uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
 # 向量处理加速（可选）
 conda install -c conda-forge cupy cuda-version=12.8 # GPU 要打包别安
-pip install numba # CPU
+pip install numba # CPU 使用IndexGSQ需要安装
 # 打包exe 没有做torch兼容 手动打包cupy不可用
 pip install nuitka
 nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
@@ -633,7 +635,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
 - 删除 IndexGSQ Fast以外的所有方法
 - 修改 翻译并发使用库aiohttp
-- 修改 修改默认嵌入模型为onnx-community/bge-small-en-v1.5-ONNX
+- 修改 修改默认嵌入模型为 FastEmbed BAAI/bge-small-en-v1.5
 - 添加 aiohttp fastembed 依赖
 
 ### 计划
