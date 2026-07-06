@@ -603,6 +603,8 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
+- 添加 量化方法
+    - PQ OPQ
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
