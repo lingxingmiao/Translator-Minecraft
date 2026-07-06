@@ -602,7 +602,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6（进行中）
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
-    - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
