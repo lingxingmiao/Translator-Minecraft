@@ -605,6 +605,8 @@ AI给我加了一堆BUG所以不发布
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
 - 添加 量化方法
     - PQ OPQ
+    - Q_SVD_LM 8-1.6bit系列
+    - Q_K_M 8-1bit系列
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
@@ -620,6 +622,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 内置嵌入模型FastEmbed框架
 - 修改 MMTQM改为GTNH评测集余弦相似度![](https://img.shields.io/badge/状态-方案评估中-blue)
 - 修改 构建IVF索引nlist与nprobe为自动计算
+- 修改 SVD与LM采样逻辑
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
@@ -638,6 +641,10 @@ AI给我加了一堆BUG所以不发布
 - 修复 Tool的类命名错误导致无法使用的问题
 - 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
 - 删除 IndexGSQ Fast以外的所有方法
+- 删除 量化方法
+    - GSQ4_0
+    - Q2_E_NF Q2_E_SVD_LM
+    - TQ1_SVD
 - 修改 翻译并发使用库aiohttp
 - 修改 修改默认嵌入模型为 FastEmbed BAAI/bge-small-en-v1.5
 - 添加 aiohttp fastembed 依赖
