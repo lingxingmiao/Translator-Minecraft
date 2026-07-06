@@ -610,6 +610,8 @@ AI给我加了一堆BUG所以不发布
 - 添加 构建索引基础索引无限嵌套
 - 添加 IndexGSQ PCA降维
 - 添加 索引类型IVFPQR NSG NSGPQ MSGSQ
+- 添加 内置嵌入模型OpenVINO格式
+- 添加 内置嵌入模型FastEmbed框架
 - 修改 MMTQM改为GTNH评测集余弦相似度![](https://img.shields.io/badge/状态-方案评估中-blue)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修复 翻译并发被强制硬编码限速的问题
@@ -632,7 +634,7 @@ AI给我加了一堆BUG所以不发布
 - 删除 IndexGSQ Fast以外的所有方法
 - 修改 翻译并发使用库aiohttp
 - 修改 修改默认嵌入模型为onnx-community/bge-small-en-v1.5-ONNX
-- 添加 aiohttp 依赖
+- 添加 aiohttp fastembed 依赖
 
 ### 计划
 - 添加 翻译耗时预测器
