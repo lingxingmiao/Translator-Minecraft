@@ -218,7 +218,7 @@ pip install uvicorn fastapi slowapi
 # 性能优化（可选）
 pip install ujson
 # 未知伤亡DLL模组解析（可选）
-pip install dnfile
+pip install dnfile pythonnet
 # 内置向量生成（可选）
 # FastEmbed （强烈推荐用这个）
 pip install fastembed # pip install fastembed-gpu
@@ -525,6 +525,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 翻译语言列表启用任务模式时也会使用owolib解析(文本组件)
 - 修改 合并已有翻译从翻译语言文件移动至翻译语言列表
 - 修改 批量翻译提示词与逐条翻译提示词分离
+- 添加 dnfile pythonnet 依赖
 
 ### Release.1.6 Bata.2
 - 添加 翻译类型支持
