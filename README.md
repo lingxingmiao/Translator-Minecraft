@@ -42,16 +42,6 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
 公益API当前使用模型: [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
 
-### Minecraft Machine Translation Quality Metrics
-即将推出... 预计Q4'26-Q4'27<br>
-这是一个用于评估翻译模型/大语言模型翻译质量指标的。<br>
-从4-12个选项中选择一个
-
-题目分布:
-- 模组: 55%
-- 任务: 30%
-- 光影: 15%
-
 ## 推荐模型翻译质量排名
 <details>
 <summary>点击展开/收起</summary>
@@ -104,28 +94,32 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 <details>
 <summary>点击展开/收起</summary>
 该区域/技术由AI管理
+    
 RMSE不代表Recall@10
     
 ### 类型
-- _0 表示什么技术都没使用
-- _K 表示常规块缩放
-- _M 表示中心均值化
-- _H 表示使用Hadamard变换，向量过多可能导致召回率下降
-- _E 表示极端数值分离
-- _NF 表示使用固定[-1.512, -0.453, 0.453, 1.512]质心，无法使用分位数，块大小32出现比特率大幅上升
-- _LM 表示使用了Lloyd-Max学习专属质心
-- _SVD 表示使用了SVD学习最优旋转，该步骤耗时较长
-- TQ1 表示使用三值量化
-- GSQ 表示旋转矩阵, 有_0, _K分支
+- _0   表示使用了 什么都没用
+- _K   表示使用了 常规块缩放
+- _M   表示使用了 中心均值化
+- _H   表示使用了 哈达玛变换  R1.6移除 保留方法名
+- _E   表示使用了 极端值分离  R1.6移除
+- _NF  表示使用了 NF2质心    无法使用分位数裁切
+- _LM  表示使用了 Lloyd-Max
+- _SVD 表示使用了 奇异值分解
 
 ### 存储
 | 块大小 与 BPW/S | 128 | 64 | 32 | 自定义 |
 | - | - | - | - | - |
 | Q8_K | 8.1875 | 8.375 | 8.75 | 8+24/B |
+| Q8_K_M | 8.1875 | 8.375 | 8.75 | 8+24/B |
 | GSQ8_K | 8.25 | 8.5 | 9 | 8+32/B |
+| Q8_SVD_LM | 8.125 | 8.25 | 8.5 | 8+16/B |
 | Q6_K | 6.1875 | 6.375 | 6.75 | 6+24/B |
+| Q6_K_M | 6.1875 | 6.375 | 6.75 | 6+24/B |
 | GSQ6_K | 6.25 | 6.5 | 7 | 6+32/B |
+| Q6_SVD_LM | 6.125 | 6.25 | 6.5 | 6+16/B |
 | Q4_K | 4.1875 | 4.375 | 4.75 | 4+24/B |
+| Q4_K_M | 4.1875 | 4.375 | 4.75 | 4+24/B |
 | Q4_K_H | 4.25 | 4.5 | 5 | 4+32/B |
 | Q4_NF | 4.125 | 4.25 | 4.5 | 4+16/B |
 | Q4_NF_H | 4.125 | 4.25 | 4.5 | 4+16/B |
@@ -133,22 +127,28 @@ RMSE不代表Recall@10
 | GSQ4_0 | 4+32/N | 4+32/N | 4+32/N | 4+32/N |
 | GSQ4_K | 4.25 | 4.5 | 5 | 4+32/B |
 | Q3_K | 3.1875 | 3.375 | 3.75 | 3+24/B |
+| Q3_K_M | 3.1875 | 3.375 | 3.75 | 3+24/B |
 | GSQ3_K | 3.25 | 3.5 | 4 | 3+32/B |
+| Q3_SVD_LM | 3.125 | 3.25 | 3.5 | 3+16/B |
 | Q2_K | 2.1875 | 2.375 | 2.75 | 2+24/B |
+| Q2_K_M | 2.1875 | 2.375 | 2.75 | 2+24/B |
 | Q2_NF | 2.125 | 2.25 | 2.5 | 2+16/B |
-| Q2_E_NF | 2.3125 | 2.625 | 3.25 | 2+40/B |
-| Q2_NF_H | 2.125 | 2.25 | 2.5 | 2+16/B |
-| Q2_E_NF_H | 2.3125 | 2.625 | 3.25 | 2+40/B |
 | Q2_SVD_LM | 2.125 | 2.25 | 2.5 | 2+16/B |
-| Q2_E_SVD_LM | 2.3125 | 2.625 | 3.25 | 2+40/B |
 | GSQ2_K | 2.25 | 2.5 | 3 | 2+32/B |
-| TQ1_SVD | 1.6625 | 1.725 | 1.85 | 1.6+8/B |
+| TQ1_K_M | 1.7875 | 1.975 | 2.35 | 1.6+24/B |
+| TQ1_SVD_LM | 1.725 | 1.85 | 2.1 | 1.6+16/B |
 | Q1_K_M | 1.03125 | 1.0625 | 1.125 | 1+4/B |
-| Float32 | 32 | 32 | 32 |
-| Float16 | 16 | 16 | 16 |
-| BFloat16 | 16 | 16 | 16 |
-| Float16_E0M15 | 16 | 16 | 16 |
-| Float8_E4M3 | 8 | 8 | 8 |
+| Float32 | 32 | 32 | 32 | 32 |
+| Float16 | 16 | 16 | 16 | 16 |
+| BFloat16 | 16 | 16 | 16 | 16 |
+| Float16_E0M15 | 16 | 16 | 16 | 16 |
+| Float16_Max | 16 | 16 | 16 | 16 |
+| Float12_Max | 12 | 12 | 12 | 12 |
+| Float8_Max | 8 | 8 | 8 | 8 |
+| Float8_E4M3 | 8 | 8 | 8 | 8 |
+| Float8_E0M7 | 8 | 8 | 8 | 8 |
+| PQ | 8·M/D | 8·M/D | 8·M/D | 8·M/D |
+| OPQ | 8·M/D | 8·M/D | 8·M/D | 8·M/D |
 
 ### 使用 nomic-ai/nomic-embed-text-v1.5
 | RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
@@ -531,12 +531,12 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译类型支持
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .json格式 (Roo Code + DeepSeek V4 Pro太强了)
 - 添加 量化方法
-    - Q4_K_H Q4_SVD_LM GSQ4_0(Q4_K优化版, 代替Q4_K)
-    - Q2_NF Q2_E_NF Q2_SVD_LM Q2_E_SVD_LM(Q2_K优化版, Q3_K代替品)
-    - TQ1_SVD(三值高压缩，Q2_K代替品)
-    - Q1_K_M(二值极高压缩, Q2_K代替品)
-    - GSQ_K系列(GSQ_0改进版, 涵盖2-8bit, 平均为同bit顶尖水平)
-    - Float12 E0M11 Float8 E0M7
+    - Q4_K_H Q4_SVD_LM GSQ4_0
+    - Q2_NF Q2_E_NF Q2_SVD_LM Q2_E_SVD_LM
+    - TQ1_SVD
+    - Q1_K_M
+    - GSQ_K 8-2bit
+    - Float12_E0M11 Float8_E0M7
 - 添加 向量重排(仅QSG_K有效, 索引库[IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/))
 - 添加 DictMini转换数据集随机排布
 - 添加 DictMini转换数据集 Alpaca 格式加强版(Alpaca-EX)
@@ -605,24 +605,25 @@ AI给我加了一堆BUG所以不发布
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
 - 添加 量化方法
     - PQ OPQ
-    - Q_SVD_LM 8-1.6bit系列
-    - Q_K_M 8-1bit系列
+    - Q_SVD_LM  8-1.6 bit系列
+    - Q_K_M     8-1   bit系列
+    - Float_Max 8-12  bit系列
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
 - 添加 日志保存时间间隔
 - 添加 缓存间隔清理
 - 添加 内置嵌入模型解码参数归一化与提示词名称
-- 添加 使用API的GUI程序 [TranslatorMinecraftAPP](https://github.com/lingxingmiao/TranslatorMinecraftApp)
 - 添加 构建索引与搜索时统一归一化
 - 添加 构建索引基础索引无限嵌套
-- 添加 IndexGSQ PCA降维
+- 添加 PCA降维![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 向量维度裁切![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 索引类型IVFPQR NSG NSGPQ MSGSQ
 - 添加 内置嵌入模型OpenVINO格式
 - 添加 内置嵌入模型FastEmbed框架
-- 修改 MMTQM改为GTNH评测集余弦相似度![](https://img.shields.io/badge/状态-方案评估中-blue)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
+- 修改 允许所有类型向量叠加(Flaot_Max与GS/Q系列会有损失)
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
@@ -641,10 +642,12 @@ AI给我加了一堆BUG所以不发布
 - 修复 Tool的类命名错误导致无法使用的问题
 - 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
 - 删除 IndexGSQ Fast以外的所有方法
+- 删除 Minecraft Machine Translation Quality Metrics(以后加回来)
 - 删除 量化方法
     - GSQ4_0
     - Q2_E_NF Q2_E_SVD_LM
     - TQ1_SVD
+    - Float12_E0M12
 - 修改 翻译并发使用库aiohttp
 - 修改 修改默认嵌入模型为 FastEmbed BAAI/bge-small-en-v1.5
 - 添加 aiohttp fastembed 依赖
