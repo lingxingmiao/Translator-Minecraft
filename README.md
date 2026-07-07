@@ -648,6 +648,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 IndexGSQ的6bit找不键导致的报错问题
 - 修复 Tool的类命名错误导致无法使用的问题
 - 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
+- 修复 量化器编码时间显示不正确的问题
 - 删除 IndexGSQ Fast以外的所有方法
 - 删除 Minecraft Machine Translation Quality Metrics(以后加回来)
 - 删除 量化方法
