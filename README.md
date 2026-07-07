@@ -633,6 +633,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
 - 修改 允许所有类型向量叠加(Flaot_Max与GS/Q系列会有损失)
+- 修改 VEC_QUANTILE改为VEC_QUANTIZATION_CLIP
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
