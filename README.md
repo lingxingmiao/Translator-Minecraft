@@ -228,7 +228,7 @@ pip install ujson
 pip install dnfile pythonnet
 # 内置向量生成（可选）
 # FastEmbed （强烈推荐用这个）
-pip install fastembed # pip install fastembed-gpu
+pip install fastembed # pip install fastembed-gpu 需要CuDNN9.0x
 # SentenceTransformer ONNX
 pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transformers[onnx-gpu]"
 # SentenceTransformer OpenVINO 需要英特尔处理器
@@ -628,6 +628,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 索引类型IVFPQR NSG NSGPQ MSGSQ
 - 添加 内置嵌入模型OpenVINO格式
 - 添加 内置嵌入模型FastEmbed框架
+- 添加 LLM层级RPM与TPM限制功能(TPM为预测)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
 - 修改 允许所有类型向量叠加(Flaot_Max与GS/Q系列会有损失)
