@@ -630,6 +630,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 内置嵌入模型FastEmbed框架
 - 添加 LLM层级RPM与TPM限制功能(TPM为预测)
 - 添加 DictMini重复剔除工具
+- 添加 LLM Token缓存命中计数(非OpenAI标准 usage.prompt_cache_hit/miss_tokens)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
 - 修改 允许所有类型向量叠加(Flaot_Max与GS/Q系列会有损失)
