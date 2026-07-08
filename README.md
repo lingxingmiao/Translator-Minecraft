@@ -690,10 +690,9 @@ AI给我加了一堆BUG所以不发布
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
 - 添加 量化方法
     - PQ OPQ
-    - Q_SVD_LM  6-1.6 bit系列
-    - Q_K_M     8-1   bit系列
-    - Float_Max 8-16  bit系列
-    - 5bit系列![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Q_SVD_LM  6-1.6 bit系列(6 5 4 3 2 1.6)
+    - Q_K_M     8-1   bit系列(8 6 5 4 3 2 1.6 1)
+    - Float_Max 8-16  bit系列(8 12 16)
 - 添加 Faiss GPU支持
 - 添加 [IndexGSQ](https://github.com/lingxingmiao/IndexGSQ/) GPU支持 与 无Numba支持
 - 添加 检索生成向量缓存(Float32 含衰减、宽限期、上限)
