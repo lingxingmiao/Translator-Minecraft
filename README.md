@@ -623,8 +623,8 @@ AI给我加了一堆BUG所以不发布
 - 添加 内置嵌入模型解码参数归一化与提示词名称
 - 添加 构建索引与搜索时统一归一化
 - 添加 构建索引基础索引无限嵌套
-- 添加 PCA降维![](https://img.shields.io/badge/状态-进行中-brightgreen)
-- 添加 向量维度裁切![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 PCA降维
+- 添加 向量维度裁切
 - 添加 索引类型IVFPQR NSG NSGPQ MSGSQ
 - 添加 内置嵌入模型OpenVINO格式
 - 添加 内置嵌入模型FastEmbed框架
