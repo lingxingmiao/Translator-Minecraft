@@ -708,6 +708,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 获取嵌入模型加速类型为onnx时大小写不同导致的报错
 - 修复 量化器编码时间显示不正确的问题
 - 修复 量化器解码向量时内存会意外占用额外两倍的问题
+- 修复 内置snbtlib的_serialize_value函数转义问题
+- 修改 生成翻译退回时越界索引的问题
 - 删除 IndexGSQ Fast以外的所有方法
 - 删除 Minecraft Machine Translation Quality Metrics(以后加回来)
 - 删除 量化方法
