@@ -709,6 +709,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 LLM层级RPM与TPM限制功能(TPM为预测)
 - 添加 DictMini重复剔除工具
 - 添加 LLM Token缓存命中计数(非OpenAI标准 usage.prompt_cache_hit/miss_tokens)
+- 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 优化 参考词预处理锁持有时间(依然需要承受向量叠加的时间)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
