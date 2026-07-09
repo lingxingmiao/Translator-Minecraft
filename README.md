@@ -684,6 +684,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 DictMini重复剔除工具
 - 添加 LLM Token缓存命中计数(非OpenAI标准 usage.prompt_cache_hit/miss_tokens)
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
+- 添加 翻译缓存在生成翻译二次应用/保存
 - 优化 参考词预处理锁持有时间(依然需要承受向量叠加的时间)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
@@ -714,6 +715,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 生成翻译退回时越界索引的问题
 - 修复 通用翻译最后三个没识别到结果时返回内容为空变量导致的报错
 - 修复 翻译流程path2不存在或者不是目录时会尝试读取文件导致的警告
+- 修复 整合包FTB任务无法翻译的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修复 翻译缓存并发使用的IO瓶颈
 - 删除 IndexGSQ Fast以外的所有方法
 - 删除 Minecraft Machine Translation Quality Metrics(以后加回来)
 - 删除 量化方法
