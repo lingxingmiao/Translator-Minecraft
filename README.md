@@ -662,7 +662,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
-    - 模组/assets/<modid>/patchouli_books
+    - 模组内帕秋莉手册
 - 添加 量化方法
     - PQ OPQ
     - Q_SVD_LM  6-1  bit系列(6 5 4 3 2 1.6 1)
