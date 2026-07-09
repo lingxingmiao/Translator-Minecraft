@@ -691,6 +691,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 VEC_QUANTILE改为VEC_QUANTIZATION_CLIP
 - 修改 LLM_TOKEN_USAGE拆分为LLM_TOKEN_IN与LLM_TOKEN_OUT
 - 修改 重写内置snbtlib
+- 修改 tqdm.rich来托梦想要24FPS
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
