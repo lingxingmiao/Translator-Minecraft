@@ -715,7 +715,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 生成翻译退回时越界索引的问题
 - 修复 通用翻译最后三个没识别到结果时返回内容为空变量导致的报错
 - 修复 翻译流程path2不存在或者不是目录时会尝试读取文件导致的警告
-- 修复 整合包FTB任务无法翻译的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修复 翻译列表有时候使用owolib时还是会因为列表不能当键报错的问题
 - 修复 翻译缓存并发使用的IO瓶颈
 - 删除 IndexGSQ Fast以外的所有方法
 - 删除 Minecraft Machine Translation Quality Metrics(以后加回来)
