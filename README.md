@@ -657,8 +657,7 @@ AI给我加了一堆BUG所以不发布
 - 删除 R1.4 B1 添加的翻译任务自动分离 "&§x{key}srt" 混合编码后进行翻译
 - 添加 tqdm numba 依赖
 
-### Release.1.6（进行中）
-依旧胡闹VSCode 胡闹ZooCode 胡闹DeepSeek 胡闹LongCat
+### Release.1.6 Bata.3
 - 添加 翻译类型支持
     - 更好的任务/resources (!?SiO_O114514?!)
     - [模组翻译](https://www.mcmod.cn/class/27911.html) .txt格式
@@ -684,16 +683,17 @@ AI给我加了一堆BUG所以不发布
 - 添加 LLM层级RPM与TPM限制功能(TPM为预测)
 - 添加 DictMini重复剔除工具
 - 添加 LLM Token缓存命中计数(非OpenAI标准 usage.prompt_cache_hit/miss_tokens)
-- 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 添加 翻译缓存在生成翻译二次应用/保存
+- 重构 内置snbtlib
 - 优化 参考词预处理锁持有时间(依然需要承受向量叠加的时间)
 - 修改 构建IVF索引nlist与nprobe为自动计算
 - 修改 SVD与LM采样逻辑
 - 修改 允许所有类型向量叠加(Flaot_Max与GS/Q系列会有损失)
 - 修改 VEC_QUANTILE改为VEC_QUANTIZATION_CLIP
 - 修改 LLM_TOKEN_USAGE拆分为LLM_TOKEN_IN与LLM_TOKEN_OUT
-- 修改 重写内置snbtlib
 - 修改 tqdm.rich来托梦想要24FPS
+- 修改 修改默认嵌入模型为 FastEmbed BAAI/bge-small-en-v1.5
+- 修改 翻译并发使用库aiohttp
 - 修复 翻译并发被强制硬编码限速的问题
 - 修复 翻译语言列表会撑爆日志的问题
 - 修复 构建索引的向量重排模式没有使用的问题
@@ -725,13 +725,20 @@ AI给我加了一堆BUG所以不发布
     - Q2_E_NF Q2_E_SVD_LM
     - TQ1_SVD
     - Float12_E0M12
-- 修改 翻译并发使用库aiohttp
-- 修改 修改默认嵌入模型为 FastEmbed BAAI/bge-small-en-v1.5
 - 添加 aiohttp fastembed 依赖
+
+### Release.1.6 Bata.4（进行中）
+依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith 
+- 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
+- 重构 翻译语言列表![](https://img.shields.io/badge/状态-等待中(福绒聚中)-blue)
+
+### Release.1.6（更新中）
+预计5个Bata版本
 
 ### 计划
 - 添加 翻译耗时预测器
 
 ### 编辑需要
-- ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000) 
+- ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
+- 顺序：添加 -> >重构 -> 优化 -> 修改 -> 修复 -> 删除 -> 依赖(循环前面的)
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
