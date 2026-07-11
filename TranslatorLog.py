@@ -1,15 +1,48 @@
 from TranslatorLib import (queue, Path, logging, QueueHandler, QueueListener, re, FileHandler,
+                           threading, time, atexit,
                            RuntimeConfig, DEFAULT_CONFIG, Locale)
 class NoRotateHandler(FileHandler):
+    def __init__(self, filename, mode='a', encoding=None, delay=False, flush_interval=5.0):
+        super().__init__(filename, mode, encoding, delay)
+        self._flush_interval = flush_interval
+        self._buffer = []
+        self._lock = threading.Lock()
+        self._last_flush = time.time()
+        self._stop_event = threading.Event()
+        self._flush_thread = threading.Thread(target=self._定时刷新, daemon=True)
+        self._flush_thread.start()
+        atexit.register(self._退出刷新)
     def emit(self, record):
         try:
             msg = self.format(record)
-            if self.stream is None:
-                self.stream = self._open()
-            self.stream.write(msg + self.terminator)
-            self.flush()
+            with self._lock:
+                self._buffer.append(msg + self.terminator)
+                if time.time() - self._last_flush >= self._flush_interval:
+                    self._执行刷新()
         except Exception:
             self.handleError(record)
+    def _执行刷新(self):
+        if self._buffer:
+            try:
+                if self.stream is None:
+                    self.stream = self._open()
+                self.stream.writelines(self._buffer)
+                self.stream.flush()
+            except Exception:
+                pass
+            self._buffer.clear()
+        self._last_flush = time.time()
+    def _定时刷新(self):
+        while not self._stop_event.wait(self._flush_interval):
+            with self._lock:
+                self._执行刷新()
+    def _退出刷新(self):
+        self._stop_event.set()
+        with self._lock:
+            self._执行刷新()
+    def close(self):
+        self._退出刷新()
+        super().close()
 class Log:
     def __init__(Self, Config: dict = None):
         Config = Config or {}
@@ -30,13 +63,14 @@ class Log:
         日志文件 = Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log").resolve()
         日志文件.parent.mkdir(parents=True, exist_ok=True)
         格式化器 = logging.Formatter(fmt='[%(asctime)s][%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        文件处理器 = NoRotateHandler(str(日志文件), encoding='utf-8', mode='a')
+        刷新间隔 = getattr(Self.Config, 'LOGS_FLUSH_INTERVAL', 5.0)
+        文件处理器 = NoRotateHandler(str(日志文件), encoding='utf-8', mode='a', flush_interval=刷新间隔)
         文件处理器.setFormatter(格式化器)
         处理器列表 = [文件处理器]
         默认日志 = Path(f"{DEFAULT_CONFIG.LOGS_FILE_PATH}/{DEFAULT_CONFIG.LOGS_FILE_NAME}.log").resolve()
         if Self.Config.LOGS_GLOBAL and 日志文件 != 默认日志:
             默认日志.parent.mkdir(parents=True, exist_ok=True)
-            全局处理器 = NoRotateHandler(str(默认日志), encoding='utf-8', mode='a')
+            全局处理器 = NoRotateHandler(str(默认日志), encoding='utf-8', mode='a', flush_interval=刷新间隔)
             全局处理器.setFormatter(格式化器)
             处理器列表.append(全局处理器)
         Self._队列监听器 = QueueListener(日志队列, *处理器列表, respect_handler_level=True)

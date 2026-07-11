@@ -1,4 +1,4 @@
-from TranslatorLib import (json, uuid, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, re, fancymenulib, hqmlib, List, shlex, locale, System, dnfile,
+from TranslatorLib import (json, uuid, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, re, fancymenulib, hqmlib, List, shlex, locale, System, dnfile, np,
                            TranslatorPersistence, RuntimeConfig, Locale, Module, Log)
 
 class File:
@@ -589,6 +589,124 @@ class File:
         except Exception:
             Self.日志("log.module.mmt.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+    def 读取单个MMT_TXT文件(Self, 文件路径: str) -> list:
+        结果 = []
+        try:
+            with open(文件路径, "r", encoding="utf-8") as f:
+                内容 = f.read()
+        except Exception:
+            Self.日志("log.module.mmt.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
+            return 结果
+        行列表 = 内容.splitlines()
+        当前模组ID = None
+        当前源语言 = None
+        在提示中 = False
+        在代码块 = False
+        for 行 in 行列表:
+            去空格 = 行.strip()
+            if not 去空格:
+                continue
+            if re.match(r'^\s*```', 去空格):
+                在代码块 = not 在代码块
+                continue
+            if 在代码块:
+                continue
+            if re.match(r'^\s*#', 去空格) and not 去空格.startswith('###'):
+                continue
+            if 在提示中:
+                if 去空格.startswith('###'):
+                    在提示中 = False
+                else:
+                    continue
+            if re.match(r'###\s*FILE_NAME\s*###', 去空格):
+                continue
+            if re.match(r'###\s*AI_PROMPT\s*###', 去空格):
+                在提示中 = True
+                continue
+            if re.match(r'###\s*TRANSLATION_STATUS\s*###', 去空格):
+                continue
+            模组匹配 = re.match(r'###\s*\[?([^|\]]+)\]?\s*\|\s*\[?([^|\]#]+)\]?\s*###', 去空格)
+            if 模组匹配:
+                当前模组ID = 模组匹配.group(1).strip()
+                当前源语言 = 模组匹配.group(2).strip()
+                continue
+            if 当前模组ID is None:
+                continue
+            分隔匹配 = re.match(r'\s*([^=:→]+)\s*[=:→]\s*(.*)', 行)
+            if 分隔匹配:
+                键 = 分隔匹配.group(1).strip()
+                值 = 分隔匹配.group(2).strip()
+                if 键:
+                    结果.append([[文件路径, 当前模组ID, 键], 值])
+        return 结果
+    def 应用MMT_TXT翻译(Self, 翻译列表: list) -> None:
+        if not 翻译列表:
+            return
+        文件映射 = {}
+        for 项 in 翻译列表:
+            文件路径 = 项[0][0]
+            模组ID = 项[0][1]
+            键 = 项[0][2]
+            译文 = 项[1]
+            文件映射.setdefault(文件路径, {}).setdefault(模组ID, {})[键] = 译文
+        for 文件路径, 模组条目 in 文件映射.items():
+            try:
+                with open(文件路径, "r", encoding="utf-8") as f:
+                    原始内容 = f.read()
+            except Exception:
+                Self.日志("log.module.mmt.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
+                continue
+            行列表 = 原始内容.splitlines()
+            新行列表 = []
+            当前模组ID = None
+            在提示中 = False
+            在代码块 = False
+            跳过状态行 = False
+            for 行 in 行列表:
+                去空格 = 行.strip()
+                if re.match(r'^\s*```', 去空格):
+                    在代码块 = not 在代码块
+                    新行列表.append(行)
+                    continue
+                if 在代码块:
+                    新行列表.append(行)
+                    continue
+                if 在提示中:
+                    if 去空格.startswith('###'):
+                        在提示中 = False
+                    else:
+                        新行列表.append(行)
+                        continue
+                if re.match(r'###\s*AI_PROMPT\s*###', 去空格):
+                    在提示中 = True
+                    新行列表.append(行)
+                    continue
+                if re.match(r'###\s*TRANSLATION_STATUS\s*###', 去空格):
+                    新行列表.append(行)
+                    新行列表.append("TRANSLATED")
+                    跳过状态行 = True
+                    continue
+                if 跳过状态行:
+                    跳过状态行 = False
+                    continue
+                模组匹配 = re.match(r'###\s*\[?([^|\]]+)\]?\s*\|\s*\[?([^|\]#]+)\]?\s*###', 去空格)
+                if 模组匹配:
+                    当前模组ID = 模组匹配.group(1).strip()
+                    新行列表.append(行)
+                    continue
+                if 当前模组ID and 当前模组ID in 模组条目:
+                    分隔匹配 = re.match(r'\s*([^=:→]+)\s*[=:→]\s*.*', 行)
+                    if 分隔匹配:
+                        键 = 分隔匹配.group(1).strip()
+                        if 键 in 模组条目[当前模组ID]:
+                            译文 = 模组条目[当前模组ID][键]
+                            行 = re.sub(r'(\s*[^=:→]+\s*[=:→]\s*).*', r'\1' + 译文, 行)
+                新行列表.append(行)
+            try:
+                with open(文件路径, "w", encoding="utf-8") as f:
+                    f.write("\n".join(新行列表))
+            except Exception:
+                Self.日志("log.module.mmt.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
     def 应用MMT翻译(Self, index: list) -> None:
         if not index:
             return
@@ -927,7 +1045,26 @@ class File:
                         v = ast.literal_eval(v)
                     except Exception: pass
                     json文件[k] = v
-                f.write(json.dumps(json文件, ensure_ascii=False, indent=4))
+                def _sanitize(obj):
+                    if isinstance(obj, dict):
+                        return {kk: _sanitize(vv) for kk, vv in obj.items()}
+                    elif isinstance(obj, list):
+                        return [_sanitize(item) for item in obj]
+                    elif hasattr(obj, 'isnan') and callable(getattr(obj, 'isnan')):
+                        try:
+                            if float(obj) != float(obj):
+                                return None
+                        except (TypeError, ValueError):
+                            pass
+                    elif isinstance(obj, (np.floating,)):
+                        return None if obj != obj else float(obj)
+                    elif isinstance(obj, (np.integer,)):
+                        return int(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return obj
+                清理后 = _sanitize(json文件)
+                f.write(json.dumps(清理后, ensure_ascii=False, indent=4))
             elif Path(file).suffix == ".local":
                 f.write("\n".join([re.sub(r'\s*=\s*', ' = ', line) for line in 保存列表]))
     def 读取压缩文件(Self, file_path: str, cache_path: str, original_language: str, target_language: str):

@@ -1,5 +1,5 @@
-from TranslatorLib import (uuid, pickle, Path, threading, SimpleNamespace, re,
-                           RuntimeConfig, Log, Locale, Index, Builder)
+from TranslatorLib import (uuid, pickle, Path, threading, time, shutil, SimpleNamespace, re, np,
+                           RuntimeConfig, Log, Locale, Index, Builder, TranslatorPersistence)
 
 class Module:
     def __init__(Self, Config: dict = None):
@@ -12,6 +12,7 @@ class Module:
         Self.线程锁 = threading.Lock()
         Self.Index = Index(Config)
         Self.Builder = Builder(Config)
+        Self.清理过期缓存()
         Self.正则表达式预编译 = SimpleNamespace()
         Self.正则表达式预编译.ZS模式 = {
             "tooltip": re.compile(r'\.addTooltip\("((?:[^"\\]|\\.)*)"\)'),
@@ -24,23 +25,44 @@ class Module:
     def __enter__(Self):
         return Self
     def 翻译缓存(Self, 输入列表: list = None):
-        with Self.线程锁:
-            文本文件 = []
-            try:
-                with open(f"{Self.Config.TRANSLATOR_CACHE_PATH}/{Self.Config.TRANSLATOR_CACHE_NAME}.pkl", "rb+") as f:
-                    文本文件 = pickle.load(f)
-            except Exception: pass
-            if 输入列表:
-                文本文件.extend(输入列表)
-                文本文件 = list({item[0]: item for item in 文本文件}.values())
-                with open(f"{Self.Config.TRANSLATOR_CACHE_PATH}/{Self.Config.TRANSLATOR_CACHE_NAME}.pkl", "wb+") as f:
-                    pickle.dump(文本文件, f)
-            return {item[0]: item[1] for item in 文本文件}
+        # 内存缓存模式：读写都在内存中进行，写盘由后台定时线程负责，避免并发生成时频繁全量 IO
+        if 输入列表:
+            TranslatorPersistence.更新翻译缓存(输入列表)
+        return TranslatorPersistence.查询翻译缓存()
     def 输出路径处理(Self, path: str):
         if not path:
             path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
         Path(path).mkdir(parents=True, exist_ok=True)
         return Path(path).resolve()
+    def 清理过期缓存(Self):
+        try:
+            缓存根 = Path(Self.Config.PATH_CACHE)
+            if not 缓存根.is_dir(): return
+            标记文件 = 缓存根 / ".last_cleanup"
+            检查间隔 = Self.Config.CACHE_CHECK_INTERVAL * 3600
+            if 标记文件.is_file():
+                if time.time() - 标记文件.stat().st_mtime < 检查间隔:
+                    return
+            截止时间 = time.time() - Self.Config.CACHE_TTL_HOURS * 3600
+            清理数 = 0
+            for 子目录 in 缓存根.iterdir():
+                if 子目录.is_dir() and 子目录.name != "__pycache__":
+                    try:
+                        if 子目录.stat().st_mtime < 截止时间:
+                            shutil.rmtree(子目录, ignore_errors=True)
+                            清理数 += 1
+                    except Exception:
+                        pass
+            标记文件.write_text(str(int(time.time())))
+            if 清理数:
+                Self.日志("log.module.cache.clean", count=清理数, info_level=0)
+        except Exception:
+            pass
+    def 归一化向量(Self, 数组):
+        数组 = np.ascontiguousarray(数组, dtype=np.float32)
+        范数 = np.linalg.norm(数组, axis=1, keepdims=True)
+        范数[范数 < 1e-8] = 1e-8
+        return 数组 / 范数
     def 列表去重(Self, 列表: list):
         return list(dict.fromkeys(列表))
     def 过滤键文本(Self, 条目):

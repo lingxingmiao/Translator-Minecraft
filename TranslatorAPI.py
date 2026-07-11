@@ -1,8 +1,14 @@
 from TranslatorLib import (APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote, hashlib, re,
                            Translator, Tool,
-                           FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks, FileResponse, PlainTextResponse, HTTPBearer, HTTPAuthorizationCredentials, CORSMiddleware, Limiter, _rate_limit_exceeded_handler, get_remote_address, RateLimitExceeded)
+                           FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks, FileResponse, PlainTextResponse, HTTPBearer, HTTPAuthorizationCredentials, CORSMiddleware, Limiter, _rate_limit_exceeded_handler, get_remote_address, RateLimitExceeded, asynccontextmanager)
 
-FastAPI = FastAPI(title="TranslationMinecraft")
+@asynccontextmanager
+async def 应用生命周期(app):
+    yield
+    from TranslatorPersistence import 关闭所有异步会话
+    await 关闭所有异步会话()
+
+FastAPI = FastAPI(title="TranslationMinecraft", lifespan=应用生命周期)
 FastAPI.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

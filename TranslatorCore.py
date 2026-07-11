@@ -1,4 +1,4 @@
-from TranslatorLib import (HARDWARE_INFO, np, threading, zipfile, json, ast, eb, re, partial, defaultdict, Path, ThreadPoolExecutor, queue, Callable, GPU_ACC, time, uuid, bisect, SimpleNamespace, Any, random, heapq, datetime,
+from TranslatorLib import (HARDWARE_INFO, np, threading, zipfile, json, ast, eb, re, partial, defaultdict, deque, Path, ThreadPoolExecutor, Callable, GPU_ACC, uuid, bisect, SimpleNamespace, Any, random, datetime,time, asyncio, aiohttp, shutil,
                            RuntimeConfig, Quantization, Locale, Module, File, TranslatorPersistence, Log, Builder, NOT_IMPORT)
 
 class 翻译上下文管理器:
@@ -79,111 +79,167 @@ class 翻译上下文管理器:
             索引 += 2
         return 结果列表
 
+class Tier速率限制器:
+    __slots__ = ('最大请求每分钟', '最大Token每分钟', '窗口秒数', '_请求时间记录', '_Token记录', '_锁')
+    def __init__(Self, 最大请求每分钟: int = 0, 最大Token每分钟: int = 0, 窗口秒数: float = 60.0):
+        Self.最大请求每分钟 = max(0, 最大请求每分钟)
+        Self.最大Token每分钟 = max(0, 最大Token每分钟)
+        Self.窗口秒数 = 窗口秒数
+        Self._请求时间记录 = deque()
+        Self._Token记录 = deque()
+        Self._锁 = asyncio.Lock()
+
+    async def 获取许可(Self):
+        if Self.最大请求每分钟 <= 0 and Self.最大Token每分钟 <= 0:
+            return
+        while True:
+            async with Self._锁:
+                now = time.monotonic()
+                Self._清理过期记录(now)
+                请求ok = Self.最大请求每分钟 <= 0 or len(Self._请求时间记录) < Self.最大请求每分钟
+                Tokenok = True
+                if Self.最大Token每分钟 > 0:
+                    total = sum(t for _, t in Self._Token记录)
+                    Tokenok = total < Self.最大Token每分钟
+                if 请求ok and Tokenok:
+                    Self._请求时间记录.append(now)
+                    return
+                等待 = 0.0
+                if not 请求ok and Self._请求时间记录:
+                    等待 = max(等待, Self._请求时间记录[0] + Self.窗口秒数 - now + 0.01)
+                if not Tokenok and Self._Token记录:
+                    等待 = max(等待, Self._Token记录[0][0] + Self.窗口秒数 - now + 0.01)
+            if 等待 > 0:
+                await asyncio.sleep(等待)
+
+    async def 记录Token(Self, count: int):
+        if Self.最大Token每分钟 <= 0 or count <= 0:
+            return
+        async with Self._锁:
+            Self._Token记录.append((time.monotonic(), count))
+
+    def _清理过期记录(Self, now: float):
+        cutoff = now - Self.窗口秒数
+        while Self._请求时间记录 and Self._请求时间记录[0] < cutoff:
+            Self._请求时间记录.popleft()
+        while Self._Token记录 and Self._Token记录[0][0] < cutoff:
+            Self._Token记录.popleft()
+
+    def 重置(Self):
+        Self._请求时间记录.clear()
+        Self._Token记录.clear()
+
 class 请求池:
-    """串行RAG请求池 - 串行执行RAG检索后提交到池中并发处理API请求"""
-    __slots__ = ('队列', '工作线程列表', '是否运行', '日志', '翻译方法', '上下文管理器',
+    __slots__ = ('队列', '工作协程列表', '是否运行', '日志', '翻译方法', '上下文管理器',
                  '返回列表', '返回锁', '进度条', '进度锁', '配置', '最大并发', 'tqdm',
-                 '层级列表', '层级并发状态', '层级堆', '状态锁', '状态条件')
+                 '层级列表', '层级信号量字典', '层级速率限制器字典', '层级锁', '已完成计数', '总条目数')
     def __init__(Self, 最大并发: int, 日志: Callable, 翻译方法: Callable, 上下文管理器, 配置, tqdm):
-        Self.队列 = queue.Queue()
-        Self.工作线程列表 = []
+        Self.队列 = asyncio.Queue(maxsize=0)
+        Self.工作协程列表 = []
         Self.是否运行 = False
         Self.日志 = 日志
         Self.翻译方法 = 翻译方法
         Self.上下文管理器 = 上下文管理器
         Self.配置 = 配置
         Self.返回列表 = []
-        Self.返回锁 = threading.Lock()
+        Self.返回锁 = asyncio.Lock()
         Self.进度条 = None
-        Self.进度锁 = threading.Lock()
+        Self.进度锁 = asyncio.Lock()
         Self.最大并发 = 最大并发
         Self.tqdm = tqdm
         Self.层级列表 = []
-        Self.层级并发状态 = {}
-        Self.层级堆 = []
-        Self.状态锁 = threading.Lock()
-        Self.状态条件 = threading.Condition(Self.状态锁)
+        Self.层级信号量字典 = {}
+        Self.层级速率限制器字典 = {}
+        Self.层级锁 = asyncio.Lock()
+        Self.已完成计数 = 0
+        Self.总条目数 = 0
     def 注册层级(Self, 层级列表: list):
         Self.层级列表 = 层级列表
-        Self.层级并发状态 = {}
-        Self.层级堆 = []
+        Self.层级信号量字典 = {}
+        Self.层级速率限制器字典 = {}
         for cfg in 层级列表:
             tier_id = cfg.get("id", id(cfg)) if cfg else -1
             max_conn = cfg.get("max_connections", cfg.get("max_workers", Self.配置.LLM_MAX_WORKERS)) if cfg else Self.配置.LLM_MAX_WORKERS
-            weight = cfg.get("weight", 1.0) if cfg else 1.0
-            Self.层级并发状态[tier_id] = {"cfg": cfg, "current": 0, "max": max_conn, "weight": weight}
             if max_conn > 0:
-                heapq.heappush(Self.层级堆, (-weight, 0, tier_id))
-    def _选择层级(Self):
-        with Self.状态条件:
-            while True:
-                while Self.层级堆:
-                    neg_w, curr, tid = Self.层级堆[0]
-                    info = Self.层级并发状态[tid]
-                    if curr == info["current"] and info["current"] < info["max"]:
-                        heapq.heappop(Self.层级堆)
-                        info["current"] += 1
-                        if info["current"] < info["max"]:
-                            heapq.heappush(Self.层级堆, (-info["weight"], info["current"], tid))
-                        return info["cfg"]
-                    else:
-                        heapq.heappop(Self.层级堆)
-                Self.状态条件.wait()
-    def _释放层级(Self, cfg):
-        if cfg is None: return
-        with Self.状态条件:
-            tier_id = cfg.get("id", id(cfg))
-            info = Self.层级并发状态.get(tier_id)
-            if info:
-                info["current"] -= 1
-                if info["current"] < info["max"]:
-                    heapq.heappush(Self.层级堆, (-info["weight"], info["current"], tier_id))
-                Self.状态条件.notify_all()
-    def 启动(Self, 总条目数: int = 0):
+                Self.层级信号量字典[tier_id] = {"cfg": cfg, "semaphore": asyncio.Semaphore(max_conn)}
+            rpm = cfg.get("rpm", 0) if cfg else 0
+            tpm = cfg.get("tpm", 0) if cfg else 0
+            if rpm > 0 or tpm > 0:
+                限制器 = Tier速率限制器(最大请求每分钟=rpm, 最大Token每分钟=tpm)
+                Self.层级速率限制器字典[tier_id] = 限制器
+                cfg["_速率限制器"] = 限制器
+                Self.日志("log.core.request.pool.ratelimit", tier=tier_id, rpm=rpm, tpm=tpm, info_level=0)
+    async def _获取层级信号量(Self, cfg):
+        if cfg is None: return None
+        tier_id = cfg.get("id", id(cfg))
+        限制器 = Self.层级速率限制器字典.get(tier_id)
+        if 限制器:
+            await 限制器.获取许可()
+        info = Self.层级信号量字典.get(tier_id)
+        if info:
+            await info["semaphore"].acquire()
+            return info
+        return None
+    def _释放层级信号量(Self, info):
+        if info:
+            info["semaphore"].release()
+    async def 启动(Self, 总条目数: int = 0):
         Self.是否运行 = True
+        Self.已完成计数 = 0
+        Self.总条目数 = 总条目数
         if 总条目数 > 0:
             Self.进度条 = Self.tqdm(total=总条目数, desc="tqdm.translator.generate")
         for _ in range(Self.最大并发):
-            线程 = threading.Thread(target=Self.工作线程循环, daemon=True)
-            线程.start()
-            Self.工作线程列表.append(线程)
-    def 停止(Self):
+            协程 = asyncio.create_task(Self.工作协程循环())
+            Self.工作协程列表.append(协程)
+    async def 停止(Self):
         Self.是否运行 = False
-        for _ in Self.工作线程列表:
-            Self.队列.put(None)
-        for 线程 in Self.工作线程列表:
-            线程.join(timeout=2)
+        for _ in Self.工作协程列表:
+            await Self.队列.put(None)
+        await asyncio.gather(*Self.工作协程列表, return_exceptions=True)
+        Self.工作协程列表.clear()
         if Self.进度条:
             Self.进度条.close()
-    def 提交(Self, 翻译内容列表: list, 其他内容列表: list, 层级配置):
-        Self.队列.put((翻译内容列表, 其他内容列表, 层级配置))
-    def 工作线程循环(Self):
+        for 限制器 in Self.层级速率限制器字典.values():
+            限制器.重置()
+        for cfg in Self.层级列表:
+            if cfg:
+                cfg.pop("_速率限制器", None)
+        Self.层级速率限制器字典.clear()
+    async def 提交(Self, 翻译内容列表: list, 其他内容列表: list, 层级配置):
+        await Self.队列.put((翻译内容列表, 其他内容列表, 层级配置))
+    async def 工作协程循环(Self):
         while Self.是否运行:
             try:
-                任务 = Self.队列.get(timeout=0.5)
-            except queue.Empty:
+                任务 = await asyncio.wait_for(Self.队列.get(), timeout=0.5)
+            except asyncio.TimeoutError:
                 continue
             if 任务 is None:
                 Self.队列.task_done()
                 break
             翻译内容列表, 其他内容列表, 层级配置 = 任务
+            信号量信息 = None
             try:
-                if 层级配置 is None and Self.层级列表:
-                    层级配置 = Self._选择层级()
-                结果 = Self.翻译方法(翻译内容=翻译内容列表, 其他内容=其他内容列表, 层级配置=层级配置, context=Self.上下文管理器)
-                with Self.返回锁:
+                if 层级配置 is not None and Self.层级信号量字典:
+                    信号量信息 = await Self._获取层级信号量(层级配置)
+                结果 = await Self.翻译方法(翻译内容=翻译内容列表, 其他内容=其他内容列表, 层级配置=层级配置, context=Self.上下文管理器)
+                async with Self.返回锁:
                     Self.返回列表.extend(结果)
-                with Self.进度锁:
+                async with Self.进度锁:
                     if Self.进度条:
-                        Self.进度条.update(len(结果))
+                        更新数量 = len(结果)
+                        if Self.总条目数 > 0 and Self.进度条.n + 更新数量 > Self.总条目数:
+                            更新数量 = Self.总条目数 - Self.进度条.n
+                        if 更新数量 > 0:
+                            Self.进度条.update(更新数量)
             except Exception:
                 Self.日志("log.core.request.pool.error", e=eb.format_exc(), info_level=2)
             finally:
-                if 层级配置 and Self.层级列表:
-                    Self._释放层级(层级配置)
+                if 信号量信息:
+                    Self._释放层级信号量(信号量信息)
                 Self.队列.task_done()
-    def 获取结果(Self):
-        Self.队列.join()
+    async def 获取结果(Self):
+        await Self.队列.join()
         return Self.返回列表
 
 class Translator:
@@ -203,6 +259,8 @@ class Translator:
         Self.日志 = Self.Log.写入日志
         Self.tqdm = Self.Locale.Tqdm
         Self.Builder = Builder(Config=Config)
+        TranslatorPersistence.加载向量缓存(Self=Self.Builder)
+        TranslatorPersistence.加载翻译缓存(Self=Self)
         if GPU_ACC: Self.日志("log.core.numpy.gpu", type=HARDWARE_INFO['type'], acc_type=HARDWARE_INFO['acc_type'], version=HARDWARE_INFO['version'], acc_version=HARDWARE_INFO['acc_version'], deviceid=HARDWARE_INFO['device_id'], count=HARDWARE_INFO["device_count"], info_level=0)
         else: Self.日志("log.core.numpy.cpu", type=HARDWARE_INFO['type'], acc_type=HARDWARE_INFO['acc_type'], version=HARDWARE_INFO['version'], acc_version=HARDWARE_INFO['acc_version'], e=HARDWARE_INFO['error'], info_level=0)
         for index in NOT_IMPORT: Self.日志("log.core.not_import", index=index, info_level=1)
@@ -213,11 +271,11 @@ class Translator:
         Self.正则表达式预编译.模型思维链剔除方法 = re.compile(r'(?s)(?:<think>.*?</think>|\[think\].*?\[/think\])\s*')
     def __enter__(Self):
         return Self
-    def 生成翻译(Self, 翻译内容: list, 其他内容: str, 层级配置: dict = None, context: 翻译上下文管理器 = None):
+    async def 生成翻译(Self, 翻译内容: list, 其他内容: str, 层级配置: dict = None, context: 翻译上下文管理器 = None):
             请求文本, 返回结果 = [], []
             消息结果, 请求结果, 附加内容 = "", "", "",
             是否重试 = False
-            请求错误次数, 批量翻译错误次数 = 0, 0
+            请求错误次数, 批量翻译错误次数, 连接错误次数 = 0, 0, 0
             层级配置 = 层级配置 or {}
             请求地址 = 层级配置.get("url", Self.Config.LLM_API_URL)
             请求密钥 = 层级配置.get("key", Self.Config.LLM_API_KEY)
@@ -230,15 +288,35 @@ class Translator:
             模型频率惩罚 = 层级配置.get("frequency_penalty", Self.Config.LLM_FP)
             模型种子 = 层级配置.get("seed", Self.Config.LLM_SEED)
             重试次数 = 层级配置.get("max_retry", Self.Config.LLM_MAX_RETRY)
-            超时时间 = (层级配置.get("conn_timeout", Self.Config.LLM_CONN_TIMEOUT), 层级配置.get("timeout", Self.Config.LLM_TIMEOUT))
+            连接超时 = 层级配置.get("conn_timeout", Self.Config.LLM_CONN_TIMEOUT)
+            总超时 = 层级配置.get("timeout", Self.Config.LLM_TIMEOUT)
             重试时间 = 层级配置.get("retry_time", Self.Config.LLM_RETRY_TIME)
             重试系数 = 层级配置.get("retry_coef", Self.Config.LLM_RETRY_COEF)
             请求额外参数 = 层级配置.get("api_kwargs", Self.Config.LLM_API_KWARGS)
-            请求会话 = TranslatorPersistence.获取会话(请求地址, 请求密钥, 模型名称, 层级配置.get("max_workers", Self.Config.LLM_MAX_WORKERS), 重试系数, 重试次数)
+            连接保活超时 = 层级配置.get("keepalive_timeout", Self.Config.LLM_KEEPALIVE_TIMEOUT)
+            DNS缓存时间 = 层级配置.get("ttl_dns_cache", Self.Config.LLM_TTL_DNS_CACHE)
+            异步会话 = TranslatorPersistence.获取异步会话(请求地址, 请求密钥, 模型名称, 层级配置.get("max_workers", Self.Config.LLM_MAX_WORKERS), (连接超时, 总超时), 连接保活超时, DNS缓存时间)
+            缓存命中结果 = []
+            if Self.Config.TRANSLATOR_CACHE_READ:
+                翻译缓存快照 = TranslatorPersistence.查询翻译缓存()
+                if 翻译缓存快照:
+                    待翻译内容 = []
+                    待翻译其他 = []
+                    for idx, 原文 in enumerate(翻译内容):
+                        if isinstance(原文, str) and 原文 in 翻译缓存快照:
+                            缓存命中结果.append([其他内容[idx][0], 原文, 翻译缓存快照[原文], 其他内容[idx][2]])
+                        else:
+                            待翻译内容.append(原文)
+                            待翻译其他.append(其他内容[idx])
+                    if not 待翻译内容:
+                        return 缓存命中结果
+                    翻译内容 = 待翻译内容
+                    其他内容 = 待翻译其他
             原始翻译内容 = 翻译内容.copy()
             翻译内容 = [翻译内容]
             原始其他内容 = 其他内容.copy()
             其他内容 = [其他内容]
+            本次批次数 = len(原始翻译内容)
             while True:
                 try:
                     合并返回的请求结果 = []
@@ -264,12 +342,26 @@ class Translator:
                         请求文本 = 文本[0] if 请求文本长度 == 1 else json.dumps(文本)
                         请求文本 = Self.Config.TRANSLATOR_USER_PROMPT[请求文本长度 == 1].format(text=请求文本, LANGUAGE_OUTPUT=Self.Config.LANGUAGE_OUTPUT, count=len(请求文本))
                         messages.append({"role": "user", "content": 请求文本})
-                        请求结果 = 请求会话.post(url=请求地址, json={"model": 模型名称, "messages": messages, "top_p": 模型核采样, "top_k": 模型前K个候选词, "temperature": 模型温度, "seed": 模型种子, "repeat_penalty": 模型重复惩罚, "presence_penalty": 模型存在惩罚, "frequency_penalty": 模型频率惩罚, "stream": False,} | 请求额外参数, timeout=超时时间)
-                        请求结果.raise_for_status()
-                        请求结果 = 请求结果.json()
+                        请求体 = {"model": 模型名称, "messages": messages, "top_p": 模型核采样, "top_k": 模型前K个候选词, "temperature": 模型温度, "seed": 模型种子, "repeat_penalty": 模型重复惩罚, "presence_penalty": 模型存在惩罚, "frequency_penalty": 模型频率惩罚, "stream": False}
+                        请求体.update(请求额外参数)
+                        请求超时 = aiohttp.ClientTimeout(total=总超时, connect=连接超时, sock_read=None, sock_connect=连接超时)
+                        async with 异步会话.post(url=请求地址, json=请求体, timeout=请求超时) as 响应:
+                            请求结果 = await 响应.json()
+                            if 响应.status >= 400:
+                                raise aiohttp.ClientResponseError(
+                                    响应.request_info, 响应.history,
+                                    status=响应.status, message=请求结果.get("error", {}).get("message", str(请求结果)),
+                                    headers=响应.headers
+                                )
                         Token结果 = 请求结果.get("usage", {})
                         消息结果 = 请求结果["choices"][0]["message"]["content"]
-                        Self.Config.LLM_TOKEN_USAGE += Token结果.get("total_tokens", 0)
+                        Self.Config.LLM_TOKEN_IN += Token结果.get("prompt_tokens", 0)
+                        Self.Config.LLM_TOKEN_OUT += Token结果.get("completion_tokens", 0)
+                        Self.Config.LLM_TOKEN_CACHE_HIT += Token结果.get("prompt_cache_hit_tokens", 0)
+                        Self.Config.LLM_TOKEN_CACHE_MISS += Token结果.get("prompt_cache_miss_tokens", 0)
+                        _速率限制器 = 层级配置.get("_速率限制器")
+                        if _速率限制器:
+                            await _速率限制器.记录Token(Token结果.get("total_tokens", 0))
                         Self.日志("log.core.translator.generate.request.outputs.debug", messages=翻译内容, item=消息结果, promptex=附加内容, info_level=4)
                         消息结果 = Self.正则表达式预编译.模型思维链剔除方法.sub("", 消息结果)
                         try:
@@ -282,7 +374,12 @@ class Translator:
                         返回结果.append([原始其他内容[index][0], 原始翻译内容[index], 合并返回的请求结果[index], 原始其他内容[index][2]])
                         if Self.Config.LLM_CONTEXTS != False:
                             context.add(原始其他内容[index][0], 合并返回的请求结果[index])
-                        Self.日志("log.core.translator.generate", input=原始翻译内容[index], output=合并返回的请求结果[index])
+                        Self.日志("log.core.translator.generate", input=原始翻译内容[index], output=合并返回的请求结果[index], info_level=0)
+                    if Self.Config.TRANSLATOR_CACHE_WRITE and 返回结果:
+                        新增缓存条目 = [[项[1], 项[2]] for 项 in 返回结果 if 项[1] and 项[2] and 项[1] != 项[2]]
+                        if 新增缓存条目:
+                            TranslatorPersistence.更新翻译缓存(新增缓存条目)
+                    返回结果.extend(缓存命中结果)
                     return 返回结果
                 except IndexError:
                     批量翻译错误次数 += 1
@@ -291,19 +388,52 @@ class Translator:
                         是否重试 = True
                         翻译内容 = 翻译内容[0]
                         其他内容 = 其他内容[0]
+                        原始翻译内容 = 翻译内容.copy()
+                        原始其他内容 = 其他内容.copy()
+                        本次批次数 = len(原始翻译内容)
+                    elif 是否重试 == True:
+                        Self.日志("log.core.translator.generate.error", e="IndexError: 逐条翻译仍然返回结果数量不匹配", output=请求结果, info_level=2)
+                        返回结果 = [[原始其他内容[index][0] if index < len(原始其他内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始其他内容[index][2] if index < len(原始其他内容) and len(原始其他内容[index]) > 2 else ""] for index in range(本次批次数)]
+                        返回结果.extend(缓存命中结果)
+                        return 返回结果
                     else:
                         Self.日志("log.core.translator.generate.batch.retry", info_level=1)
+                except aiohttp.ServerDisconnectedError:
+                    连接错误次数 += 1
+                    if 连接错误次数 >= 重试次数 * 3:
+                        Self.日志("log.core.translator.generate.error", e=eb.format_exc(), output=请求结果, info_level=2)
+                        返回结果 = [[原始其他内容[index][0] if index < len(原始其他内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始其他内容[index][2] if index < len(原始其他内容) and len(原始其他内容[index]) > 2 else ""] for index in range(本次批次数)]
+                        返回结果.extend(缓存命中结果)
+                        return 返回结果
+                    Self.日志("log.core.translator.generate.retry", e=eb.format_exc(), info_level=1)
+                    await asyncio.sleep(random.uniform(0.1, 0.5))
+                except (asyncio.TimeoutError, aiohttp.ClientConnectionError, aiohttp.ClientConnectorError, aiohttp.ClientPayloadError) as e:
+                    Self.日志("log.core.translator.generate.messages.timeout", promptex=附加内容, messages=翻译内容, e=eb.format_exc(), info_level=1)
+                    请求错误次数 += 1
+                    if 请求错误次数 >= 重试次数:
+                        返回结果 = [[原始其他内容[index][0] if index < len(原始其他内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始其他内容[index][2] if index < len(原始其他内容) and len(原始其他内容[index]) > 2 else ""] for index in range(本次批次数)]
+                        Self.日志("log.core.translator.generate.error", e=eb.format_exc(), output=请求结果, info_level=2)
+                        返回结果.extend(缓存命中结果)
+                        return 返回结果
+                    else:
+                        Self.日志("log.core.translator.generate.retry", e=eb.format_exc(), info_level=1)
+                        基础等待 = (重试系数 ** (请求错误次数 - 1)) * 重试时间
+                        await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
                 except Exception:
                     Self.日志("log.core.translator.generate.messages.error", promptex=附加内容, messages=翻译内容, e=eb.format_exc(), info_level=1)
-                    返回结果 = [[其他内容[index][0], 翻译内容[index], 翻译内容[index], 其他内容[index][2]] for index in range(len(翻译内容))]
+                    try:
+                        返回结果 = [[原始其他内容[index][0] if index < len(原始其他内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始翻译内容[index] if index < len(原始翻译内容) else "", 原始其他内容[index][2] if index < len(原始其他内容) and len(原始其他内容[index]) > 2 else ""] for index in range(本次批次数)]
+                    except IndexError:
+                        返回结果 = [["", str(item), str(item), ""] for item in 原始翻译内容]
                     请求错误次数 += 1
                     if 请求错误次数 >= 重试次数:
                         Self.日志("log.core.translator.generate.error", e=eb.format_exc(), output=请求结果, info_level=2)
+                        返回结果.extend(缓存命中结果)
                         return 返回结果
                     else:
                         Self.日志("log.core.translator.generate.retry", e=eb.format_exc(), output=请求结果, info_level=1)
                         基础等待 = (重试系数 ** (请求错误次数 - 1)) * 重试时间
-                        time.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
+                        await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
     def 任务分配器(Self, 总数: int):
         层级列表 = Self.Config.get_active_tiers()
         if not 层级列表:
@@ -366,7 +496,7 @@ class Translator:
         低比例, 高比例 = Self.Config.LLM_TIER_OVERLAP_RATIO
         return [(上一级, 低比例), (选定层级, 高比例)]
 
-    def 翻译语言列表(Self, texts: list, 参考列表: list=None, 使用模型: list=None, 索引ID: list=uuid.uuid4().hex, 获取参考文本: bool = False) -> list:
+    async def 翻译语言列表(Self, texts: list, 参考列表: list=None, 使用模型: list=None, 索引ID: list=uuid.uuid4().hex, 获取参考文本: bool = False) -> list:
         输入列表, 返回列表, 命中缓存, 翻译缓存输入, 返回请求内容, 返回其他内容, 完整返回列表, 去翻译列表, 翻译参考列表, 未翻译列表, 任务列表 = [], [], [], [], [], [], [], [], [], [], []
         参考字典 = {}
         if 使用模型 == None: 使用模型 = []
@@ -390,8 +520,9 @@ class Translator:
         if 参考键文本:
             参考字典 = dict(zip(参考键文本, 参考译文文本))
             for index in texts:
-                if index[0] in 参考字典:
-                    去翻译列表.append([index[0], index[1], 参考字典[index[0]], index[2]])
+                参考键 = str(index[0])
+                if 参考键 in 参考字典:
+                    去翻译列表.append([index[0], index[1], 参考字典[参考键], index[2]])
                 else:
                     未翻译列表.append(index)
         else:
@@ -410,7 +541,7 @@ class Translator:
             未翻译列表[:] = 待翻译
             成功缓存 = len(命中缓存)
             命中率 = (成功缓存 / 原始长度) if 原始长度 > 0 else 0.0
-            Self.日志("log.core.translator.cache.hit", hit=f"{命中率:.4%}", info_level=0)
+            Self.日志("log.core.translator.cache.hit", rate=f"{命中率:.4%}", hit=成功缓存, total=原始长度, info_level=0)
         try:
             if 未翻译列表:
                 for index in 未翻译列表:
@@ -430,6 +561,8 @@ class Translator:
                             输入列表 = Self.Builder.并行生成向量(输入列表)
                             向量列表 = np.asarray(输入列表[0], dtype=np.float32)
                             向量列表 = 向量列表.get() if GPU_ACC else 向量列表
+                            向量列表 = Self.Module.归一化向量(向量列表)
+                            向量列表 = Self.Quantization.PCA应用懒加载(向量列表, 向量文件)
                             for _ in Self.tqdm(range(1), desc="tqdm.index.search"):
                                 索引结果矩阵 = 向量索引.search(向量列表, Self.Config.INDEX_TEXT_K)[1]
                             if Self.Config.INDEX_LANG_K != 0 and 翻译参考列表:
@@ -464,6 +597,8 @@ class Translator:
                             单词输入列表 = Self.Builder.并行生成向量(单词列表)
                             单词向量列表 = np.asarray(单词输入列表[0], dtype=np.float32)
                             单词向量列表 = 单词向量列表.get() if GPU_ACC else 单词向量列表
+                            单词向量列表 = Self.Module.归一化向量(单词向量列表)
+                            单词向量列表 = Self.Quantization.PCA应用懒加载(单词向量列表, 向量文件)
                             for _ in Self.tqdm(range(1), desc="tqdm.index.search"):
                                 单词索引结果矩阵 = 向量索引.search(单词向量列表, Self.Config.INDEX_WORD_K)[1]
                             for index in range(len(单词向量列表)):
@@ -567,22 +702,34 @@ class Translator:
                 for 轮次 in range(Self.Config.TRANSLATOR_REFINE_ROUNDS + 1):
                     if 轮次 == 0 and Self.Config.TRANSLATOR_REFINE_ROUNDS > 0: 上下文管理器.switch = False
                     if 轮次 == 1: 上下文管理器.switch = True
+                    有效最大并发 = sum(cfg.get("max_workers", Self.Config.LLM_MAX_WORKERS) for cfg, _ in 分配结果 if cfg is not None)
+                    if 有效最大并发 < Self.Config.LLM_MAX_WORKERS:
+                        有效最大并发 = Self.Config.LLM_MAX_WORKERS
                     请求池实例 = 请求池(
-                        最大并发=Self.Config.LLM_MAX_WORKERS,
+                        最大并发=有效最大并发,
                         日志=Self.日志,
                         翻译方法=Self.生成翻译,
                         上下文管理器=上下文管理器,
                         配置=Self.Config,
                         tqdm=Self.tqdm
                     )
-                    if getattr(Self.Config, "LLM_TIER_DYNAMIC", False):
+                    if 分配结果:
                         请求池实例.注册层级([cfg for cfg, _ in 分配结果 if cfg is not None])
-                    请求池实例.启动(总条目数=总条目数)
+                    await 请求池实例.启动(总条目数=总条目数)
                     if getattr(Self.Config, "LLM_TIER_DYNAMIC", False):
-                        for 步进 in range(0, 总条目数, Self.Config.TRANSLATOR_BATCH):
-                            子请求 = 处理后的请求内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
-                            子其他 = 处理后的其他内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
-                            请求池实例.提交(子请求, 子其他, None)
+                        层级列表 = [cfg for cfg, _ in 分配结果 if cfg is not None]
+                        权重列表 = [w for _, w in 分配结果 if _ is not None]
+                        if 层级列表 and 权重列表:
+                            for 步进 in range(0, 总条目数, Self.Config.TRANSLATOR_BATCH):
+                                子请求 = 处理后的请求内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                子其他 = 处理后的其他内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                选中层级 = random.choices(层级列表, weights=权重列表, k=1)[0]
+                                await 请求池实例.提交(子请求, 子其他, 选中层级)
+                        else:
+                            for 步进 in range(0, 总条目数, Self.Config.TRANSLATOR_BATCH):
+                                子请求 = 处理后的请求内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                子其他 = 处理后的其他内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                await 请求池实例.提交(子请求, 子其他, None)
                     elif Self.Config.LLM_TIER_INTERLEAVE:
                         条目计数 = []
                         剩余 = 总条目数
@@ -615,22 +762,28 @@ class Translator:
                                 批次其他.append(处理后的其他内容[索引])
                                 索引 += 1
                             if 批次请求:
-                                请求池实例.提交(批次请求, 批次其他, 当前层级配置)
+                                await 请求池实例.提交(批次请求, 批次其他, 当前层级配置)
                     else:
-                        起始索引 = 0
-                        for 索引, (层级配置, 比例) in enumerate(分配结果):
-                            if 索引 == len(分配结果) - 1:
-                                条目数量 = 总条目数 - 起始索引
-                            else:
-                                条目数量 = int(总条目数 * 比例)
-                            结束索引 = 起始索引 + 条目数量
-                            子请求 = 处理后的请求内容[起始索引:结束索引]
-                            子其他 = 处理后的其他内容[起始索引:结束索引]
-                            for 步进 in range(0, len(子请求), Self.Config.TRANSLATOR_BATCH):
-                                请求池实例.提交(子请求[步进:步进 + Self.Config.TRANSLATOR_BATCH], 子其他[步进:步进 + Self.Config.TRANSLATOR_BATCH], 层级配置)
-                            起始索引 = 结束索引
-                    返回列表 = 请求池实例.获取结果()
-                    请求池实例.停止()
+                        if 分配结果:
+                            起始索引 = 0
+                            for 索引, (层级配置, 比例) in enumerate(分配结果):
+                                if 索引 == len(分配结果) - 1:
+                                    条目数量 = 总条目数 - 起始索引
+                                else:
+                                    条目数量 = int(总条目数 * 比例)
+                                结束索引 = 起始索引 + 条目数量
+                                子请求 = 处理后的请求内容[起始索引:结束索引]
+                                子其他 = 处理后的其他内容[起始索引:结束索引]
+                                for 步进 in range(0, len(子请求), Self.Config.TRANSLATOR_BATCH):
+                                    await 请求池实例.提交(子请求[步进:步进 + Self.Config.TRANSLATOR_BATCH], 子其他[步进:步进 + Self.Config.TRANSLATOR_BATCH], 层级配置)
+                                起始索引 = 结束索引
+                        else:
+                            for 步进 in range(0, 总条目数, Self.Config.TRANSLATOR_BATCH):
+                                子请求 = 处理后的请求内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                子其他 = 处理后的其他内容[步进:步进 + Self.Config.TRANSLATOR_BATCH]
+                                await 请求池实例.提交(子请求, 子其他, None)
+                    返回列表 = await 请求池实例.获取结果()
+                    await 请求池实例.停止()
                 唯一结果映射 = {}
                 for a, b, c, d in 返回列表:
                     if isinstance(b, (list, dict)):
@@ -648,7 +801,7 @@ class Translator:
                 返回列表 = 展开返回列表
             返回列表.extend(去翻译列表)
             返回列表.extend(命中缓存)
-            if not 使用模型: 使用模型.append(["null"])
+            if not 使用模型: 使用模型.append([])
             返回列表 = {str(a): [b, c, d] for a, b, c, d in 返回列表}
             完整返回列表 = []
             翻译缓存输入 = []
@@ -682,7 +835,7 @@ class Translator:
             if Self.Config.TRANSLATOR_CACHE_WRITE:
                 Self.Module.翻译缓存(翻译缓存输入)
         except Exception:
-            Self.日志("log.core.translator.error", e=eb.format_exc(), texts=输入复制, info_level=3)
+            Self.日志("log.core.translator.error", e=eb.format_exc(), texts=(输入复制[:10] if 输入复制 else []), info_level=3)
             raise
         return 完整返回列表
     def 翻译语言文件(Self, file0: str,  file1: str="", 索引ID: str=uuid.uuid4().hex, output_path: str = "", export_inspection: bool = False, output_lang_str: bool = False, read_error: bool = True, 使用模型: list = []):
@@ -690,7 +843,7 @@ class Translator:
         输出列表 = []
         if 使用模型 == None: 使用模型 = []
         可翻译源文件, 源文件, 参考文件, 压缩路径, 输出扩展名, file2 = Self.File.读取资源文件(file0, file1, read_error)
-        翻译列表 = Self.翻译语言列表(可翻译源文件, 参考文件, 使用模型, 索引ID) #翻译核心
+        翻译列表 = TranslatorPersistence.运行异步(Self.翻译语言列表(可翻译源文件, 参考文件, 使用模型, 索引ID)) #翻译核心
         if export_inspection:
             for index in Self.tqdm(翻译列表, desc="tqdm.progress.encoding"):
                 行数据 = {index[0]: index[1]}
@@ -726,8 +879,21 @@ class Translator:
                 for index in 输出列表:
                     Self.File.保存语言文件(f"{Path(index[0]).parent}/{Self.Config.LANGUAGE_OUTPUT}{Path(index[0]).suffix}", index[1])
                 压缩文件夹Path = Path(压缩路径)
+                try:
+                    压缩源 = file0 if Path(file0).suffix.lower() in {".zip", ".jar"} else file1
+                    if 压缩源 and Path(压缩源).is_file():
+                        with zipfile.ZipFile(压缩源, 'r') as 手册压缩包:
+                            for 内部文件 in 手册压缩包.namelist():
+                                if "/patchouli_books/" in f"/{内部文件}" and not 内部文件.endswith('/'):
+                                    if not (压缩文件夹Path / 内部文件).exists():
+                                        手册压缩包.extract(内部文件, 压缩路径)
+                        for 手册根 in 压缩文件夹Path.glob("assets/*/patchouli_books"):
+                            if 手册根.is_dir():
+                                Self.翻译帕秋莉手册语言版本(str(手册根), 索引ID=索引ID)
+                except Exception:
+                    Self.日志("log.module.book.load.error", file=str(file0), e=eb.format_exc(), info_level=1)
                 if file2[0] == False:
-                    文档内容 = Self.Config.PACK_META_TEMPLATE_TRANSLATE.format(name=Path(file0).stem, lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(使用模型[0]) or Self.Config.LLM_MODEL or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
+                    文档内容 = Self.Config.PACK_META_TEMPLATE_TRANSLATE.format(name=Path(file0).stem, lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(m for m in (使用模型[0] if 使用模型 else []) if m and m != "null") or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
                     with open(压缩文件夹Path/"pack.mcmeta", "w+", encoding="utf-8") as f:
                         f.write(json.dumps({
                             "pack": {
@@ -764,13 +930,14 @@ class Translator:
                 翻译列表.extend(结果)
         if path2:
             path2 = Path(path2)
-            for index in 文件匹配:
-                参考文件列表.extend([p for p in path2.rglob(index)] if Path(path2).is_dir() else [path2])
-            Self.日志(f"log.core.file.{日志类型}.read.start", info_level=0)
-            with ThreadPoolExecutor(max_workers=读取并发) as 执行器:
-                结果集 = 执行器.map(读取方法, 参考文件列表)
-                for 结果 in Self.tqdm(结果集, total=len(参考文件列表), desc="tqdm.file.read"):
-                    参考列表.extend(结果)
+            if path2.exists():
+                for index in 文件匹配:
+                    参考文件列表.extend(p for p in path2.rglob(index))
+                Self.日志(f"log.core.file.{日志类型}.read.start", info_level=0)
+                with ThreadPoolExecutor(max_workers=读取并发) as 执行器:
+                    结果集 = 执行器.map(读取方法, 参考文件列表)
+                    for 结果 in Self.tqdm(结果集, total=len(参考文件列表), desc="tqdm.file.read"):
+                        参考列表.extend(结果)
         Self.日志(f"log.core.file.{日志类型}.read.end", info_level=0)
         过滤后 = []
         try:
@@ -784,7 +951,7 @@ class Translator:
         翻译函数黑名单 = {"传入使用模型"}
         翻译参数 = {k: v for k, v in 总参数.items() if not k in 翻译函数黑名单}
         保存参数 = {k: v for k, v in 总参数.items() if k in 翻译函数黑名单}
-        翻译结果 = Self.翻译语言列表(待翻译, 参考列表, 使用模型=使用模型, **翻译参数)
+        翻译结果 = TranslatorPersistence.运行异步(Self.翻译语言列表(待翻译, 参考列表, 使用模型=使用模型, **翻译参数))
         分组 = defaultdict(list)
         for 项目 in 翻译结果:
             分组[分组键方法(项目)].append(项目)
@@ -797,6 +964,16 @@ class Translator:
         Self.翻译流程(path, "*.snbt", Self.File.读取单个FTBQ_Snbt文件, Self.Module.过滤键文本, lambda x: x[0][0], partial(Self.File.应用FTBQ翻译, mode="H" if (Path(path) / "quests").is_dir() else "L"), Self.Config.QUESTS_READ_MAX_CONCURRENT, Self.Config.QUESTS_WRITE_MAX_CONCURRENT, "quests", path2=path2, **参数)
     def 翻译BQ任务(Self, path, path2=None, **参数):
         Self.翻译流程(path, "*.json", Self.File.读取单个BQ_Json文件, Self.Module.过滤键文本, lambda x: x[0][0], Self.File.应用BQ翻译, Self.Config.QUESTS_READ_MAX_CONCURRENT, Self.Config.QUESTS_WRITE_MAX_CONCURRENT, "quests", path2=path2, **参数)
+        资源路径 = Path(f"{path}/resources")
+        if 资源路径.is_dir():
+            for 命名空间目录 in 资源路径.iterdir():
+                if not 命名空间目录.is_dir(): continue
+                语言目录 = 命名空间目录 / "lang"
+                if not 语言目录.is_dir(): continue
+                for 语言文件 in 语言目录.iterdir():
+                    if 语言文件.is_file() and 语言文件.name.lower() == f"{Self.Config.LANGUAGE_INPUT}.lang".lower():
+                        Self.翻译语言文件(file0=str(语言文件), output_path=str(语言目录), **参数)
+                        break
     def 翻译HQM任务(Self, path, path2=None, **参数):
         Self.翻译流程(path, ["*.hqm", "*.json"], partial(Self.File.读取单个HQM文件, mode="L" if any(Path(path).rglob("*.hqm")) else "H"), Self.Module.过滤键文本, lambda x: x[0][0], partial(Self.File.应用HQM翻译, mode="L" if any(Path(path).rglob("*.hqm")) else "H"), Self.Config.QUESTS_READ_MAX_CONCURRENT, Self.Config.QUESTS_WRITE_MAX_CONCURRENT, "quests", path2=path2, **参数)
     def 翻译ZS脚本(Self, path, path2=None, **参数):
@@ -811,6 +988,36 @@ class Translator:
             Self.翻译语言文件(**翻译语言文件参数, **参数)
     def 翻译帕秋莉手册(Self, path, path2=None, **参数):
         Self.翻译流程(path, "*.json", Self.File.读取单个帕秋莉手册文件, Self.Module.过滤键文本, lambda x: str(x[2]), Self.File.应用帕秋莉手册翻译, Self.Config.BOOK_READ_MAX_CONCURRENT, Self.Config.BOOK_WRITE_MAX_CONCURRENT, "book", path2=path2, **参数)
+    def 翻译帕秋莉手册语言版本(Self, patchouli根目录, 索引ID=None):
+        # 帕秋莉手册结构：patchouli_books/<书籍>/<语言>/{entries,categories,templates}/*.json
+        # 将源语言目录（如 en_us）整体复制为目标语言目录（如 zh_cn），再对副本原地翻译，保留英文原版
+        根 = Path(patchouli根目录)
+        if not 根.is_dir():
+            return
+        源语言 = Self.Config.LANGUAGE_INPUT.lower()
+        目标语言 = Self.Config.LANGUAGE_OUTPUT.lower()
+        if 源语言 == 目标语言:
+            return
+        额外参数 = {}
+        if 索引ID is not None: 额外参数["索引ID"] = 索引ID
+        for 书籍目录 in 根.iterdir():
+            if not 书籍目录.is_dir():
+                continue
+            源目录 = next((d for d in 书籍目录.iterdir() if d.is_dir() and d.name.lower() == 源语言), None)
+            if 源目录 is None:
+                continue
+            目标目录 = 书籍目录 / 目标语言
+            try:
+                if 目标目录.exists():
+                    shutil.rmtree(目标目录, ignore_errors=True)
+                shutil.copytree(源目录, 目标目录)
+            except Exception:
+                Self.日志("log.module.book.load.error", file=str(源目录), e=eb.format_exc(), info_level=1)
+                continue
+            try:
+                Self.翻译帕秋莉手册(path=str(目标目录), **额外参数)
+            except Exception:
+                Self.日志("log.module.book.write.error", file=str(目标目录), path="", e=eb.format_exc(), info_level=1)
     def 翻译数据包(Self, path, path2=None, **参数):
         path = Path(path)
         if path.is_file():
@@ -822,8 +1029,10 @@ class Translator:
         Self.翻译流程(path, ["*.json"], Self.File.读取未知伤亡语言文件, Self.Module.过滤键文本, lambda x: x[0][0], Self.File.保存未知伤亡语言文件, Self.Config.LANG_READ_MAX_CONCURRENT, Self.Config.LANG_WRITE_MAX_CONCURRENT, "lang", 输出方法=lambda p: p.parent / f"{Self.Config.LANGUAGE_OUTPUT}.json", 传入使用模型=True, path2=path2, **参数)
     def 翻译未知伤亡dll模组(Self, path, path2=None, **参数):
         Self.翻译流程(path, "*.dll", Self.File.读取单个DLL文件, Self.Module.过滤DLL文本, lambda x: x[0][0], Self.File.应用DLL翻译, Self.Config.DLL_READ_MAX_CONCURRENT, Self.Config.DLL_WRITE_MAX_CONCURRENT, "dll", path2=path2, **参数)
-    def 翻译MMT文件(Self, path, path2=None, **参数):
+    def 翻译MMT_JSON文件(Self, path, path2=None, **参数):
         Self.翻译流程(path, "*.json", Self.File.读取单个MMT文件, Self.Module.过滤键文本, lambda x: x[0][0], Self.File.应用MMT翻译, Self.Config.LANG_READ_MAX_CONCURRENT, Self.Config.LANG_WRITE_MAX_CONCURRENT, "mmt", path2=path2, **参数)
+    def 翻译MMT_TXT文件(Self, path, path2=None, **参数):
+        Self.翻译流程(path, "*.txt", Self.File.读取单个MMT_TXT文件, lambda x: x[1] and x[1].strip(), lambda x: x[0][0], Self.File.应用MMT_TXT翻译, Self.Config.LANG_READ_MAX_CONCURRENT, Self.Config.LANG_WRITE_MAX_CONCURRENT, "mmt", path2=path2, **参数)
     def 翻译整合包(Self, path: str, all_mode: bool = False):
         翻译列表路径 = {}
         使用模型 = []
@@ -852,7 +1061,7 @@ class Translator:
                 for _ in Self.tqdm(执行器.map(翻译单个模组, I18n缺失模组ID), total=len(I18n缺失模组ID), desc="tqdm.translator.mod"):
                     pass
             with open(f"{str(缓存路径)}/pack.mcmeta", "w+", encoding="utf-8") as f:
-                文档内容 = Self.Config.PACK_META_TEMPLATE_TRANSLATE.format(name="", lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(使用模型[0]) or Self.Config.LLM_MODEL or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
+                文档内容 = Self.Config.PACK_META_TEMPLATE_TRANSLATE.format(name="", lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(m for m in (使用模型[0] if 使用模型 else []) if m and m != "null") or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
                 f.write(json.dumps({
                     "pack": {
                         "description": 文档内容,
@@ -933,7 +1142,7 @@ class Translator:
                        文件数据 = Self.File.读取Json文件(file0)
                        if isinstance(文件数据, dict) and "header" in 文件数据 and "content" in 文件数据:
                            Self.日志("log.core.translator.general.model", model="Mine Mod Translator Mod Json", info_level=0)
-                           Self.翻译MMT文件(path=file0, path2=file1)
+                           Self.翻译MMT_JSON文件(path=file0, path2=file1)
                            返回内容 = Path(file0)
                        elif "name" in 文件数据:
                            Self.日志("log.core.translator.general.model", model="Casualties: Unknown Language File", info_level=0)
@@ -958,6 +1167,17 @@ class Translator:
                     Self.翻译未知伤亡dll模组(path=file0)
                     Self.日志("log.core.translator.succeed", path=Path(file0).resolve(), info_level=0)
                     返回内容 = Path(file0)
+                elif 文件0扩展名 == ".txt":
+                    try:
+                        with open(file0, "r", encoding="utf-8") as _f:
+                             _头 = _f.read(200)
+                        if "### FILE_NAME ###" in _头 or "### AI_PROMPT ###" in _头:
+                            Self.日志("log.core.translator.general.model", model="Mine Mod Translator Mod TXT", info_level=0)
+                            Self.翻译MMT_TXT文件(path=file0, path2=file1)
+                            Self.日志("log.core.translator.succeed", path=Path(file0).resolve(), info_level=0)
+                            返回内容 = Path(file0)
+                    except Exception:
+                        pass
                 elif 文件0扩展名 in [".zip", ".mrpack"]:
                     with zipfile.ZipFile(file0, 'r') as zf:
                         namelist = zf.namelist()
@@ -972,6 +1192,8 @@ class Translator:
                             if len(根目录集合) != 1:
                                 return False
                             根前缀 = 根目录集合.pop()
+                            if 根前缀.rstrip('/') == 目标文件夹名.rstrip('/'):
+                                return True
                             目标完整前缀 = 根前缀 + 目标文件夹名.rstrip('/') + '/'
                             return any(路径.startswith(目标完整前缀) for 路径 in namelist)
                         def 翻译语言文件匹配(显示名称: str):
@@ -1042,10 +1264,13 @@ class Translator:
                                 
                                 else:
                                     Self.日志("log.core.translator.general.modpack.translate.file.no", info_level=2)
+                                    返回内容 = Path(Self.Config.LOGS_FILE_PATH) / Self.Config.LOGS_FILE_NAME
                             else:
                                 Self.日志("log.core.translator.general.structure.unknown", info_level=3)
+                                返回内容 = Path(Self.Config.LOGS_FILE_PATH) / Self.Config.LOGS_FILE_NAME
                 else:
                     Self.日志("log.core.translator.general.structure.unknown", info_level=3)
+                    返回内容 = Path(Self.Config.LOGS_FILE_PATH) / Self.Config.LOGS_FILE_NAME
             elif Path(file0).is_dir():
                 文件夹名称 = Path(file0).name
                 匹配方法 = {
@@ -1063,39 +1288,40 @@ class Translator:
                 返回内容 = Path(file0)
         except Exception:
             Self.日志("log.core.translator.general.error.unknown", e=eb.format_exc(), info_level=3)
+            返回内容 = Path(file0)
+        if 返回内容 is None:
+            返回内容 = Path(file0)
         Self.日志("log.core.translator.succeed", path=返回内容.resolve(), info_level=0)
         return 返回内容.resolve()
         
         
-测试 = False
+测试 = True
 if __name__ == "__main__" and 测试:
     参数 = {
-        "LLM1_API_URL": "https://api.deepseek.com/chat/completions",
-        "LLM1_MODEL": "deepseek-v4-flash",
-        "LLM1_API_KWARGS": {"extra_body": {"thinking": {"type": "disabled"}}},
-        "LLM1_MAX_WORKERS": 2500,
+        "LLM1_API_URL": "https://api.longcat.chat/openai/v1/chat/completions",
+        "LLM1_MAX_WORKERS": 50,
+        "LLM1_MODEL": "LongCat-2.0",
+        "LLM1_API_KWARGS": {"thinking": {"type": "disabled"}},
+        #"LLM1_API_KWARGS": {"extra_body": {"thinking": {"type": "disabled"}}},
+        "LLM1_MAX_WORKERS": 5,
         "LLM0_API_URL": "http://127.0.0.1:25564/v1/chat/completions",
-        "LLM0_MODEL": "Gemma4-26B-A4B",
-        "LLM0_MAX_WORKERS": 1,
+        "LLM0_MODEL": "gemma-4-e2b-it-minecraft-mt-en-zh-4.6b-v1.0",
+        "LLM0_MAX_WORKERS": 8,
         "LLM_TIER_CASCADE": True,
-        "LLM0_MIN_COUNT": 100000,
+        "LLM1_MIN_COUNT": 10000000,
         "LLM_TIER_CASCADE_RATIO": 0.8,
-        "TRANSLATOR_BATCH": 5,
-        "LLM_CONTEXTS": 3,
-        "EMB_API_URL": "http://127.0.0.1:25564/v1/embeddings",
-        "EMB_MODEL": "text-embedding-bge-large-en-v1.5",
+        "TRANSLATOR_BATCH": 3,
+        "LLM_CONTEXTS": 0,
         "TRANSLATOR_ORIGINAL_REFERENCE": False,
         "LANGUAGE": "zh_CN",
         "TRANSLATOR_CACHE_NAME": "Translator_Cache",
-        "VEC_FILE_NAME": "Vectors2",
-        "VEC_QUANTIZATION": "Float32",
         "EMB_MAX_WORKERS": 5,
         "DEBUG_MODE": True,
         "TRANSLATOR_CACHE_READ": False,
         "TRANSLATOR_CACHE_WRITE": False,
         "LLM_TIER_INTERLEAVE": False,
-        "INDEX_MODE": "GSQMoEPlus",
-        "INDEX_SQ": "GSQ2"
+        #"INDEX_MODE": "GSQMoEPlus",
+        #"INDEX_SQ": "GSQ8"
         #"LANGUAGE_OUTPUT": "文言",
     }
     翻译 = Translator(参数)
@@ -1105,7 +1331,7 @@ if __name__ == "__main__" and 测试:
     #翻译.翻译CMM菜单(r"mods")
     #翻译.翻译FM菜单(r"fancymenu")
     #翻译.翻译HQM任务(r"hqm")
-    翻译.翻译通用文件(r"zh_cn.json")
+    翻译.翻译通用文件(r"C:\Users\FengMang\Downloads\bloodmagic-1.20.1-3.3.7-49.jar")
     #翻译.翻译通用文件(r"en_us.lang")
     #翻译.翻译未知伤亡语言文件(r"E:\SteamLibrary\steamapps\common\Casualties Unknown Demo\CasualtiesUnknown_Data\Lang\ZH.json", r"E:\SteamLibrary\steamapps\common\Casualties Unknown Demo\CasualtiesUnknown_Data\Lang\EN.json")
     #翻译.翻译未知伤亡dll模组(r"翻译")
