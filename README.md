@@ -728,9 +728,10 @@ AI给我加了一堆BUG所以不发布
 - 添加 aiohttp fastembed 依赖
 
 ### Release.1.6 Bata.4（进行中）
-依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith 
+依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
-- 重构 翻译语言列表![](https://img.shields.io/badge/状态-等待中(福绒聚中)-blue)
+- 重构 翻译语言列表![](https://img.shields.io/badge/状态-等待中(PCD中)-blue)
+- 删除 除动态路由以外的所有翻译LLM请求路由
 
 ### Release.1.6（更新中）
 预计5个Bata版本
