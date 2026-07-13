@@ -730,7 +730,10 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6 Bata.4（进行中）
 依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
-- 重构 翻译语言列表![](https://img.shields.io/badge/状态-等待中(PCD中)-blue)
+- 添加 基于向量索引的翻译上下文![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 RAG注入位置至user字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 除动态路由以外的所有翻译LLM请求路由
 
 ### Release.1.6（更新中）
