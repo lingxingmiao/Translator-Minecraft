@@ -729,7 +729,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 aiohttp fastembed 依赖
 
 ### Release.1.6 Bata.4（进行中）
-依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus
+依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus<br>
 GTNH引力太强了我跳不起来
 - 添加 量化方法
     - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078)x_Gx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-进行中-brightgreen)(看情况 不一定会加)
