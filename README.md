@@ -110,6 +110,7 @@ RMSE不代表Recall@10
 ### 存储
 | 量化方法 | B=128 | B=64 | B=32 | 公式 |
 |---------|-------|------|------|------|
+| **Q1_K_M** | 1.125 | 1.250 | 2.500 | 1 + 16/B + 2D(D+2K)/N |
 | **Q1_K_M** | 1.292 | 1.562 | 2.125 | 1 + 32/B + 16/D |
 | **TQ1_SVD_LM** | 1.725 | 1.850 | 2.100 | 1.6 + 16/B + 2D(D+2K)/N |
 | **TQ1_K_M** | 1.831 | 1.975 | 2.350 | 1.6 + 32/B + 16/D |
@@ -729,6 +730,10 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.6 Bata.4（进行中）
 依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus
+GTNH引力太强了我跳不起来
+- 添加 量化方法
+    - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078)x_Gx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-进行中-brightgreen)(看情况 不一定会加)
+    - TurboQx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-进行中-brightgreen)(看情况 不一定会加)
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 添加 基于向量索引的翻译上下文
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
