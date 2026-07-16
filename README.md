@@ -738,7 +738,7 @@ GTNH引力太强了我跳不起来
 - 添加 基于向量索引的翻译上下文
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen)
-- 优化 精简提示词部分节省Token
+- 优化 精简提示词部分节省Token(大约一倍)
 - 修改 RAG注入位置至user字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 批量翻译从JSON List改为HTML ```<p></p>```![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 除动态路由以外的所有翻译LLM请求路由
