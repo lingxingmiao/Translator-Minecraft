@@ -742,6 +742,7 @@ GTNH引力太强了我跳不起来
 - 优化 精简提示词部分节省Token(大约一倍)
 - 修改 RAG注入位置至user字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 批量翻译从JSON List改为HTML ```<p></p>```![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 跨实例/跨函数翻译会超过模型设定并发的问题
 - 删除 除动态路由以外的所有翻译LLM请求路由
 
 ### Release.1.6（更新中）
