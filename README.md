@@ -739,7 +739,7 @@ GTNH引力太强了我跳不起来
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 RAG长度模糊匹配,误差超过x直接滚~ ![](https://img.shields.io/badge/状态-进行中-brightgreen)(还差TEXT和LANG)
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
-- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM极前期 网络控制器前中期 Config管理器中后期
+- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM极前期 网络控制器前中期
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
