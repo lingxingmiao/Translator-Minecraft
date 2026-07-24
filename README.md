@@ -739,7 +739,7 @@ GTNH引力太强了我跳不起来
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 RAG长度模糊匹配,误差超过x直接滚~ ![](https://img.shields.io/badge/状态-进行中-brightgreen)(还差TEXT和LANG)
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
-- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM极前期:网络控制器前中期:TPM限速器
+- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM前期
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段![](https://img.shields.io/badge/状态-进行中-brightgreen)
@@ -751,6 +751,7 @@ GTNH引力太强了我跳不起来
 - 修复 多层级时SEED都会是一个的问题
 - 修复 没写LLMx层级时不会注册导致拿不到层级的问题
 - 修复 从大量修改传入方式开始VSC一直用不了补全的问题
+- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 添加 token-calibrator 依赖
 
