@@ -736,13 +736,15 @@ GTNH引力太强了我跳不起来
     - TurboQx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 添加 基于向量索引的翻译上下文
+- 添加 最原始的上下文方式(Token输入命中缓存最高)
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 RAG长度模糊匹配,误差超过x直接滚~
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
 - 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM中期
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
-- 修改 RAG注入位置至user字段
+- 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
+- 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
 - 修改 批量翻译从JSON List改为HTML ```<p></p>```
 - 修改 TPM限速修改为基于学习估算方法
 - 修复 跨实例/跨函数翻译会超过模型设定并发的问题
