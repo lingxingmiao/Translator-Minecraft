@@ -740,20 +740,21 @@ GTNH引力太强了我跳不起来
 - 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 RAG长度模糊匹配,误差超过x直接滚~
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
+- 添加 向量索引俄罗斯套娃加速![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM中期
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
 - 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
 - 修改 批量翻译从JSON List改为HTML ```<p></p>```
-- 修改 TPM限速修改为基于学习估算方法
+- 修改 TPM限速修改为基于学习估算方法+
+- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修复 跨实例/跨函数翻译会超过模型设定并发的问题
 - 修复 持久化向量缓存/翻译缓存的定时保存无效的问题
 - 修复 向量缓存不会保存使用频率的问题
 - 修复 多层级时SEED都会是一个的问题
 - 修复 没写LLMx层级时不会注册导致拿不到层级的问题
 - 修复 从大量修改传入方式开始VSC一直用不了补全的问题
-- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 添加 token-calibrator 依赖
 
