@@ -737,11 +737,12 @@ GTNH引力太强了我跳不起来
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
 - 添加 基于向量索引的翻译上下文
 - 添加 最原始的上下文方式(Token输入命中缓存最高)
-- 添加 输入缓存Token计数自定义字段![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 输入缓存Token计数自定义字段
 - 添加 RAG长度模糊匹配,误差超过x直接滚~
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
 - 添加 向量索引俄罗斯套娃加速![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
-- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:请求LLM中期
+- 添加 翻译对照自定义格式
+- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:LLM请求结束 返回处理前期
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
