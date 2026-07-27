@@ -744,7 +744,7 @@ GTNH引力太强了我跳不起来
 - 添加 翻译对照自定义格式
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 生成翻译分块进度条(保留原有进度条)
-- 重构 翻译语言列表函数![](https://img.shields.io/badge/状态-进行中-brightgreen) 进度:测试:尾声
+- 重构 翻译语言列表函数
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
@@ -758,6 +758,7 @@ GTNH引力太强了我跳不起来
 - 修复 多层级时SEED都会是一个的问题
 - 修复 没写LLMx层级时不会注册导致拿不到层级的问题
 - 修复 从大量修改传入方式开始VSC一直用不了补全的问题
+- 修复 本地生成嵌入向量有一个线程锁导致的生成效率下降
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 添加 token-calibrator 依赖
 
