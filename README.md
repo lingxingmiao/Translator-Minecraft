@@ -740,7 +740,7 @@ GTNH引力太强了我跳不起来
 - 添加 输入缓存Token计数自定义字段
 - 添加 RAG长度模糊匹配,误差超过x直接滚~
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
-- 添加 向量索引俄罗斯套娃加速![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 向量索引俄罗斯套娃加速![](https://img.shields.io/badge/状态-进行中-blue)
 - 添加 翻译对照自定义格式
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 生成翻译分块进度条(保留原有进度条)
@@ -751,7 +751,7 @@ GTNH引力太强了我跳不起来
 - 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
 - 修改 批量翻译从JSON List改为HTML ```<p></p>```
 - 修改 TPM限速修改为基于学习估算方法+
-- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-进行中50%-brightgreen)
+- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-剩余重排-brightgreen)
 - 修复 跨实例/跨函数翻译会超过模型设定并发的问题
 - 修复 持久化向量缓存/翻译缓存的定时保存无效的问题
 - 修复 向量缓存不会保存使用频率的问题
