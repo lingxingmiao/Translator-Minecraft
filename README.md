@@ -740,7 +740,7 @@ GTNH引力太强了我跳不起来
 - 添加 输入缓存Token计数自定义字段
 - 添加 RAG长度模糊匹配,误差超过x直接滚~
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
-- 添加 向量索引俄罗斯套娃加速(计算量减少80%-95% 可改用PCA降维)
+- 添加 向量索引俄罗斯套娃加速(计算量减少80%-95% 时间增加1500% 可改用PCA降维)![](https://img.shields.io/badge/状态-等待兼容IndexGSQ-blue)
 - 添加 翻译对照自定义格式
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 生成翻译分块进度条,涵盖未分配(灰),工作中(黄),逐条工作(蓝),重试中(橘),完成(绿),失败(红)
