@@ -309,7 +309,7 @@ conda env remove -n Translator_Minecraft
 <details>
 <summary>Release.1.6 Bata.4</summary>
 
-- HEAI: 基于ANN的HEI模糊搜索Groovy脚本
+- HEAI: 基于向量索引的HEI模糊搜索Groovy脚本
     
 </details>
 </details>
@@ -762,6 +762,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6 Bata.4（进行中）
 依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus<br>
 GTNH引力太强了我跳不起来
+#### 程序更新日志
 - 添加 量化方法
     - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078)x_Gx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
     - TurboQx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
@@ -778,6 +779,7 @@ GTNH引力太强了我跳不起来
 - 添加 批发翻译分组大小可使用浮点数,示例:3.2->3个一组(80%)4个一组(20%)
 - 添加 INDEX_IVF_NLIST参数比例激活
 - 添加 本地嵌入模型传入文本格式化(用于兼容需要前缀的模型)
+- 添加 默认本地翻译模型(基于llama.cpp, 使用编码器-解码器架构)![](https://img.shields.io/badge/状态-等待中-blue)
 - 重构 翻译语言列表函数
 - 优化 精简提示词部分节省Token(大约一倍)
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
@@ -799,6 +801,8 @@ GTNH引力太强了我跳不起来
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 删除 INDEX_BASE_SQ配置项
 - 添加 token-calibrator 依赖
+#### 模块更新日志
+- 添加 HEAI: 基于向量索引的HEI模糊搜索Groovy脚本
 
 ### Release.1.6（更新中）
 预计5个Bata版本
