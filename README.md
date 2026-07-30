@@ -304,6 +304,11 @@ conda env remove -n Translator_Minecraft
 
 ## 更新日志
 版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
+<details>
+<summary>历史更新日志(点击展开/收起)</summary>
+<details>
+<summary>Release.1</summary>
+    
 ### Release.1
 含1个α版本与2个β版本
 - 添加 语言文件 翻译支持
@@ -324,7 +329,10 @@ conda env remove -n Translator_Minecraft
 - 修复 翻译语言文件 双文件无法正确处理
 - 修复 无法传入上下文开关参数
 - 添加 额外依赖 ujson pyhocon
-
+</details>
+<details>
+<summary>Release.1.2</summary>
+    
 ### Release.1.2
 含2个1版本
 - 添加 自动汉化更新 的 I18n词典 导入参考词功能（[Dict-Mini.json](https://github.com/CFPATools/i18n-dict)）
@@ -338,6 +346,9 @@ conda env remove -n Translator_Minecraft
 - 修复 FTBQ 与 BQ 任务翻译无法传入的问题
 - 修复 批量翻译 翻译键值映射问题
 - 删除 额外依赖 ujson
+</details>
+<details>
+<summary>Release.1.3</summary>
 
 ### Release.1.3 Bata.1
 - 大量修改传入方式
@@ -379,6 +390,9 @@ conda env remove -n Translator_Minecraft
 - 添加 系统变量:
     - FENGMANG_GPU_ACC（是否启用GPU加速）
     - FENGMANG_GPU_DEVICE_ID（GPU加速设备ID）
+</details>
+<details>
+<summary>Release.1.4</summary>
 
 ### Release.1.4 Bata.1
 - 添加 调用大语言模型额外参数传入
@@ -453,6 +467,9 @@ conda env remove -n Translator_Minecraft
 - 修改 GPU加速模式配置更改至config.cfg
 - 修改 Tqdm的Tqdm改为Rich的Tqdm
 - 修改 mcp-config.cfg 与 api-config.cfg 改为 config-mcp.cfg 与 config-api.cfg
+</details>
+<details>
+<summary>Release.1.5</summary>
 
 ### Release.1.5 Bata.1
 - 添加 高质量索引模式(非任务Token消耗平均翻1-3倍 任务翻译峰值超20倍以上)
@@ -547,7 +564,10 @@ AI给我加了一堆BUG所以不发布
 - 删除 高质量索引(功能被细化)
 - 删除 导入查看词(文件夹版本, 非Dict Mini)
 - 停止支持 TranslatorMCPServer.py(太没用了)
-
+</details>
+<details>
+<summary>Release.1.6（更新中）</summary>
+    
 ### Release.1.6 Bata.1
 - 添加 翻译类型支持(看到BBSMC有好多功能想搬了)
     - 数据包(含起源)
@@ -727,6 +747,8 @@ AI给我加了一堆BUG所以不发布
     - TQ1_SVD
     - Float12_E0M12
 - 添加 aiohttp fastembed 依赖
+</details>
+</details>
 
 ### Release.1.6 Bata.4（进行中）
 依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus<br>
