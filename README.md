@@ -305,7 +305,16 @@ conda env remove -n Translator_Minecraft
 ## 更新日志
 版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
 <details>
-<summary>历史更新日志(点击展开/收起)</summary>
+<summary>历史附加模块更新日志(点击展开/收起)</summary>
+<details>
+<summary>Release.1.6 Bata.4</summary>
+
+- HEAI: 基于ANN的HEI模糊搜索Groovy脚本
+    
+</details>
+</details>
+<details>
+<summary>历史软件更新日志(点击展开/收起)</summary>
 <details>
 <summary>Release.1</summary>
     
