@@ -804,6 +804,7 @@ GTNH引力太强了我跳不起来
 - 修复 TRANSLATOR_BATCH_RETRY没有定义的问题
 - 修复 IndexGSQ的GSQ5量化无法使用的问题
 - 修复 本地嵌入模型ONNX无法使用GPU的问题
+- 修复 翻译未知伤亡语言文件会返回源文件的问题
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 删除 INDEX_BASE_SQ配置项
 - 添加 token-calibrator 依赖
