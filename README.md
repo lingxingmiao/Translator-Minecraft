@@ -764,8 +764,7 @@ AI给我加了一堆BUG所以不发布
 GTNH引力太强了我跳不起来
 #### 程序更新日志
 - 添加 量化方法
-    - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078)x_Gx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-进行中-blue)(看情况 不一定会加)
-    - TurboQx 8-1 bit系列(8 6 5 4 3 2 1.6 1)![](https://img.shields.io/badge/状态-等待中-blue)(看情况 不一定会加)
+    - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078) 8-2 bit系列(8 6 5 4 3 2)
 - 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 基于向量索引的翻译上下文
 - 添加 最原始的上下文方式(Token输入命中缓存最高)
