@@ -333,7 +333,10 @@ conda env remove -n Translator_Minecraft
 - 添加 最大历史上下文
 - 添加 文件传入参数
 - 添加 额外依赖 numpy faiss-cpu
-
+</details>
+<details>
+<summary>Release.1.1</summary>
+    
 ### Release.1.1
 含2个β版本
 - 添加 翻译 FTBQ任务 BQ任务
@@ -793,7 +796,7 @@ GTNH引力太强了我跳不起来
 - 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
 - 修改 批量翻译从JSON List改为HTML ```<tr></tr>```
 - 修改 TPM限速修改为基于学习估算方法+
-- 修改 嵌入模型请求与重排模型改为异步请求![](https://img.shields.io/badge/状态-剩余重排-brightgreen)
+- 修改 嵌入模型请求与重排模型改为异步请求
 - 修复 跨实例/跨函数翻译会超过模型设定并发的问题
 - 修复 持久化向量缓存/翻译缓存的定时保存无效的问题
 - 修复 向量缓存不会保存使用频率的问题
