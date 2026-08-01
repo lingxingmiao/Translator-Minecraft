@@ -775,7 +775,7 @@ GTNH引力太强了我跳不起来
     - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078) 4-1 bit系列(4 3 2 1.6 1)
     - Anisotropic AVQ 叠加至 _SVD_LM
     - 张量链分解
-- 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 翻译前总结注入提示词![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 基于向量索引的翻译上下文
 - 添加 最原始的上下文方式(Token输入命中缓存最高)
 - 添加 输入缓存Token计数自定义字段
@@ -783,7 +783,6 @@ GTNH引力太强了我跳不起来
 - 添加 aiohttp.TCPConnector.force_close参数加入LLM层级配置
 - 添加 向量索引俄罗斯套娃加速(计算量-80%~95% 耗时-10% 可改用PCA降维)
 - 添加 翻译对照自定义格式
-- 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 生成翻译分块进度条,涵盖未分配(灰),工作中(黄),逐条工作(蓝),重试中(橘),完成(绿),失败(红)
 - 添加 批发翻译分组大小可使用浮点数,示例:3.2->3个一组(80%)4个一组(20%)
 - 添加 INDEX_IVF_NLIST参数比例激活
@@ -816,8 +815,8 @@ GTNH引力太强了我跳不起来
 #### 模块更新日志
 - 添加 HEAI: 基于向量索引的HEI模糊搜索Groovy脚本
 
-### Release.1.6（更新中）
-预计5个Bata版本
+### Release.1.6（等待中）
+- 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 
 ### 计划
 - 添加 翻译耗时预测器
