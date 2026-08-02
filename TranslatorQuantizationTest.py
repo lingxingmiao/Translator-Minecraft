@@ -1,14 +1,15 @@
 import sys
-from TranslatorLib import TranslatorPersistence, Quantization, Translator, GPU_ACC, CleanVRAM, eb, np, faiss, os
+from TranslatorLib import TranslatorPersistence, Quantization, Translator, GPU_ACC, CleanVRAM, eb, np, faiss, os, Config, asyncio
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # ==========================================
 # 1. 初始化与数据加载
 # ==========================================
-核心模块 = Translator(Config={"VEC_FILE_NAME": "Vectors2", "VEC_QUANTIZATION": "Float32"})
+核心配置 = Config(Config={"VEC_FILE_NAME": "FP16_MAX", "VEC_QUANTIZATION": "Float16_Max"})
+核心模块 = Translator(核心配置)
 #核心模块 = Translator()
 
-向量 = TranslatorPersistence.参考词预处理(核心模块)[0].get()
+向量 = asyncio.run(TranslatorPersistence.参考词预处理(核心模块))[0].get()
 if 向量.ndim == 1:
     向量 = 向量.reshape(1, -1)
 当前向量 = 向量.astype(np.float32)
@@ -28,7 +29,7 @@ vec_max = float(np.max(当前向量))
 # ==========================================
 
 #VEC_INT_DTYPE = 核心模块.Config.VEC_INT_DTYPE
-VEC_INT_DTYPE = ["Q5_K_M" , "Q5_SVD_LM" , "Q5_K", "GSQ5_K", "Q1_SVD_LM"]
+VEC_INT_DTYPE = ["Q4_SVD_LM"]
 #VEC_FLOAT_DTYPE = 核心模块.Config.VEC_FLOAT_DTYPE
 VEC_FLOAT_DTYPE = []
 
@@ -122,7 +123,7 @@ for cfg_idx, cfg in enumerate(配置列表):
     M = cfg.get("VEC_QUANTIZATION_PQ_M", "?")
     NBITS = cfg.get("VEC_QUANTIZATION_PQ_NBITS", "?")
     print(f"[{cfg_idx+1}/{len(配置列表)}] ⚙️  M={M}, NBITS={NBITS}")
-    量化模块 = Quantization(Config=cfg)
+    量化模块 = Quantization(核心配置)
 
     for dtype in 所有量化方案:
         CleanVRAM()

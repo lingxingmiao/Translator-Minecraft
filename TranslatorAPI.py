@@ -1,14 +1,8 @@
 from TranslatorLib import (APIConfig, Dict, uvicorn, Path as pt, time, json, asyncio, uuid, shutil, threading, eb, Dict, Any, atexit, sqlite3, quote, hashlib, re,
-                           Translator, Tool,
-                           FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks, FileResponse, PlainTextResponse, HTTPBearer, HTTPAuthorizationCredentials, CORSMiddleware, Limiter, _rate_limit_exceeded_handler, get_remote_address, RateLimitExceeded, asynccontextmanager)
+                           Translator, Tool, Config,
+                           FastAPI, UploadFile, HTTPException, status, Depends, Security, Form, Request, BackgroundTasks, FileResponse, PlainTextResponse, HTTPBearer, HTTPAuthorizationCredentials, CORSMiddleware, Limiter, _rate_limit_exceeded_handler, get_remote_address, RateLimitExceeded)
 
-@asynccontextmanager
-async def 应用生命周期(app):
-    yield
-    from TranslatorPersistence import 关闭所有异步会话
-    await 关闭所有异步会话()
-
-FastAPI = FastAPI(title="TranslationMinecraft", lifespan=应用生命周期)
+FastAPI = FastAPI(title="TranslationMinecraft")
 FastAPI.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +14,9 @@ FastAPI.add_middleware(
 FastAPI.state.limiter = 限流器
 FastAPI.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 请求并行数 = asyncio.Semaphore(APIConfig["api"]["max_concurrent"])
-API翻译器实例 = Translator(APIConfig["server"])
+配置实例 = Config(APIConfig["server"])
+API翻译器实例 = 配置实例.get_translator()
+API翻译器实例.Log = 配置实例.Log  # Translator 无 Log 属性，从 Config 附加
 
 class 持久化状态字典(Dict[str, Any]):
     def __init__(Self, db_path: str = "task_states.db", save_interval: float = 5.0, cleanup_hours: float = 24.0, cleanup_interval: float = 300.0):
@@ -207,6 +203,12 @@ async def _执行核心任务(task_id: str, 处理函数, 翻译器实例: Trans
                 "logs": 任务状态字典[task_id].get("logs", []) + [f"[ERROR] {翻译器实例.Lang("log.api.error", e=eb.format_exc())}"]
             })
             文件哈希值.pop(task_id, None)
+        finally:
+            if getattr(翻译器实例, "Log", None) is not None and 翻译器实例.Log is not 配置实例.Log:
+                try:
+                    翻译器实例.Log.关闭()
+                except Exception:
+                    pass
 def 清理任务缓存(task_id: str):
     """下载完成后或超时后清理缓存目录"""
     if task_id in 任务状态字典:
@@ -228,25 +230,6 @@ def 解析字符串字典(字符串: str = Form(None)) -> dict:
         return json.loads(字符串)
     except json.JSONDecodeError:
         raise HTTPException(400, "Invalid JSON in translatorcore")
-
-def 过滤用户配置(用户配置: dict) -> dict:
-    规则 = {
-        "allow_patterns": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_WHITE,
-        "deny_patterns": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_BLACK,
-        "range_checks": API翻译器实例.Config.API_TRANSLATOR_CORE_CONFIG_RANGE
-    }
-    过滤后配置 = {}
-    for 键, 值 in 用户配置.items():
-        if any(re.match(模式, 键) for 模式 in 规则["deny_patterns"]):
-            continue
-        if not any(re.match(模式, 键) for 模式 in 规则["allow_patterns"]):
-            continue
-        for 模式, (最小值, 最大值) in 规则["range_checks"].items():
-            if re.match(模式, 键) and isinstance(值, (int, float)):
-                值 = max(最小值, min(值, 最大值))
-                break
-        过滤后配置[键] = 值
-    return 过滤后配置
 @FastAPI.post("/translate", dependencies=[Depends(验证Key)])
 @限流器.limit(APIConfig["api"]["current-limiting"])
 async def 提交翻译任务(
@@ -260,7 +243,9 @@ async def 提交翻译任务(
     task_id = uuid.uuid4().hex
     file0_content = await file0.read()
     file0_hash = hashlib.sha3_256(file0_content).hexdigest()
-    翻译器实例 = Translator(APIConfig["server"] | 过滤用户配置(translatorcore))
+    临时配置 = 配置实例.get_config_temporary(translatorcore)
+    翻译器实例 = 临时配置.get_translator()
+    翻译器实例.Log = 临时配置.Log  # Translator 无 Log 属性，从临时 Config 附加
     if APIConfig["api"]["transalator_file_exists_del"] and 剔除任务中重复文件(task_id, file0_hash):
         任务状态字典[task_id] = {"status": "success", "progress": 0, "result_path": None, "error": 翻译器实例.Lang("log.api.task.error.file.exists"), "logs": []}
         return {"task_id": task_id, "status": "success", "message": 翻译器实例.Lang("log.api.task.error.file.exists")}
@@ -289,6 +274,34 @@ async def 提交翻译任务(
     )
     return {"task_id": task_id, "status": "queued", "message": 翻译器实例.Lang("log.api.task.submitted")}
 
+@FastAPI.post("/translate_path", dependencies=[Depends(验证Key)])
+@限流器.limit(APIConfig["api"]["current-limiting"])
+async def 提交本地路径翻译任务(
+    request: Request, background_tasks: BackgroundTasks,
+    file0_path: str = Form(...),
+    all_mode: bool = Form(False)
+) -> Dict:
+    设置时间()
+    task_id = uuid.uuid4().hex
+    file0 = pt(file0_path)
+    翻译器实例 = API翻译器实例
+    缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
+    缓存目录.mkdir(parents=True, exist_ok=True)
+    任务状态字典[task_id] = {"status": "queued", "progress": 0, "result_path": None, "error": None, "logs": []}
+    asyncio.create_task(
+        _执行核心任务(
+            task_id,
+            翻译器实例.翻译通用文件,
+            翻译器实例,
+            缓存目录,
+            file0=str(file0),
+            file1="",
+            all_mode=all_mode,
+            export_inspection=False
+        )
+    )
+    return {"task_id": task_id, "status": "queued", "message": 翻译器实例.Lang("log.api.task.submitted")}
+
 @FastAPI.post("/separatelangupdate", dependencies=[Depends(验证Key)])
 @限流器.limit(APIConfig["api"]["current-limiting"])
 async def 提交分离语言更新任务(
@@ -299,7 +312,9 @@ async def 提交分离语言更新任务(
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = Tool(APIConfig["server"] | 过滤用户配置(translatorcore))
+    临时配置 = 配置实例.get_config_temporary(translatorcore)
+    翻译器实例 = Tool(临时配置)
+    翻译器实例.Log = 临时配置.Log
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0
@@ -336,7 +351,9 @@ async def 提交合并语言更新任务(
 ) -> Dict:
     设置时间()
     task_id = uuid.uuid4().hex
-    翻译器实例 = Tool(APIConfig["server"] | 过滤用户配置(translatorcore))
+    临时配置 = 配置实例.get_config_temporary(translatorcore)
+    翻译器实例 = Tool(临时配置)
+    翻译器实例.Log = 临时配置.Log  # Tool 无 Log 属性，从临时 Config 附加
     缓存目录 = pt(f"{翻译器实例.Config.PATH_CACHE}/{task_id}/")
     缓存目录.mkdir(parents=True, exist_ok=True)
     file0_path = 缓存目录 / file_name0

@@ -1,7 +1,7 @@
 from __future__ import annotations 
 
 __lazy_modules__ = ["traceback", "threading", "hashlib", "zipfile", "sqlite3", "tomllib", "asyncio", "logging", "shutil", "locale", "bisect", "pickle", "random", "atexit", "heapq", "queue", "shlex", "time", "uuid", "math", "ast", "re", "io", "json", "enum", "types", "typing", "urllib.parse", "urllib3.util.retry", "logging.handlers", "pathlib", "requests.adapters", "functools", "concurrent.futures", "contextlib", "collections", "dataclasses",
-                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "aiohttp", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os"]
+                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "aiohttp", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os", "warnings", "copy", "tqdm", "clr", "token_calibrator"]
 
 import traceback as eb
 import threading
@@ -25,6 +25,7 @@ import shlex
 import time
 import uuid
 import math
+import copy
 import ast
 import os
 import re
@@ -46,7 +47,7 @@ from requests.adapters import HTTPAdapter
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import asynccontextmanager
-from collections import defaultdict, deque, OrderedDict
+from collections import defaultdict, deque, OrderedDict, Counter
 from dataclasses import dataclass, replace
 #需要安装↓ numpy aiohttp requests faiss
 import numpy
@@ -60,8 +61,8 @@ from rich.align import Align
 from rich.text import Text
 from rich.style import Style
 from rich.color import Color
-from tqdm.rich import tqdm
-from tqdm import tqdm as ttqdm, TqdmExperimentalWarning
+from tqdm.rich import tqdm as rich_tqdm
+from tqdm import tqdm as tqdm_tqdm, TqdmExperimentalWarning
 #可选服务安装↓ uvicorn fastapi slowapi
 try:
     import uvicorn, fastapi, slowapi
@@ -90,6 +91,13 @@ try:
 except:
     System = None
     NOT_IMPORT.append("pythonnet")
+try:
+    import token_calibrator
+except:
+    class token_calibrator:
+        class TokenCalibrator: pass
+        class TokenEstimator: pass
+    NOT_IMPORT.append("token_calibrator")
 ConfigFile = Path("config.cfg").resolve()
 ConfigFile.parent.mkdir(parents=True, exist_ok=True)
 if ConfigFile.is_file():
@@ -1756,12 +1764,83 @@ class hqmlib:
 hqmlib = hqmlib()
 snbtlib = snbtlib()
 fancymenulib = fancymenulib()
+_prange = numba.prange if numba is not None else range
+
 
 def CleanVRAM():
     if GPU_ACC:
         np.get_default_memory_pool().free_all_blocks()
         np.get_default_pinned_memory_pool().free_all_blocks()
-    
+def 格式化时间(秒数):
+    if 秒数 is None or 秒数 < 0 or not math.isfinite(秒数):
+        return "--:--:--"
+    秒数 = int(秒数)
+    小时 = 秒数 // 3600
+    分钟 = (秒数 % 3600) // 60
+    秒 = 秒数 % 60
+    return f"{小时:02d}:{分钟:02d}:{秒:02d}"
+class diff_tqdm:
+    def __init__(Self, tasks, iterable=None, desc=None, mininterval=None, disable=False, **kwargs):
+        Self.任务 = tasks
+        Self._last_tasks_ref = tasks
+        Self.数量 = len(tasks)
+        Self.desc = desc
+        Self.开始时间 = time.monotonic()
+        Self.n = 0
+        Self.上次完成 = 0
+        Self.上次时间 = Self.开始时间
+        Self.缓存速率 = 0.0
+        Self.禁用显示 = disable
+    def refresh(Self):
+        if Self.禁用显示: return
+        if not Self.任务: return
+        if Self._last_tasks_ref is not Self.任务:
+            Self._last_tasks_ref = Self.任务
+            Self.数量 = len(Self.任务)
+            Self.上次完成 = 0
+            Self.上次时间 = time.monotonic()
+            Self.缓存速率 = 0.0
+            Self.开始时间 = Self.上次时间
+        方块列表 = []
+        当前完成 = 0
+        for 元素 in Self.任务:
+            if 元素 == "Done": # 完成
+                方块列表.append("\033[38;2;0;220;0m█\033[0m")
+                当前完成 += 1
+            elif 元素 == "Fail": # 失败
+                方块列表.append("\033[38;2;235;0;0m█\033[0m")
+                当前完成 += 1
+            elif 元素 == "Retrying": # 重试中
+                方块列表.append("\033[38;2;245;130;0m█\033[0m") 
+            elif 元素 == "Working": # 工作中
+                方块列表.append("\033[38;2;255;255;0m█\033[0m") 
+            elif 元素 == "ItemByItem": # 逐条处理
+                方块列表.append("\033[38;2;0;0;220m█\033[0m") 
+            else: # Unassigned 未分配
+                方块列表.append("\033[38;2;192;192;192;0m█\033[0m") 
+        Self.n = 当前完成 
+        方块字符串 = "".join(方块列表)
+        总任务数 = Self.数量
+        当前时间 = time.monotonic()
+        已用秒数 = 当前时间 - Self.开始时间
+        if 当前完成 > Self.上次完成:
+            时间差 = 当前时间 - Self.上次时间
+            新增数 = 当前完成 - Self.上次完成
+            if 时间差 > 0:
+                瞬时速率 = 新增数 / 时间差
+                Self.缓存速率 = 0.4 * 瞬时速率 + 0.6 * Self.缓存速率
+            else:
+                Self.缓存速率 = 当前完成 / 已用秒数 if 已用秒数 > 0 else 0.0
+            Self.上次完成 = 当前完成
+            Self.上次时间 = 当前时间
+        处理速率 = Self.缓存速率
+        百分比 = (当前完成 / 总任务数) * 100 if 总任务数 else 0.0
+        剩余秒数 = (总任务数 - 当前完成) / 处理速率 if 处理速率 > 0 else float('inf')
+        已用显示 = 格式化时间(已用秒数)
+        剩余显示 = 格式化时间(剩余秒数)
+        信息行 = f"{Self.desc} {百分比:3.1f}% {当前完成}/{总任务数} [ {已用显示} < {剩余显示} , {处理速率:.1f} it/s ] {方块字符串}"
+        print(f"\r{信息行}")
+            
 
 def 彩色文本(文本: str, 颜色序列: list[str] | None = None) -> Text:
     if 颜色序列 is None:
@@ -1790,6 +1869,13 @@ def 彩色文本(文本: str, 颜色序列: list[str] | None = None) -> Text:
         结果文本.append('\n')
     return 结果文本
 
+class InconsistentValues(Exception):
+    def __init__(Self, a: str, b: str):
+        Self.a = a
+        Self.b = b
+        super().__init__(f"The values of the two variables are different: {a} and {b}")
+        
+
 if GPU_ACC:
     加速方法 = "CuPy"
     加速版本 = np.__version__
@@ -1810,7 +1896,7 @@ else:
 
 信息文本 = Text.from_markup(f"""
 [bold]TranslatorMinecraft Core[/bold]
-[bright_green]Version:[/] Release 1.6 Bata.3
+[bright_green]Version:[/] Release 1.6 Bata.4
 [bright_green]NumPy Accelerator:[/] {加速方法} {加速版本}""")
 
 总文本 = Text.assemble(文本, 信息文本)
@@ -1827,13 +1913,13 @@ Console(force_terminal=True, color_system="auto").print(
 __all__ = [
     "aiohttp", "APIConfig", "Any", "as_completed", "ast", "asynccontextmanager", "asyncio", "atexit",  # A
     "bisect",  # B
-    "Callable",  # C
-    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime",  # D
+    "Callable", "copy", "Counter",  # C
+    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime", "diff_tqdm",  # D
     "eb",  # E
-    "faiss", "fancymenulib", "FileHandler",  # F
+    "faiss", "fancymenulib", "FileHandler", "fastapi",  # F
     "GPU_ACC", "gtnhlib", # G
     "HARDWARE_INFO", "hashlib", "hqmlib", "HTTPAdapter", "heapq",  # H
-    "io",  # I
+    "io", "InconsistentValues",  # I
     "json",  # J
     # K (无)
     "List", "locale", "logging",  # L
@@ -1842,19 +1928,21 @@ __all__ = [
     "Optional", "os",  # O
     "partial", "Path", "pickle", "PurePosixPath",  # P
     "queue", "QueueHandler", "QueueListener", "quote",  # Q
-    "random", "re", "replace", "requests", "Retry", "RotatingFileHandler",  # R
+    "random", "re", "replace", "requests", "Retry", "RotatingFileHandler", "rich_tqdm",  # R
     "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "System",  # S
-    "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm", "ttqdm", # T
+    "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm_tqdm", "token_calibrator",# T
     "Union", "uuid",  # U
     # V, W, X, Y (无)
     "zipfile",  # Z
+    "_prange", # _
 ]
 
 if all(v is not None for v in [uvicorn, fastapi, slowapi]):
     __all__.extend(["FastAPI", "UploadFile", "HTTPException", "status", "Depends", "Security", "Form", "Request", "BackgroundTasks", "FileResponse", "PlainTextResponse", "HTTPBearer", "HTTPAuthorizationCredentials", "CORSMiddleware", "Limiter", "_rate_limit_exceeded_handler", "get_remote_address", "RateLimitExceeded"])
 
+if TYPE_CHECKING:
+    from TranslatorPersistence import TranslationCache, VectorCache, TokenCalibratorCache
 
-#你懂互相导入的艺术吗
 if TYPE_CHECKING:
     import TranslatorCore
     import TranslatorFile
@@ -1865,47 +1953,72 @@ if TYPE_CHECKING:
     import TranslatorLocale
     import TranslatorBuilder
     import TranslatorIndex
-    
+    import TranslatorNetwork
+
 import TranslatorIndexGSQ as IndexGSQ
+import TranslatorIndex
 import TranslatorPersistence
-from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG
+from TranslatorPersistence import TranslationCache, VectorCache, TokenCalibratorCache
 
-def Locale(Config: dict = None) -> "TranslatorLocale.Locale":
+def Locale(Config) -> "TranslatorLocale.Locale":
     from TranslatorLocale import Locale as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Quantization(Config: dict = None) -> "TranslatorQuantization.Quantization":
+def Quantization(Config) -> "TranslatorQuantization.Quantization":
     from TranslatorQuantization import Quantization as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Log(Config: dict = None) -> "TranslatorLog.Log":
+def Log(Config) -> "TranslatorLog.Log":
     from TranslatorLog import Log as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Module(Config: dict = None) -> "TranslatorModule.Module":
+def Module(Config) -> "TranslatorModule.Module":
     from TranslatorModule import Module as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def File(Config: dict = None) -> "TranslatorFile.File":
+def File(Config) -> "TranslatorFile.File":
     from TranslatorFile import File as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Translator(Config: dict = None) -> "TranslatorCore.Translator":
+def Translator(Config) -> "TranslatorCore.Translator":
     from TranslatorCore import Translator as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Tool(Config: dict = None) -> "TranslatorTool.Tool":
+def Tool(Config) -> "TranslatorTool.Tool":
     from TranslatorTool import Tool as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Builder(Config: dict = None) -> "TranslatorBuilder.Builder":
+def Builder(Config) -> "TranslatorBuilder.Builder":
     from TranslatorBuilder import Builder as _Class
-    return _Class(Config or {})
+    return _Class(Config)
 
-def Index(Config: dict = None) -> "TranslatorIndex.Index":
+def Index(Config) -> "TranslatorIndex.Index":
     from TranslatorIndex import Index as _Class
-    return _Class(Config or {})
+    return _Class(Config)
+
+def Network(Config) -> "TranslatorNetwork.Network":
+    from TranslatorNetwork import Network as _Class
+    return _Class(Config)
+
+from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG, DefaultConfig, Config, Config as _Config
 
 __all__.extend([
-    "Translator", "TranslatorPersistence", "RuntimeConfig", "DEFAULT_CONFIG", "Module", "Quantization", "File", "Locale", "Log", "Tool", "Builder", "Index", "IndexGSQ", "TranslatorBuilder"
+    # A (无)
+    "Builder", # B
+    # C, E (无)
+    "DEFAULT_CONFIG", "DefaultConfig", # D
+    # E (无)
+    "File", # F
+    # G, H (无)
+    "Index", "IndexGSQ", # I
+    # J, K (无)
+    "Locale", "Log", # L
+    "Module", # M
+    "Network", # N
+    # O, P (无)
+    "Quantization", # Q
+    "RuntimeConfig", # R
+    # S (无)
+    "Translator", "Tool", "TranslatorPersistence", "TranslationCache", "VectorCache", "TokenCalibratorCache", "TranslatorIndex", # T
+    # U, V, W, X, Y, Z (无)
 ])

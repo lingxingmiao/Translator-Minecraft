@@ -1,9 +1,8 @@
-from TranslatorLib import json, Path, Dict, tqdm, RuntimeConfig, ttqdm
+from TranslatorLib import json, Path, Dict, rich_tqdm, tqdm_tqdm, diff_tqdm
 
 class Locale:
-    def __init__(Self, Config):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
+    def __init__(Self, App):
+        Self.Config = App.Config
         Self.语言对象: Dict[str, dict] = {}
         Path(Self.Config.LANG_PATH).mkdir(parents=True, exist_ok=True)
         Self.TQDM刷新率 = 1/Self.Config.TQDM_FPS
@@ -56,7 +55,9 @@ class Locale:
                 返回值 = 中文文本
         return 返回值
         
-    def Tqdm(Self, iterable=None, desc=None, **kwargs):
-        return tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
-    def tTqdm(Self, iterable=None, desc=None, **kwargs):
-        return ttqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+    def RichTqdm(Self, iterable=None, desc=None, **kwargs):
+        return rich_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+    def TqdmTqdm(Self, iterable=None, desc=None, **kwargs):
+        return tqdm_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+    def DiffTqdm(Self, tasks, iterable=None, desc=None, **kwargs):
+        return diff_tqdm(tasks=tasks, iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)

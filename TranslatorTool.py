@@ -1,18 +1,19 @@
 from TranslatorLib import (zipfile, json, eb, defaultdict, Path, uuid, random, ThreadPoolExecutor, partial, asyncio,
-                           Translator, TranslatorPersistence)
+                           TranslatorPersistence, Config)
 
 class Tool:
-    def __init__(Self, Config: dict = None):
-        Self.Translator = Translator(Config=Config or {})
-        Self.Config = Self.Translator.Config
-        Self.Module = Self.Translator.Module
-        Self.Locale = Self.Translator.Locale
-        Self.Quantization = Self.Translator.Quantization
-        Self.Lang = Self.Translator.Lang
-        Self.File = Self.Translator.File
-        Self.Builder = Self.Translator.Builder
-        Self.日志 = Self.Translator.日志
-        Self.tqdm = Self.Locale.Tqdm
+    def __init__(Self, App: Config):
+        Self.Translator = App.get_translator()
+        Self.Config = App.Config
+        Self.Module = App.Module
+        Self.Locale = App.Locale
+        Self.Quantization = App.Quantization
+        Self.Lang = App.Lang
+        Self.File = App.File
+        Self.Builder = App.Builder
+        Self.日志 = App.日志
+        Self.tqdm = App.RichTqdm
+        Self.CacheTranslator = App.CacheTranslator
         Self.正则表达式预编译 = Self.Translator.正则表达式预编译
     def 语言文件对转DictMini(Self, File0: str, DictMini: str = None, OutputPath: str = "./"):
         Self.日志("log.core.file.settle.start", info_level=0)
@@ -70,9 +71,11 @@ class Tool:
                         Dict文件[原文] = 值列表.copy()
                 with open(DictMini, "w", encoding="utf-8") as f:
                     json.dump(Dict文件, f, ensure_ascii=False)
+                Self.去重DictMini(DictMini)
             else:
                 with open(f"{OutputPath}/Dict-Mini.json", "w", encoding="utf-8") as f:
                     json.dump(DictMini附加, f, ensure_ascii=False)
+                Self.去重DictMini(f"{OutputPath}/Dict-Mini.json")
             Self.日志("log.core.file.settle.end", info_level=0)
         except Exception:
             Self.日志("log.core.file.settle.error", e=eb.format_exc(), info_level=3)
@@ -183,9 +186,9 @@ class Tool:
             for index in Self.tqdm(Dict文件, desc="tqdm.file.processing"):
                 文本列表.append([index, Dict文件[index][0]])
         elif mode == "rerank":
-            文本列表 = Self.Builder.获取相似度最高译文(Dict文件)
+            文本列表 = asyncio.run(Self.Builder.获取相似度最高译文(Dict文件))
             文本列表 = [[index[0], index[1]] for index in 文本列表]
-        Self.Module.翻译缓存(文本列表)
+        Self.CacheTranslator.翻译缓存(文本列表, 语言=Self.Config.LANGUAGE_OUTPUT)
         Self.日志("log.core.file.settle.end", info_level=0)
     def DictMini转换数据集(Self, file: str, mode: str = "Alpaca", output_file: str = "dataset.jsonl"):
         Self.日志("log.core.file.settle.start", info_level=0)
@@ -199,14 +202,19 @@ class Tool:
         导出列表 = []
         random.shuffle(待处理列表)
         if mode == "Alpaca-EX":
-            文本列表, 参考列表 = TranslatorPersistence.运行异步(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
-            提示词 = Self.Translator.Config.TRANSLATOR_SYSTEM_PROMPT[1].format(LANGUAGE_OUTPUT=Self.Translator.Config.LANGUAGE_OUTPUT)
+            翻译映射 = asyncio.run(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
+            提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
+            预编译输入文本 = Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text="{text}")
             所有翻译对 = []
-            for 源文本, 目标参考 in zip(文本列表, 参考列表):
-                src = 源文本 if isinstance(源文本, str) else str(源文本)
-                tgt = 目标参考[0] if isinstance(目标参考[0], str) else str(目标参考[0])
-                术语表原始数据 = 目标参考[1][1] if len(目标参考) > 1 and isinstance(目标参考[1][1], list) else []
-                所有翻译对.append({"src": src, "tgt": tgt, "glossary": 术语表原始数据})
+            
+            for 原文, 译文 in 待处理列表:
+                参考列表 = 翻译映射.get(原文, [])
+                术语表原始数据 = 参考列表 if isinstance(参考列表, list) else []
+                所有翻译对.append({
+                    "src": 原文, 
+                    "tgt": 译文, 
+                    "glossary": 术语表原始数据
+                })
             random.shuffle(所有翻译对)
             新待处理列表 = []
             i = 0
@@ -226,28 +234,23 @@ class Tool:
                             if 术语键 not in 见过的术语:
                                 见过的术语.add(术语键)
                                 合并术语表.append(术语)
-                            
-                术语表文本 = "\n".join([f"{术语[0]} --> {术语[1]}" for 术语 in 合并术语表])
+                if 合并术语表:
+                    参考词 = "<rag-input>" + " ".join([f"{t[0]}={t[1]}" for t in 合并术语表]) + "</rag-input>"
+                else:
+                    参考词 = ""
                 if 抽样数量 == 1:
-                    源文本字符串 = 选中的源文本[0]
-                    目标文本字符串 = 选中的目标文本[0]
+                    输入文本 = f"<rt>{选中的源文本[0]}</rt>"
+                    输出文本 = f"<rt>{选中的目标文本[0]}</rt>"
                 else:
-                    源文本字符串 = json.dumps(选中的源文本, ensure_ascii=False)
-                    目标文本字符串 = json.dumps(选中的目标文本, ensure_ascii=False)
-                if 术语表文本:
-                    输入字符串 = f"{源文本字符串}\n\n术语参考：\n{术语表文本}"
-                else:
-                    输入字符串 = 源文本字符串
-                新待处理列表.append([提示词, 输入字符串, 目标文本字符串])
+                    输入文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的源文本])
+                    输出文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的目标文本])
+                输入文本 = (参考词 + "\n" if 参考词 else "") + 预编译输入文本.format(text=输入文本)
+                新待处理列表.append([提示词, 输入文本, 输出文本])
             待处理列表 = 新待处理列表
-        if mode == "Alpaca-EX-Mini":
-            文本列表, 参考列表 = TranslatorPersistence.运行异步(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
-            提示词 = Self.Translator.Config.TRANSLATOR_SYSTEM_PROMPT[1].format(LANGUAGE_OUTPUT=Self.Translator.Config.LANGUAGE_OUTPUT)
-            所有翻译对 = []
-            for 源文本, 目标参考 in zip(文本列表, 参考列表):
-                src = 源文本 if isinstance(源文本, str) else str(源文本)
-                tgt = 目标参考[0] if isinstance(目标参考[0], str) else str(目标参考[0])
-                所有翻译对.append({"src": src, "tgt": tgt})
+        elif mode == "Alpaca-EX-Mini":
+            提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
+            预编译输入文本 = Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text="{text}")
+            所有翻译对 = [{"src": 原文, "tgt": 译文} for 原文, 译文 in 待处理列表]
             random.shuffle(所有翻译对)
             新待处理列表 = []
             i = 0
@@ -259,13 +262,12 @@ class Tool:
                 选中的源文本 = [item["src"] for item in 当前批次]
                 选中的目标文本 = [item["tgt"] for item in 当前批次]
                 if 抽样数量 == 1:
-                    源文本字符串 = 选中的源文本[0]
-                    目标文本字符串 = 选中的目标文本[0]
+                    输入文本 = f"<rt>{选中的源文本[0]}</rt>"
+                    输出文本 = f"<rt>{选中的目标文本[0]}</rt>"
                 else:
-                    源文本字符串 = json.dumps(选中的源文本, ensure_ascii=False)
-                    目标文本字符串 = json.dumps(选中的目标文本, ensure_ascii=False)
-                输入字符串 = 源文本字符串
-                新待处理列表.append([提示词, 输入字符串, 目标文本字符串])
+                    输入文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的源文本])
+                    输出文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的目标文本])
+                新待处理列表.append([提示词, 预编译输入文本.format(text=输入文本), 输出文本])
             待处理列表 = 新待处理列表
         for index in Self.tqdm(待处理列表, desc="tqdm.progress.encoding"):
             if mode == "ChatML":
@@ -299,8 +301,8 @@ class Tool:
                                     待处理列表.append([index1, index, ""])
         elif file == None:
             for _ in Self.tqdm(range(1), desc="tqdm.file.read"):
-                待处理列表 = [[k, v, ""] for k, v in Self.Module.翻译缓存()]
-        TranslatorPersistence.参考词预处理(Self=Self, texts=待处理列表, use_cache=False)
+                待处理列表 = [[k, v, ""] for k, v in Self.CacheTranslator.翻译缓存(语言=Self.Config.LANGUAGE_OUTPUT).items()]
+        asyncio.run(TranslatorPersistence.参考词预处理(Self=Self, texts=待处理列表, use_cache=False, 查询=False))
         Self.日志("log.core.file.settle.end", info_level=0)
         
     def 翻译流程转DictMini(Self, path1, path2, DictMini, 文件匹配, 读取方法, 过滤方法, 读取并发, 日志类型, OutputPath = r"./"):
@@ -407,11 +409,13 @@ if __name__ == "__main__" and 测试:
         "EMB_MAX_WORKERS": 2,
         "DEBUG_MODE": True,
         "EMB_MAX_TOKENS": 512,
-        "VEC_FILE_NAME": "Vectors2",
-        "VEC_QUANTIZATION": "Float32",
+        "VEC_FILE_NAME": "FP16_MAX", "VEC_QUANTIZATION": "Float16_Max"
     }
-    翻译 = Tool(参数)
+    from TranslatorLib import Config
+    配置 = Config(参数)
+    翻译 = Tool(配置)
     #翻译.语言文件对转DictMini(r"C:\Users\FengMang\Downloads\Minecraft-Shaders-zh_CN-Lang-Files-Surisen.zip", r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.导入未知伤亡语言文件DictMini(r"C:\Users\FengMang\Downloads\EN.json", r"C:\Users\FengMang\Downloads\zh_CN.json", r"C:\Users\FengMang\Downloads\Dict-Mini.json") #byd保留所有权利不敢用
-    翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", mode="Alpaca-EX-Mini")
+    #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
+    #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
+    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", mode="Alpaca-EX-Mini")

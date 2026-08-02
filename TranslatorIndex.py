@@ -1,14 +1,137 @@
-from TranslatorLib import (os, faiss, numpy,
-                           IndexGSQ, Log, Locale, RuntimeConfig, GPU_ACC)
+from TranslatorLib import (os, faiss, numpy, pickle, njit, numba, _prange,
+                           IndexGSQ, GPU_ACC, Config)
+@njit(cache=True, parallel=True, fastmath=True) # 上一世不用Numba耗时增加1600% 这一世-10%
+def 索引重排(原始向量, 粗排索引, 查询矩阵, 截取数量):
+    查询数量 = 查询矩阵.shape[0]
+    得分矩阵 = numpy.empty((查询数量, 截取数量), dtype=numpy.float32)
+    索引矩阵 = numpy.empty((查询数量, 截取数量), dtype=numpy.int64)
+    索引矩阵[:] = -1
+    for i in _prange(查询数量):
+        候选索引 = 粗排索引[i]
+        候选数量 = 候选索引.shape[0]
+        if 候选数量 == 0: continue
+        当前查询 = 查询矩阵[i]
+        相似度得分 = numpy.empty(候选数量, dtype=numpy.float32)
+        for j in range(候选数量):
+            向量索引 = 候选索引[j]
+            if 向量索引 < 0: 相似度得分[j] = -1e30
+            else: 相似度得分[j] = numpy.dot(原始向量[向量索引], 当前查询)
+        实际截取数 = min(截取数量, 候选数量)
+        排序后索引 = numpy.argsort(相似度得分)[::-1][:实际截取数]
+        得分矩阵[i, :实际截取数] = 相似度得分[排序后索引]
+        索引矩阵[i, :实际截取数] = 候选索引[排序后索引]
+    return 得分矩阵, 索引矩阵
 
+
+class IndexRefineLowDim:
+    def __init__(Self, index: faiss.Index = None, low_dim: int = None, reduce_dim_mode: str = "mrl"):
+        Self.索引 = index
+        Self.低维维度 = low_dim
+        Self.高维维度 = None
+        Self.降维模式 = reduce_dim_mode.lower()      # "mrl" or "pca"
+        Self.低维向量 = None
+        Self.原始向量 = None
+        Self.PCA均值 = None
+        Self.PCA投影矩阵 = None
+
+        Self.k_factor = 10
+    def reduce_dim(Self, x):
+        if Self.降维模式 == "pca":
+            if Self.PCA均值 is None or Self.PCA投影矩阵 is None:
+                目标维度 = int(Self.低维维度)
+                均值 = numpy.mean(x, axis=0, keepdims=True)
+                数据中心 = x - 均值
+                if x.shape[0] > x.shape[1]:
+                    协方差 = 数据中心.T @ 数据中心
+                    特征值, 特征向量 = numpy.linalg.eigh(协方差)
+                    排序 = numpy.argsort(特征值)[::-1]
+                    投影矩阵 = 特征向量[:, 排序[:目标维度]]
+                else:
+                    _, _, Vt = numpy.linalg.svd(数据中心, full_matrices=False)
+                    投影矩阵 = Vt[:目标维度, :].T
+                x = numpy.dot(数据中心, 投影矩阵)
+                Self.PCA均值 = 均值
+                Self.PCA投影矩阵 = 投影矩阵
+            else:
+                x = numpy.dot(x - Self.PCA均值, Self.PCA投影矩阵)
+        elif Self.降维模式 == "mrl":
+            x = x[:, :Self.低维维度]
+        return x
+    def search(Self, queries, k):
+        返回D = numpy.empty((len(queries), k), dtype='float32')
+        返回I = numpy.empty((len(queries), k), dtype='int64')
+        返回I.fill(-1)
+        总向量数 = Self.原始向量.shape[0] if Self.原始向量 is not None else 0
+        if 总向量数 == 0:
+            return 返回D, 返回I
+        粗排k = int(min(k * Self.k_factor, 总向量数))
+        _, 粗排索引 = Self.索引.search(Self.reduce_dim(queries), 粗排k)
+        return 索引重排(Self.原始向量, 粗排索引, queries, k)    
+    def add(Self, x):
+        if Self.原始向量 is None:
+            Self.原始向量 = x
+            Self.高维维度 = x.shape[1]
+            Self.低维向量 = Self.reduce_dim(x)
+        else:
+            Self.原始向量 = numpy.concatenate([Self.原始向量, x], axis=0)
+            新低维 = Self.reduce_dim(x)
+            Self.低维向量 = numpy.concatenate([Self.低维向量, 新低维], axis=0)
+        Self.索引.add(Self.reduce_dim(x))
+    def train(Self, x):
+        Self.索引.train(Self.reduce_dim(x))
+    def save(Self, filename: str):
+        if isinstance(Self.索引, faiss.Index):
+            序列化索引 = {"type": "faiss", "data": faiss.serialize_index(Self.索引)}
+        else:
+            序列化索引 = {"type": "gsq", "data": IndexGSQ.serialize_index(Self.索引)}
+        with open(filename, 'wb') as f:
+            pickle.dump({
+                "模式": "IndexRefineLowDim",
+                "索引": 序列化索引,
+                "低维维度": Self.低维维度,
+                "高维维度": Self.高维维度,
+                "降维模式": Self.降维模式,
+                "低维向量": Self.低维向量,
+                "原始向量": Self.原始向量,
+                "PCA均值": Self.PCA均值,
+                "PCA投影矩阵": Self.PCA投影矩阵,
+                "k_factor": Self.k_factor,
+            }, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+def load(filename: str):
+    with open(filename, 'rb') as f:
+        d = pickle.load(f)
+    index = globals()[d["模式"]]()
+    for k, v in d.items():
+        if k == "索引" and v is not None:
+            if isinstance(v, dict) and "type" in v and "data" in v:
+                if v["type"] == "faiss":
+                    v = faiss.deserialize_index(v["data"])
+                elif v["type"] == "gsq":
+                    v = IndexGSQ.deserialize_index(v["data"])
+            elif isinstance(v, bytes):
+                if v.startswith(b'\x80'):
+                    v = IndexGSQ.deserialize_index(v)
+                else:
+                    v = faiss.deserialize_index(v)
+            elif isinstance(v, str):
+                v = faiss.read_index(v)
+            elif isinstance(v, numpy.ndarray) and v.dtype == numpy.uint8:
+                v = faiss.deserialize_index(v)
+        setattr(index, k, v)
+    return index
+def read_index(filename: str):
+    return load(filename)
+def write_index(index, filename: str):
+    index.save(filename)
+    
 class Index:
-    def __init__(Self, Config: dict = None):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
-        Self.日志 = Log(Config=Config).写入日志
-        Self.Locale = Locale(Config=Config)
-        Self.Lang = Self.Locale.Lang
-        Self.tqdm = Self.Locale.Tqdm
+    def __init__(Self, App: Config):
+        Self.Config = App.Config
+        Self.日志 = App.日志
+        Self.Locale = App.Locale
+        Self.Lang = App.Lang
+        Self.tqdm = App.RichTqdm
         Self.量化映射 = {
             "Q4": faiss.ScalarQuantizer.QT_4bit,
             "Q6": faiss.ScalarQuantizer.QT_6bit,
@@ -18,6 +141,7 @@ class Index:
             "GSQ2": 2,
             "GSQ3": 3,
             "GSQ4": 4,
+            "GSQ5": 5,
             "GSQ6": 6,
             "GSQ8": 8,
         }
@@ -66,7 +190,7 @@ class Index:
             类型, 子规格, 量化名 = 规格, None, None
 
         专家总数nlist = max(1, int(numpy.sqrt(向量数量)))
-        激活专家数nprobe = min(专家总数nlist, max(1, 专家总数nlist // 4))
+        激活专家数nprobe = min(专家总数nlist, max(1, int(专家总数nlist / Self._取配置(主, "INDEX_IVF_NLIST", "VEC_RERANKER_INDEX_IVF_NLIST"))))
         HNSW_M = Self._取配置(主, "INDEX_HNSW_M", "VEC_RERANKER_INDEX_HNSW_M")
         HNSW_EFC = Self._取配置(主, "INDEX_HNSW_CONSTRUCTION", "VEC_RERANKER_INDEX_HNSW_CONSTRUCTION")
         HNSW_EFS = Self._取配置(主, "INDEX_HNSW_SEARCH", "VEC_RERANKER_INDEX_HNSW_SEARCH")
@@ -119,8 +243,20 @@ class Index:
             except Exception: pass
             return 向量索引, True
         if 类型 == "Refine":
-            基础索引对象, 基础训练 = Self.构建索引节点(子规格 if 子规格 is not None else 默认子规格, 向量维度, 向量数量, 主, 深度 + 1)
+            降维模式 = Self._取配置(主, "INDEX_REFINE_LOW_DIM_MODE", "VEC_RERANKER_INDEX_REFINE_LOW_DIM_MODE")
+            降维模式 = 降维模式 if 降维模式 is None else 降维模式.lower()
+            粗排维度 = int(Self._取配置(主, "INDEX_REFINE_LOW_DIM_DIM", "VEC_RERANKER_INDEX_REFINE_LOW_DIM_DIM")) if (降维模式 is not None) or (降维模式 == "mrl") else 向量维度
+            基础索引对象, 基础训练 = Self.构建索引节点(子规格 if 子规格 is not None else 默认子规格, 粗排维度, 向量数量, 主, 深度 + 1)
+            if 降维模式 == "pca":
+                PCA = faiss.PCAMatrix(向量维度, 粗排维度)
+                基础索引对象 = faiss.IndexPreTransform(PCA, 基础索引对象)
             向量索引 = faiss.IndexRefineFlat(基础索引对象)
+            向量索引.k_factor = Self._取配置(主, "INDEX_REFINEFLAT_K_FACTOR", "VEC_RERANKER_INDEX_REFINEFLAT_K_FACTOR")
+            return 向量索引, 基础训练
+        if 类型 == "RefineLowDim": # Fiass包装
+            低维维度 = int(Self._取配置(主, "INDEX_REFINE_LOW_DIM_DIM", "VEC_RERANKER_INDEX_REFINE_LOW_DIM_DIM"))
+            基础索引对象, 基础训练 = Self.构建索引节点(子规格 if 子规格 is not None else 默认子规格, 低维维度, 向量数量, 主, 深度 + 1)
+            向量索引 = IndexRefineLowDim(基础索引对象, 低维维度, Self._取配置(主, "INDEX_REFINE_LOW_DIM_MODE", "VEC_RERANKER_INDEX_REFINE_LOW_DIM_MODE"))
             向量索引.k_factor = Self._取配置(主, "INDEX_REFINEFLAT_K_FACTOR", "VEC_RERANKER_INDEX_REFINEFLAT_K_FACTOR")
             return 向量索引, 基础训练
         if 类型 == "IVFPQR":
@@ -154,8 +290,10 @@ class Index:
                         pass
             向量索引.nprobe = 激活专家数nprobe
             return 向量索引, True
+        if 类型 == "GSQFast":
+            return IndexGSQ.IndexGSQKCosineFast(app=Self, quantization=Self.量化映射[Self.Config.INDEX_SQ if 主 else Self.Config.VEC_RERANKER_INDEX_SQ]), True
 
-        Self.日志("log.index.mode.not", info_level=4)
+        Self.日志("log.index.mode.not", info_level=2)
         return faiss.IndexFlatIP(向量维度), False
 
     def 基础索引(Self, 向量维度, 训练, 模式, 向量重排模式=True):
@@ -175,12 +313,7 @@ class Index:
         if not 模式: 模式 = Self.Config.INDEX_MODE
         模式 = 模式 if 主 else Self.Config.VEC_RERANKER_INDEX_MODE
         量化 = (量化 or Self.Config.INDEX_SQ) if 主 else Self.Config.VEC_RERANKER_INDEX_SQ
-        量化类型 = Self.量化映射[量化]
-
-        if 模式 == "GSQFast" or (isinstance(模式, (list, tuple)) and len(模式) > 0 and 模式[0] == "GSQFast"):
-            向量索引, 需要训练 = IndexGSQ.IndexGSQKCosineFast(app=Self, quantization=量化类型), True
-        else:
-            向量索引, 需要训练 = Self.构建索引节点(模式, 向量维度, 向量数量, 主)
+        向量索引, 需要训练 = Self.构建索引节点(模式, 向量维度, 向量数量, 主)
 
         if 需要训练:
             _SAMPLING = Self._取配置(主, "INDEX_SAMPLING", "VEC_RERANKER_INDEX_SAMPLING")

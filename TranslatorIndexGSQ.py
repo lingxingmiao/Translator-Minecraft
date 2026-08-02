@@ -1,5 +1,4 @@
-from TranslatorLib import njit, pickle, numba, np as np, faiss
-_prange = numba.prange if numba is not None else range
+from TranslatorLib import njit, pickle, numba, np as np, faiss, _prange
 
 @njit(cache=True)
 def 加速打包2(量化值):
@@ -444,6 +443,15 @@ class IndexGSQKCosineFast:
                 "PCA_均值": self.PCA_均值,
                 "PCA_主成分": self.PCA_主成分,
             }, f, protocol=pickle.HIGHEST_PROTOCOL)
+    def serialize(self):
+        return pickle.dumps({
+            "模式": self.模式,
+            "向量库": self.向量库,
+            "映射表": self.映射表,
+            "位深": self.位深,
+            "PCA_均值": self.PCA_均值,
+            "PCA_主成分": self.PCA_主成分,
+        }, protocol=pickle.HIGHEST_PROTOCOL)
     def search(self, query, k):
         查询矩阵 = np.atleast_2d(query).astype(np.float32)
         if self.PCA_主成分 is not None:
@@ -498,15 +506,15 @@ class IndexGSQKCosineFast:
             原始TopK索引 = np.hstack([原始TopK索引, 填充索引])
             TopK分数 = np.hstack([TopK分数, 填充分数])
         return TopK分数.astype(np.float32), 原始TopK索引
-def load(filename: str):
-    with open(filename, 'rb') as f:
-        d = pickle.load(f)
+def load(d):
     index = globals()[d["模式"]]()
     for k, v in d.items():
         setattr(index, k, v)
     return index
 def read_index(filename: str):
-    return load(filename)
+    with open(filename, 'rb') as f:
+        d = pickle.load(f)
+    return load(d)
 def write_index(index, filename: str):
     index.save(filename)
 def index_cpu_to_gpu(index, **kwargs):
@@ -515,3 +523,9 @@ def index_cpu_to_gpu(index, **kwargs):
 def index_gpu_to_cpu(index, **kwargs):
     index.cpu()
     return index
+def serialize_index(index):
+    return index.serialize()
+def deserialize_index(data):
+    if isinstance(data, bytes):
+        return load(pickle.loads(data))
+    return load(pickle.load(data))

@@ -1,6 +1,5 @@
-from TranslatorLib import (queue, Path, logging, QueueHandler, QueueListener, re, FileHandler,
-                           threading, time, atexit,
-                           RuntimeConfig, DEFAULT_CONFIG, Locale)
+from TranslatorLib import (queue, Path, logging, QueueHandler, QueueListener, re, FileHandler, threading, time, atexit,
+                           DEFAULT_CONFIG, Config)
 class NoRotateHandler(FileHandler):
     def __init__(self, filename, mode='a', encoding=None, delay=False, flush_interval=5.0):
         super().__init__(filename, mode, encoding, delay)
@@ -44,16 +43,15 @@ class NoRotateHandler(FileHandler):
         self._退出刷新()
         super().close()
 class Log:
-    def __init__(Self, Config: dict = None):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
-        Self.Lang = Locale(Config=Config).Lang
+    def __init__(Self, App: Config):
+        Self.Config = App.Config
+        Self.Lang = App.Lang
         Self.启动日志()
     def __enter__(Self):
         return Self
     def 启动日志(Self):
-        日志名称 = f"Translator_{id(Self)}"
-        Self.日志管理器 = logging.getLogger(日志名称)
+        Self.日志名称 = f"Translator_{id(Self)}"
+        Self.日志管理器 = logging.getLogger(Self.日志名称)
         Self.日志管理器.setLevel(logging.DEBUG if Self.Config.DEBUG_MODE else logging.INFO)
         if Self.日志管理器.handlers:
             Self.日志管理器.handlers.clear()
@@ -99,3 +97,22 @@ class Log:
                 content = f.read()
             Self.写入日志("log.module.logs.encoding.warning", info_level=1)
             return content
+    def 关闭(Self):
+        """关闭队列监听器与文件处理器，释放文件句柄与后台线程，并从 logging 注册表移除本实例 logger"""
+        if getattr(Self, "_队列监听器", None) is not None:
+            try:
+                Self._队列监听器.stop()
+            except Exception:
+                pass
+            Self._队列监听器 = None
+        if getattr(Self, "日志管理器", None) is not None:
+            for 处理器 in list(Self.日志管理器.handlers):
+                Self.日志管理器.removeHandler(处理器)
+                try:
+                    处理器.close()
+                except Exception:
+                    pass
+        try:
+            logging.Logger.manager.loggerDict.pop(getattr(Self, "日志名称", None), None)
+        except Exception:
+            pass

@@ -1,16 +1,15 @@
 from TranslatorLib import (json, uuid, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, re, fancymenulib, hqmlib, List, shlex, locale, System, dnfile, np,
-                           TranslatorPersistence, RuntimeConfig, Locale, Module, Log)
+                           TranslatorPersistence, Config)
 
 class File:
-    def __init__(Self, Config: dict = None):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
-        Self.Module = Module(Config=Config)
-        Self.Locale = Locale(Config=Config)
-        Self.日志 = Log(Config=Config).写入日志
-        Self.Lang = Self.Locale.Lang
-        Self.tqdm = Self.Locale.Tqdm
-        Self.ttqdm = Self.Locale.tTqdm
+    def __init__(Self, App: Config):
+        Self.Config = App.Config
+        Self.Module = App.Module
+        Self.Locale = App.Locale
+        Self.日志 = App.日志
+        Self.Lang = App.Lang
+        Self.tqdm = App.RichTqdm
+        Self.ttqdm = App.TqdmTqdm
     def 读取Json文件(Self, file):
         for enc in ['utf-8-sig', 'utf-8', 'gbk', 'utf-16', locale.getpreferredencoding(False)]:
             try:
@@ -862,7 +861,7 @@ class File:
         except Exception:
             Self.日志("log.module.lang.load.error", mod="Casualties: Unknown", file=文件路径, e=eb.format_exc(), info_level=2)
             return
-        数据["description"] = Self.Config.PACK_META_TEMPLATE_CASUALTIESUNKNOWN.format(lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(使用模型[0]) or Self.Config.LLM_MODEL or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
+        数据["description"] = Self.Config.PACK_META_TEMPLATE_CASUALTIESUNKNOWN.format(lang=Self.Config.LANGUAGE_OUTPUT, model=", ".join(m for m in (使用模型 or []) if m and m != "null") or Self.Config.LLM_MODEL or Self.Lang("log.core.package.zip.hit"), author=Self.Config.PACK_AUTHOR or "海盐青茫")
         数据["name"] = Self.Config.LANGUAGE_OUTPUT
         映射 = {}
         for 条目 in 条目列表:

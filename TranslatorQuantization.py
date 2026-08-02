@@ -1,5 +1,5 @@
-from TranslatorLib import (np, Path, math, numpy, njit, CPU_ACC, GPU_ACC, CleanVRAM, faiss,
-                           RuntimeConfig, Locale, Index, Log)
+from TranslatorLib import (np, math, numpy, njit, CPU_ACC, GPU_ACC, CleanVRAM, faiss,
+                           Config)
 @njit(cache=True)
 def 加速打包2(量化值):
     数量 = len(量化值); 输出长度 = (数量 + 3) >> 2
@@ -316,15 +316,11 @@ def 加速解包12(压缩, 数量):
         输出[(块索 << 1) + 1]   = ((b1 & 15) << 8) | b2
     return 输出[:数量]
 class Quantization:
-    def __init__(Self, 配置: dict = None):
-        配置 = 配置 or {}
-        Self.Config = RuntimeConfig(**配置)
-        Path(Self.Config.LOGS_FILE_PATH).mkdir(parents=True, exist_ok=True)
-        Self.Locale = Locale(Config=配置)
-        Self.日志 = Log(Config=配置).写入日志
-        Self.tqdm = Self.Locale.Tqdm
-        Self.Index = Index(Config=配置)
-        Self.tqdm = Self.Locale.Tqdm
+    def __init__(Self, App: Config):
+        Self.Config = App.Config
+        Self.日志 = App.日志
+        Self.tqdm = App.RichTqdm
+        Self.Index = App.Index
         Self.拼接键 = ["Vector"]
         Self.Numba加速 = (not GPU_ACC) and CPU_ACC
         Self._NF边界 = numpy.array([-0.9816, 0.0, 0.9816], dtype=numpy.float32)
@@ -367,6 +363,7 @@ class Quantization:
                 加速解包12(numpy.zeros(6, dtype=numpy.uint8), 4)
             except Exception:
                 Self.Numba加速 = False
+        Self._预计算PolarQuant质心()
         Self.编码映射 = {
             "Q8_K_M": lambda Self, 数组: Self.F32编码Q8_K_M(数组),
             "Q6_K_M": lambda Self, 数组: Self.F32编码Q6_K_M(数组),
@@ -407,6 +404,11 @@ class Quantization:
             "Float8_Max": lambda Self, 数组: Self.F32编码F8_Max(数组),
             "PQ": lambda Self, 数组: Self.F32编码PQ(数组),
             "OPQ": lambda Self, 数组: Self.F32编码OPQ(数组),
+            "PolarQ1": lambda Self, 数组: Self.F32编码PolarQ1(数组),
+            "PolarTQ1": lambda Self, 数组: Self.F32编码PolarTQ1(数组),
+            "PolarQ2": lambda Self, 数组: Self.F32编码PolarQ2(数组),
+            "PolarQ3": lambda Self, 数组: Self.F32编码PolarQ3(数组),
+            "PolarQ4": lambda Self, 数组: Self.F32编码PolarQ4(数组),
         }
         Self.解码映射 = {
             "Q8_K_M": lambda Self, 数据: Self.Q8_K_M解码F32(数据["Vector"], 数据["Min"], 数据["MaxMin"], 数据["Scale"], 数据["MaxScale"], 数据["Mean"], 数据["MaxMean"], 数据["Shape"]),
@@ -448,7 +450,35 @@ class Quantization:
             "Float8_Max": lambda Self, 数据: Self.F8_Max解码F32(数据["Vector"], 数据["MaxScale"]),
             "PQ": lambda Self, 数据: Self.PQ解码F32(数据["Vector"], 数据["Codebook"], 数据["Shape"]),
             "OPQ": lambda Self, 数据: Self.OPQ解码F32(数据["Vector"], 数据["Codebook"], 数据["RotMatrix"], 数据["Mean"], 数据["Shape"]),
+            "PolarQ1": lambda Self, 数据: Self.PolarQ1解码F32(数据["PackedVector"], 数据["Norms"], 数据["MaxNorm"], 数据["Centroids"], 数据["Shape"], 数据["BlockSize"]),
+            "PolarTQ1": lambda Self, 数据: Self.PolarTQ1解码F32(数据["PackedVector"], 数据["Norms"], 数据["MaxNorm"], 数据["Centroids"], 数据["Shape"], 数据["BlockSize"]),
+            "PolarQ2": lambda Self, 数据: Self.PolarQ2解码F32(数据["PackedVector"], 数据["Norms"], 数据["MaxNorm"], 数据["Centroids"], 数据["Shape"], 数据["BlockSize"]),
+            "PolarQ3": lambda Self, 数据: Self.PolarQ3解码F32(数据["PackedVector"], 数据["Norms"], 数据["MaxNorm"], 数据["Centroids"], 数据["Shape"], 数据["BlockSize"]),
+            "PolarQ4": lambda Self, 数据: Self.PolarQ4解码F32(数据["PackedVector"], 数据["Norms"], 数据["MaxNorm"], 数据["Centroids"], 数据["Shape"], 数据["BlockSize"]),
         }
+    def _预计算PolarQuant质心(Self):
+        if hasattr(Self, '_PolarQuant质心'):
+            return
+        Self._PolarQuant质心 = {}
+        聚类数列表 = [2, 3, 4, 8, 16]
+        rng = np.random.RandomState(42)
+        样本 = rng.randn(2_000_000).astype(np.float32)
+        for 聚类数 in 聚类数列表:
+            初始中心 = np.percentile(样本, np.linspace(0, 100, 聚类数+2)[1:-1]).astype(np.float32)
+            中心 = 初始中心.copy()
+            for _ in range(100):
+                边界 = ((中心[:-1] + 中心[1:]) / 2.0).astype(np.float32)
+                量化索引 = np.searchsorted(边界, 样本).astype(np.intp)
+                计数 = np.bincount(量化索引, minlength=聚类数)
+                加权和 = np.bincount(量化索引, weights=样本, minlength=聚类数)
+                有效 = 计数 > 0
+                新中心 = np.where(有效, 加权和 / np.maximum(计数, 1), 中心).astype(np.float32)
+                if float(np.max(np.abs(新中心 - 中心))) < 1e-7:
+                    中心 = 新中心
+                    break
+                中心 = 新中心
+            Self._PolarQuant质心[聚类数] = np.sort(中心).astype(np.float32)
+
     def _确保H16(Self):
         if not hasattr(Self, 'H16矩阵'):
             H2 = numpy.array([[1., 1.], [1., -1.]], dtype=numpy.float32)
@@ -755,18 +785,29 @@ class Quantization:
             if float(np.max(np.abs(新旋转 - 旋转矩阵))) < 1e-5: 旋转矩阵 = 新旋转; break
             旋转矩阵 = 新旋转
         return 旋转矩阵, 最佳alpha
-    def _劳埃德最大化(Self, 数据, 聚类数, 迭代次数, 上限=5_000_000):
+    def _劳埃德最大化(Self, 数据, 聚类数, 迭代次数, 上限=5_000_000, 权重=None):
+        """Lloyd-Max 标量量化器；可选 权重 参数实现各向异性加权（guo20h.pdf）
+        权重: 与数据等长的数组，每个样本的重要性权重，None=均匀权重"""
         if len(数据) > 上限:
-            数据 = 数据[np.random.randint(0, len(数据), size=上限)]
+            idx = np.random.randint(0, len(数据), size=上限)
+            数据 = 数据[idx]
+            if 权重 is not None: 权重 = 权重[idx]
         数据 = np.ascontiguousarray(数据, dtype=np.float32)
+        if 权重 is not None:
+            权重 = np.ascontiguousarray(权重, dtype=np.float64).ravel()[:len(数据)]
         中心 = np.percentile(数据, np.linspace(0, 100, 聚类数+2)[1:-1]).astype(np.float32)
         for _ in Self.tqdm(range(迭代次数), desc="tqdm.vectors.lm"):
             边界 = ((中心[:-1] + 中心[1:]) / 2.0).astype(np.float32)
-            if Self.Numba加速:
+            if Self.Numba加速 and 权重 is None:
                 计数, 加权和 = 加速劳埃德统计(数据, 边界, 聚类数)
             else:
                 量化索引 = np.searchsorted(边界, 数据).astype(np.intp)
-                计数 = np.bincount(量化索引, minlength=聚类数); 加权和 = np.bincount(量化索引, weights=数据, minlength=聚类数)
+                if 权重 is None:
+                    计数 = np.bincount(量化索引, minlength=聚类数)
+                    加权和 = np.bincount(量化索引, weights=数据.astype(np.float64), minlength=聚类数)
+                else:
+                    计数 = np.bincount(量化索引, weights=权重, minlength=聚类数)
+                    加权和 = np.bincount(量化索引, weights=数据.astype(np.float64)*权重, minlength=聚类数)
             有效 = 计数 > 0; 新中心 = np.where(有效, 加权和 / np.maximum(计数, 1), 中心).astype(np.float32)
             if float(np.max(np.abs(新中心 - 中心))) < Self.Config.VEC_QUANTIZATION_ES_LM: 中心 = 新中心; break
             中心 = 新中心
@@ -828,7 +869,8 @@ class Quantization:
             展平 = np.dot(数组, 旋转矩阵).reshape(-1, 块大小)
             高位, 低位 = Self._百分位(展平, 百分比, 轴=1, 保持维度=True); np.clip(展平, 低位, 高位, out=展平)
             标准差 = np.std(展平, axis=1, ddof=0).astype(np.float32); np.maximum(标准差, 1e-8, out=标准差)
-            中心, 边界 = Self._劳埃德最大化((展平 / 标准差[:, None]).ravel(), 中心数, Self.Config.VEC_QUANTIZATION_ITRS_LM)
+            AVQ权重 = np.repeat(标准差, 块大小) if getattr(Self.Config, 'VEC_QUANTIZATION_AVQ_ETA', 1.0) > 1.0 else None
+            中心, 边界 = Self._劳埃德最大化((展平 / 标准差[:, None]).ravel(), 中心数, Self.Config.VEC_QUANTIZATION_ITRS_LM, 权重=AVQ权重)
             del 展平, 标准差; CleanVRAM()
             for _ in Self.tqdm(range(Self.Config.VEC_QUANTIZATION_ITRS_SVD), desc="tqdm.vectors.svd"):
                 协方差 = np.zeros((维度, 维度), dtype=np.float32)
@@ -852,7 +894,8 @@ class Quantization:
         高位, 低位 = Self._百分位(展平, 百分比, 轴=1, 保持维度=True); np.clip(展平, 低位, 高位, out=展平)
         标准差 = np.std(展平, axis=1, ddof=0).astype(np.float32); np.maximum(标准差, 1e-8, out=标准差)
         展平 /= 标准差[:, None]
-        中心, 边界 = Self._劳埃德最大化(展平.ravel(), 中心数, Self.Config.VEC_QUANTIZATION_ITRS_LM)
+        AVQ权重2 = np.repeat(标准差, 块大小) if getattr(Self.Config, 'VEC_QUANTIZATION_AVQ_ETA', 1.0) > 1.0 else None
+        中心, 边界 = Self._劳埃德最大化(展平.ravel(), 中心数, Self.Config.VEC_QUANTIZATION_ITRS_LM, 权重=AVQ权重2)
         量化索引 = np.searchsorted(边界, 展平).astype(np.uint8)
         del 展平, 数组; CleanVRAM(); 最大缩放 = max(float(np.max(标准差)), 1e-8)
         return (量化索引, Self._编码缩放(标准差/最大缩放), 最大缩放,
@@ -942,42 +985,174 @@ class Quantization:
         量化索引_3d = np.unpackbits(压缩.ravel()).astype(np.uint8)[:块数*块大小].reshape(块数, 块大小)
         return Self._SVD_LM解码(量化索引_3d, 缩放编码, 最大缩放, 旋转编码, 中心, 形状)
 #====================================================================================================SVD_LM量化====================================================================================================#
+#====================================================================================================PolarQuant量化====================================================================================================#
+    def _PolarQuant编码(Self, 数组, 聚类数):
+        # 参考: PolarQuant: Optimal Gaussian Weight Quantization via Hadamard Rotation for LLM Compression"""
+        块大小 = int(Self.Config.VEC_QUANTIZATION_BLOCK_SIZE)
+        数组 = np.ascontiguousarray(np.asarray(数组), dtype=np.float32)
+        形状 = 数组.shape; 行数, 维度 = 形状
+        总数 = 行数 * 维度
+        填充 = (-总数) % 块大小
+        if 填充:
+            缓冲 = np.zeros(总数 + 填充, dtype=np.float32); 缓冲[:总数] = 数组.ravel()
+        else:
+            缓冲 = 数组.ravel().copy()
+        del 数组
+        分块 = 缓冲.reshape(-1, 块大小)
+        块数 = 分块.shape[0]
+        范数 = np.linalg.norm(分块, axis=1).astype(np.float32)
+        np.maximum(范数, 1e-8, out=范数)
+        分块 /= 范数[:, None]
+        if Self.Numba加速:
+            加速FWHT原地(分块)
+        else:
+            长度 = 块大小; 步长 = 1
+            while 步长 < 长度:
+                跨度 = 2 * 步长
+                for 起始 in range(0, 长度, 跨度):
+                    左 = 分块[:, 起始:起始+步长].copy()
+                    右 = 分块[:, 起始+步长:起始+跨度]
+                    分块[:, 起始:起始+步长] = 左 + 右
+                    分块[:, 起始+步长:起始+跨度] = 左 - 右
+                步长 = 跨度
+        质心 = Self._PolarQuant质心[聚类数]
+        边界 = (质心[:-1] + 质心[1:]) / 2.0
+        量化索引 = np.searchsorted(边界, 分块).astype(np.uint8)
+        del 分块, 缓冲; CleanVRAM()
+        最大范数 = max(float(np.max(范数)), 1e-8)
+        return (量化索引.ravel(), Self._编码缩放(范数/最大范数), 最大范数,
+                质心.astype(np.float32), 形状, 块大小)
+
+    def _PolarQuant解码(Self, 量化索引_2d, 范数编码, 最大范数, 质心, 形状, 块大小):
+        """PolarQuant 解码：码本查找 -> 逆Hadamard -> 恢复L2范数"""
+        总数 = math.prod(形状); 行数, 维度 = 形状
+        块数 = (总数 + 块大小 - 1) // 块大小
+        范数 = (Self._解码缩放(范数编码, 块数) * 最大范数)[:块数]
+        np.maximum(范数, 1e-8, out=范数)
+        重建 = 质心[量化索引_2d]
+        if Self.Numba加速:
+            加速FWHT原地(重建)
+        else:
+            长度 = 块大小; 步长 = 1
+            while 步长 < 长度:
+                跨度 = 2 * 步长
+                for 起始 in range(0, 长度, 跨度):
+                    左 = 重建[:, 起始:起始+步长].copy()
+                    右 = 重建[:, 起始+步长:起始+跨度]
+                    重建[:, 起始:起始+步长] = 左 + 右
+                    重建[:, 起始+步长:起始+跨度] = 左 - 右
+                步长 = 跨度
+        重建 /= float(块大小)
+        重建 *= 范数[:, None]
+        return 重建.ravel()[:总数].reshape(形状)
+
+    def F32编码PolarQ1(Self, 数组):
+        量化索引, 范数编码, 最大范数, 质心, 形状, 块大小 = Self._PolarQuant编码(数组, 2)
+        总数 = math.prod(形状)
+        return {"PackedVector": np.packbits(量化索引[:总数].reshape(形状[0], 形状[1]).ravel()),
+                "Norms": 范数编码, "MaxNorm": 最大范数,
+                "Centroids": 质心, "Shape": 形状, "BlockSize": 块大小}
+    def PolarQ1解码F32(Self, 压缩, 范数编码, 最大范数, 质心, 形状, 块大小):
+        总数 = math.prod(形状); 块数 = (总数 + 块大小 - 1) // 块大小
+        量化索引_2d = np.unpackbits(压缩.ravel()).astype(np.uint8)[:块数*块大小].reshape(块数, 块大小)
+        return Self._PolarQuant解码(量化索引_2d, 范数编码, 最大范数, 质心, 形状, 块大小)
+
+    def F32编码PolarTQ1(Self, 数组):
+        量化索引, 范数编码, 最大范数, 质心, 形状, 块大小 = Self._PolarQuant编码(数组, 3)
+        return {"PackedVector": 加速三值打包(量化索引.ravel()),
+                "Norms": 范数编码, "MaxNorm": 最大范数,
+                "Centroids": 质心, "Shape": 形状, "BlockSize": 块大小}
+    def PolarTQ1解码F32(Self, 压缩, 范数编码, 最大范数, 质心, 形状, 块大小):
+        总数 = math.prod(形状); 块数 = (总数 + 块大小 - 1) // 块大小
+        量化索引_2d = 加速三值解包(压缩.astype(np.uint8), 块数*块大小).reshape(块数, 块大小)
+        return Self._PolarQuant解码(量化索引_2d, 范数编码, 最大范数, 质心, 形状, 块大小)
+
+    def F32编码PolarQ2(Self, 数组):
+        量化索引, 范数编码, 最大范数, 质心, 形状, 块大小 = Self._PolarQuant编码(数组, 4)
+        return {"PackedVector": Self._打包2(量化索引), "Norms": 范数编码, "MaxNorm": 最大范数,
+                "Centroids": 质心, "Shape": 形状, "BlockSize": 块大小}
+    def PolarQ2解码F32(Self, 压缩, 范数编码, 最大范数, 质心, 形状, 块大小):
+        总数 = math.prod(形状); 块数 = (总数 + 块大小 - 1) // 块大小
+        return Self._PolarQuant解码(Self._解包2(压缩, 块数*块大小).reshape(块数, 块大小),
+                                    范数编码, 最大范数, 质心, 形状, 块大小)
+
+    def F32编码PolarQ3(Self, 数组):
+        量化索引, 范数编码, 最大范数, 质心, 形状, 块大小 = Self._PolarQuant编码(数组, 8)
+        return {"PackedVector": Self._打包3(量化索引), "Norms": 范数编码, "MaxNorm": 最大范数,
+                "Centroids": 质心, "Shape": 形状, "BlockSize": 块大小}
+    def PolarQ3解码F32(Self, 压缩, 范数编码, 最大范数, 质心, 形状, 块大小):
+        总数 = math.prod(形状); 块数 = (总数 + 块大小 - 1) // 块大小
+        return Self._PolarQuant解码(Self._解包3(压缩, 块数*块大小).reshape(块数, 块大小),
+                                    范数编码, 最大范数, 质心, 形状, 块大小)
+
+    def F32编码PolarQ4(Self, 数组):
+        量化索引, 范数编码, 最大范数, 质心, 形状, 块大小 = Self._PolarQuant编码(数组, 16)
+        return {"PackedVector": Self._打包4(量化索引), "Norms": 范数编码, "MaxNorm": 最大范数,
+                "Centroids": 质心, "Shape": 形状, "BlockSize": 块大小}
+    def PolarQ4解码F32(Self, 压缩, 范数编码, 最大范数, 质心, 形状, 块大小):
+        总数 = math.prod(形状); 块数 = (总数 + 块大小 - 1) // 块大小
+        return Self._PolarQuant解码(Self._解包4(压缩, 块数*块大小).reshape(块数, 块大小),
+                                    范数编码, 最大范数, 质心, 形状, 块大小)
+
+#====================================================================================================PolarQuant量化====================================================================================================#
 #====================================================================================================SQx_K简化量化====================================================================================================#
     def _Qx_K编码(Self, 数组, 最大量级):
+        # 列方向分块量化; 维度不被块大小整除时用 NaN 填充, 尾组 min/scale 只在真实列上统计
         块大小 = int(Self.Config.VEC_QUANTIZATION_BLOCK_SIZE)
         数组 = np.ascontiguousarray(np.asarray(数组), dtype=np.float32)
         行数, 维度 = 数组.shape
         填充维 = (-维度) % 块大小
-        if 填充维:
-            缓冲 = np.zeros((行数, 维度 + 填充维), dtype=np.float32); 缓冲[:, :维度] = 数组
+        有填充 = 填充维 > 0
+        if 有填充:
+            缓冲 = np.full((行数, 维度 + 填充维), np.nan, dtype=np.float32); 缓冲[:, :维度] = 数组
         else: 缓冲 = 数组.copy()
         del 数组; 组数 = (维度 + 填充维) // 块大小
         分组 = 缓冲.reshape(行数, 组数, 块大小)
         百分比 = Self.Config.VEC_QUANTIZATION_CLIP * 100
         if 百分比 < 100.0:
-            高位, 低位 = Self._百分位(分组, 百分比, 轴=2, 保持维度=True)
+            # 与原版语义一致: 高位=低分位(取分组第 百分比 百分位), 低位=高分位(100-百分比)
+            # 即只保留中间区间, 裁掉两侧极端值
+            if 有填充:
+                高位 = np.nanpercentile(分组, 百分比, axis=2, keepdims=True).astype(np.float32)
+                低位 = np.nanpercentile(分组, 100.0 - 百分比, axis=2, keepdims=True).astype(np.float32)
+            else:
+                结果 = np.percentile(分组, [百分比, 100.0 - 百分比], axis=2, keepdims=True)
+                高位, 低位 = 结果[0].astype(np.float32), 结果[1].astype(np.float32)
             np.clip(分组, 低位, 高位, out=分组)
-        最小值 = np.min(分组, axis=2).astype(np.float32)
-        缩放值 = (np.max(分组, axis=2) - 最小值).astype(np.float32)
+        if 有填充:
+            最小值 = np.nanmin(分组, axis=2).astype(np.float32)
+            缩放值 = (np.nanmax(分组, axis=2) - 最小值).astype(np.float32)
+        else:
+            最小值 = np.min(分组, axis=2).astype(np.float32)
+            缩放值 = (np.max(分组, axis=2) - 最小值).astype(np.float32)
         np.maximum(缩放值, 1e-8, out=缩放值)
+        if 有填充: np.nan_to_num(分组, nan=0.0, copy=False)
         分组 -= 最小值[:, :, None]; 分组 /= 缩放值[:, :, None]
         np.clip(分组, 0, 1, out=分组)
         分组 *= float(最大量级); np.round(分组, out=分组)
-        最大最小 = max(float(np.max(np.abs(最小值))), 1e-8)
-        最大缩放 = max(float(np.max(缩放值)), 1e-8)
-        量化值 = 缓冲[:, :维度].ravel().astype(np.uint8)
+        最大最小 = max(float(np.max(np.abs(最小值))) if not 有填充 else float(np.nanmax(np.abs(最小值))), 1e-8)
+        最大缩放 = max(float(np.max(np.abs(缩放值))) if not 有填充 else float(np.nanmax(np.abs(缩放值))), 1e-8)
+        量化值 = 分组.astype(np.uint8).reshape(行数, 组数 * 块大小)[:, :维度].ravel()
+        if 有填充:  # 全NaN组(纯填充)的 min/scale 填 0, 避免 NaN 进入缩放编码
+            np.nan_to_num(最小值, nan=0.0, copy=False); np.nan_to_num(缩放值, nan=0.0, copy=False)
         del 缓冲, 分组; CleanVRAM()
         return 量化值, Self._编码缩放(最小值/最大最小), 最大最小, Self._编码缩放(缩放值/最大缩放), 最大缩放, 行数, 维度
     
     def _Qx_K解码(Self, 索引, 最小编码, 最大最小, 缩放编码, 最大缩放, 形状, 最大量级):
+        # 列方向分块解码; 维度不被块大小整除时尾组用填充索引(量化=0), 重建后切片真实维度
         块大小 = int(Self.Config.VEC_QUANTIZATION_BLOCK_SIZE)
         行数, 维度 = 形状; 组数 = (维度 + 块大小 - 1) // 块大小
         最小值 = (Self._解码缩放(最小编码, 行数*组数) * 最大最小).reshape(行数, 组数).astype(np.float32)
         缩放值 = (Self._解码缩放(缩放编码, 行数*组数) * 最大缩放).reshape(行数, 组数).astype(np.float32)
+        np.nan_to_num(最小值, nan=0.0, copy=False); np.nan_to_num(缩放值, nan=0.0, copy=False)
         np.maximum(缩放值, 1e-8, out=缩放值)
-        索引_3d = 索引[:行数*维度].reshape(行数, 组数, 块大小)
+        索引 = np.asarray(索引).ravel()
+        需要 = 行数 * 组数 * 块大小
+        if 索引.size < 需要:  # 编码端只存真实维度列, 解码补零对齐到完整块矩阵
+            缓冲 = np.zeros(需要, dtype=索引.dtype); 缓冲[:索引.size] = 索引; 索引 = 缓冲
+        索引_3d = 索引[:需要].reshape(行数, 组数, 块大小)
         重建 = (索引_3d.astype(np.float32) / float(最大量级)) * 缩放值[:, :, None] + 最小值[:, :, None]
-        return 重建.reshape(行数, 维度)
+        return 重建.reshape(行数, 组数 * 块大小)[:, :维度]
     
     def F32编码Q2_K(Self, 数组):
         量化值, Min, MaxMin, Scale, MaxScale, 行数, 维度 = Self._Qx_K编码(数组, 3)
@@ -1022,7 +1197,6 @@ class Quantization:
                                最小编码, 最大最小, 缩放编码, 最大缩放, 形状, 255)
 #====================================================================================================Qx_K_M量化（带均值）====================================================================================================#
     def _Qx_K_M编码(Self, 数组, 最大量级):
-        """先减每维均值，再量化残差（复用 _Qx_K编码）"""
         均值向量 = np.mean(数组, axis=0, dtype=np.float32)
         残差 = np.ascontiguousarray(数组 - 均值向量, dtype=np.float32)
         del 数组
@@ -1034,7 +1208,6 @@ class Quantization:
     
     def _Qx_K_M解码(Self, 索引, 最小编码, 最大最小, 缩放编码, 最大缩放,
                      均值编码, 最大均值, 形状, 最大量级):
-        """复用 _Qx_K解码，再加回均值"""
         行数, 维度 = 形状
         均值 = (Self._解码缩放(均值编码, 维度) * 最大均值).astype(np.float32)
         残差 = Self._Qx_K解码(索引, 最小编码, 最大最小, 缩放编码, 最大缩放, 形状, 最大量级)
@@ -1373,25 +1546,217 @@ class Quantization:
         return 数据, 均值, 投影矩阵
     def PCA应用(Self, 数据, 均值, 投影矩阵):
         return np.dot(数据 - 均值, 投影矩阵).astype(np.float32)
-    def PCA应用懒加载(Self, 向量, 向量文件):
+    def PCA应用懒加载(Self, 向量, 向量文件): #不修改指针
         if 向量文件.PCA_M is not None and 向量文件.PCA_P is not None:
-            return Self.PCA应用(Self, 向量, 向量文件.PCA_M, 向量文件.PCA_P)
-        else:
-            return 向量
+            向量[:] = Self.PCA应用(Self, 向量, 向量文件.PCA_M, 向量文件.PCA_P)
+        return 向量
 #====================================================================================================PCA====================================================================================================#
+#====================================================================================================TT分解====================================================================================================#
+    def TT分解(Self, 数据, TT形状=None, TT秩=4):
+        数据 = np.asarray(数据, dtype=np.float32)
+        n, d = 数据.shape
+        if TT形状 is None:
+            k = int(np.floor(np.log2(d)))
+            TT形状 = [2] * k
+            prod = 2 ** k
+            if prod < d:
+                TT形状 = [d // prod] + TT形状
+        else:
+            prod = int(np.prod(TT形状))
+        if prod != d:
+            raise ValueError(f"TT形状乘积 {prod} != 维度 {d}")
+        均值 = np.mean(数据, axis=0, dtype=np.float32)
+        中心数据 = 数据 - 均值
+        k = len(TT形状)
+        累积核心 = [np.zeros((1, TT形状[0], TT秩), dtype=np.float32) for _ in range(k)]
+        采样数 = min(n, 5000)
+        采样索引 = np.random.choice(n, 采样数, replace=False) if n > 采样数 else np.arange(n)
+        for idx in 采样索引:
+            向量 = 中心数据[idx]
+            张量 = 向量.reshape(TT形状)
+            残差 = 张量.copy()
+            秩左 = 1
+            for i in range(k - 1):
+                展平 = 残差.reshape(秩左 * TT形状[i], -1)
+                U, S, Vt = np.linalg.svd(展平.astype(np.float64), full_matrices=False)
+                截断秩 = min(TT秩, len(S))
+                U = U[:, :截断秩].astype(np.float32)
+                核心 = U.reshape(秩左, TT形状[i], 截断秩)
+                累积核心[i] += 核心 / 采样数
+                秩左 = 截断秩
+                残差 = (np.diag(S[:截断秩]) @ Vt[:截断秩, :]).reshape(截断秩, -1)
+            累积核心[k-1] += 残差.reshape(秩左, TT形状[k-1], 1).astype(np.float32) / 采样数
+        return 累积核心, 均值, TT形状
+
+    def TT压缩(Self, 向量, 核心列表, 均值, TT形状):
+        向量 = np.asarray(向量, dtype=np.float32).ravel() - 均值
+        张量 = 向量.reshape(TT形状)
+        k = len(TT形状)
+        系数列表 = []
+        残差 = 张量.copy()
+        for i in range(k - 1):
+            核心 = 核心列表[i]
+            r_i, d_i, r_ip1 = 核心.shape
+            展平 = 残差.reshape(r_i * d_i, -1)
+            核心展平 = 核心.reshape(r_i * d_i, r_ip1)
+            系数 = 核心展平.T @ 展平.astype(np.float64)
+            系数列表.append(系数.astype(np.float32).ravel())
+            重建 = 核心展平 @ 系数
+            残差 = (展平 - 重建).reshape(r_i, d_i, -1)
+        核心 = 核心列表[k-1]
+        残差 = 残差.ravel().astype(np.float64)
+        系数列表.append(残差.astype(np.float32))
+        return np.concatenate([c.ravel() for c in 系数列表])
+
+    def TT解压(Self, TT向量, 核心列表, 均值, TT形状):
+        k = len(TT形状)
+        偏移 = 0
+        当前 = np.array([[1.0]], dtype=np.float32)  # (1, 1)
+        for i in range(k - 1):
+            核心 = 核心列表[i]
+            r_i, d_i, r_ip1 = 核心.shape
+            系数大小 = r_ip1 * (np.prod(TT形状[i+1:]) if i < k - 1 else 1)
+            实际大小 = len(TT向量) - 偏移
+            if i < k - 1:
+                系数取 = min(系数大小, 实际大小)
+            else:
+                系数取 = 实际大小
+            系数 = TT向量[偏移:偏移+系数取].astype(np.float64)
+            if i < k - 1:
+                剩余维 = int(np.prod(TT形状[i+1:]))
+                系数 = 系数.reshape(r_ip1, 剩余维)
+            else:
+                系数 = 系数.reshape(r_ip1, 1)
+            偏移 += 系数取
+            核心展平 = 核心.reshape(r_i * d_i, r_ip1).astype(np.float64)
+            贡献 = 核心展平 @ 系数
+            if i < k - 1:
+                贡献 = 贡献.reshape(r_i, d_i, -1)
+                当前 = np.tensordot(当前.astype(np.float64), 贡献, axes=([1], [0])).reshape(1, -1)
+            else:
+                当前 = 贡献.reshape(-1)
+        重建向量 = 当前.ravel()[:int(np.prod(TT形状))]
+        return (重建向量 + 均值).astype(np.float32)
+
+    def TT应用懒加载(Self, 向量, 向量文件):
+        if 向量文件.TT_Cores is not None and 向量文件.TT_Mean is not None:
+            核心列表 = 向量文件.TT_Cores
+            均值 = 向量文件.TT_Mean
+            形状 = 向量文件.TT_Shape
+            for i in range(len(向量)):
+                向量[i] = Self.TT解压(Self, 向量[i], 核心列表, 均值, 形状)
+        return 向量
+#====================================================================================================TT分解====================================================================================================#
 #====================================================================================================类接口====================================================================================================#
+    def _解析量化配置(Self, 量化格式=None):
+        格式 = 量化格式 if 量化格式 is not None else Self.Config.VEC_QUANTIZATION
+        if isinstance(格式, (list, tuple)):
+            if len(格式) == 1:
+                return [str(格式[0])], False
+            return [str(x) for x in 格式[:2]], True
+        return [str(格式)], False
+    def _维度贡献掩码(Self, 数组, 比例):
+        能量 = np.mean(np.asarray(数组, dtype=np.float32) ** 2, axis=0)
+        排序 = np.argsort(能量)[::-1]
+        k = int(round(len(能量) * float(比例)))
+        k = max(1, min(k, len(能量) - 1))
+        掩码 = np.zeros(len(能量), dtype=bool); 掩码[排序[:k]] = True
+        return 掩码
+    def _混合编码(Self, 数组, 格式列表):
+        低格式, 高格式 = 格式列表[0], 格式列表[1]
+        数组 = np.ascontiguousarray(np.asarray(数组), dtype=np.float32)
+        比例 = float(getattr(Self.Config, 'VEC_QUANTIZATION_MIX_RATIO', 0.2))
+        掩码 = Self._维度贡献掩码(数组, 比例)  # 保证高低两组都非空
+        高索引 = np.where(掩码)[0]; 低索引 = np.where(~掩码)[0]
+        高编码 = Self.编码映射[高格式](Self, 数组[:, 高索引])
+        低编码 = Self.编码映射[低格式](Self, 数组[:, 低索引])
+        del 数组; CleanVRAM()
+        输出 = {"Format": np.packbits(掩码),
+                "HighFmt": np.array(高格式), "LowFmt": np.array(低格式),
+                "Shape": np.asarray(掩码.shape, dtype=np.int32)}
+        for 键, 值 in 高编码.items():
+            输出[f"High_{键}"] = np.asarray(值)
+        for 键, 值 in 低编码.items():
+            输出[f"Low_{键}"] = np.asarray(值)
+        del 高编码, 低编码; CleanVRAM()
+        return 输出
+    def _逐行TopK混合编码(Self, 数组, 格式列表):
+        低格式, 高格式 = 格式列表[0], 格式列表[1]
+        数组 = np.ascontiguousarray(np.asarray(数组), dtype=np.float32)
+        行数, 维度 = 数组.shape
+        k = int(getattr(Self.Config, 'VEC_QUANTIZATION_MIX_TOPK', 0) or 0)
+        if k <= 0:
+            比例 = float(getattr(Self.Config, 'VEC_QUANTIZATION_MIX_RATIO', 0.05))
+            k = max(1, int(round(维度 * 比例)))
+        k = min(k, 维度 - 1)
+        排序 = np.argsort(-np.abs(数组), axis=1)
+        高索引 = 排序[:, :k]
+        行索引 = np.arange(行数)[:, None]
+        高值 = 数组[行索引, 高索引].astype(np.float16)
+        低编码 = Self.编码映射[低格式](Self, 数组)
+        del 数组; CleanVRAM()
+        输出 = {"RowTopK": np.array(k, dtype=np.int32),
+                "HighIdx": np.ascontiguousarray(高索引.astype(np.uint16)),
+                "HighVal": np.ascontiguousarray(高值.view(np.uint16)),
+                "HighFmt": np.array(高格式), "LowFmt": np.array(低格式),
+                "Shape": np.asarray((行数, 维度), dtype=np.int32)}
+        for 键, 值 in 低编码.items():
+            输出[f"Low_{键}"] = np.asarray(值)
+        del 低编码, 高索引, 高值; CleanVRAM()
+        return 输出
+    def _逐行TopK混合解码(Self, 数据):
+        高格式 = str(np.asarray(数据["HighFmt"]).item() if np.asarray(数据["HighFmt"]).ndim else np.asarray(数据["HighFmt"]))
+        低格式 = str(np.asarray(数据["LowFmt"]).item() if np.asarray(数据["LowFmt"]).ndim else np.asarray(数据["LowFmt"]))
+        行数, 维度 = int(np.asarray(数据["Shape"]).ravel()[0]), int(np.asarray(数据["Shape"]).ravel()[1])
+        k = int(np.asarray(数据["RowTopK"]).item())
+        高索引 = np.asarray(数据["HighIdx"], dtype=np.int32).reshape(行数, k)
+        高值 = np.asarray(数据["HighVal"], dtype=np.uint16).view(np.float16).reshape(行数, k).astype(np.float32)
+        低编码 = {键[4:]: np.asarray(值) for 键, 值 in 数据.items() if 键.startswith("Low_")}
+        重建 = Self.解码映射[低格式](Self, 低编码)
+        if 重建.ndim == 2 and 重建.shape[0] == 行数 and 重建.shape[1] == 维度:
+            重建[np.arange(行数)[:, None], 高索引] = 高值
+        del 高索引, 高值, 低编码; CleanVRAM()
+        return 重建
+    def _混合解码(Self, 数据):
+        高格式 = str(np.asarray(数据["HighFmt"]).item() if np.asarray(数据["HighFmt"]).ndim else np.asarray(数据["HighFmt"]))
+        低格式 = str(np.asarray(数据["LowFmt"]).item() if np.asarray(数据["LowFmt"]).ndim else np.asarray(数据["LowFmt"]))
+        维度 = int(np.asarray(数据["Shape"]).ravel()[0])
+        掩码 = np.unpackbits(np.asarray(数据["Format"], dtype=np.uint8))[:维度].astype(bool)
+        高索引 = np.where(掩码)[0]; 低索引 = np.where(~掩码)[0]
+        高编码 = {键[5:]: np.asarray(值) for 键, 值 in 数据.items() if 键.startswith("High_")}
+        低编码 = {键[4:]: np.asarray(值) for 键, 值 in 数据.items() if 键.startswith("Low_")}
+        高重建 = Self.解码映射[高格式](Self, 高编码)
+        低重建 = Self.解码映射[低格式](Self, 低编码)
+        行数 = max(高重建.shape[0] if 高重建.ndim >= 2 else 0,
+                   低重建.shape[0] if 低重建.ndim >= 2 else 0)
+        重建 = np.empty((行数, 维度), dtype=np.float32)
+        重建[:, 高索引] = 高重建
+        重建[:, 低索引] = 低重建
+        del 高重建, 低重建; CleanVRAM()
+        return 重建
     def 解码向量(Self, 向量, 量化格式=None):
         CleanVRAM()
-        for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization.reverse"):
-            格式 = 量化格式 or Self.Config.VEC_QUANTIZATION
-            向量 = Self.解码映射[格式](Self, 向量)
+        if isinstance(向量, dict) and "RowTopK" in 向量:
+            for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization.reverse.rowtopk"):
+                向量 = Self._逐行TopK混合解码(向量)
+        elif isinstance(向量, dict) and "Format" in 向量 and "HighFmt" in 向量 and "LowFmt" in 向量:
+            for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization.reverse.mix"):
+                向量 = Self._混合解码(向量)
+        else:
+            格式列表, _ = Self._解析量化配置(量化格式)
+            for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization.reverse"):
+                向量 = Self.解码映射[格式列表[0]](Self, 向量)
         CleanVRAM()
         return 向量
     def 编码向量(Self, 向量, 量化格式=None):
         CleanVRAM()
-        for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization"):
-            格式 = 量化格式 or Self.Config.VEC_QUANTIZATION
-            向量 = Self.编码映射[格式](Self, 向量)
+        格式列表, 是否混合 = Self._解析量化配置(量化格式)
+        if 是否混合:
+            for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization.mix"):
+                向量 = Self._逐行TopK混合编码(向量, 格式列表)
+        else:
+            for _ in Self.tqdm(range(1), desc="tqdm.vectors.quantization"):
+                向量 = Self.编码映射[格式列表[0]](Self, 向量)
         CleanVRAM()
         return 向量
     def 叠加量化向量(Self, 旧数据, 新数据, 文本列表=None):

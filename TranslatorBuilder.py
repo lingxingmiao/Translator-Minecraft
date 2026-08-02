@@ -1,91 +1,133 @@
-from TranslatorLib import (np, threading, ThreadPoolExecutor, as_completed, time, eb,
-                           Log, Locale, TranslatorPersistence, RuntimeConfig)
+from TranslatorLib import (np, eb, asyncio, random, aiohttp,
+                           TranslatorPersistence, Config)
 
 class Builder:
-    def __init__(Self, Config: dict = None):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
-        Self.日志 = Log(Config=Config).写入日志
-        Self.Locale = Locale(Config=Config)
-        Self.Lang = Self.Locale.Lang
-        Self.tqdm = Self.Locale.Tqdm
-        Self.线程锁 = threading.Lock()
-        Self.嵌入模型 = None
-        Self.重排序模型 = None
-    def 生成向量(Self, text: list, outputs: list = None, outputs1: list = None):
+    def __init__(Self, App: Config):
+        Self.Config      = App.Config
+        Self.日志         = App.日志
+        Self.Network     = App.Network
+        Self.Lang        = App.Lang
+        Self.tqdm        = App.RichTqdm
+        Self.CacheVector = App.CacheVector
+        Self.DiffTqdm    = App.DiffTqdm
+        Self.嵌入模型     = None
+        Self.重排序模型   = None
+    async def 生成向量(Self, 原文: list, 会话: aiohttp.ClientSession, 层级: dict, 工作ID: str, 查询: bool):
+        
         重试次数 = 0
+        响应值 = None
+        向量列表 = []
+        
         if (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
-            with Self.线程锁:
-                try:
-                    额外参数 = {}
-                    if Self.Config.EMB_REASONING_FRAME.lower() == "sentencetransformer":
-                        if Self.Config.EMB_ENCODE_PROMPT_NAME:
-                            额外参数["prompt_name"] = Self.Config.EMB_ENCODE_PROMPT_NAME
-                        if Self.Config.EMB_MODEL_NORMALIZE:
-                            额外参数["normalize_embeddings"] = Self.Config.EMB_MODEL_NORMALIZE
-                        向量列表 = Self.嵌入模型.encode(text, **额外参数)
-                    elif Self.Config.EMB_REASONING_FRAME.lower() == "fastembed":
-                        向量列表 = list(Self.嵌入模型.embed(text))
-                    向量列表 = np.asarray(向量列表, dtype=np.float32)
-                    if Self.Config.VEC_DIM_CLIP != -1:
-                        向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
-                    return [向量列表, [text, outputs, outputs1]]
-                except Exception:
-                    Self.日志("log.core.locally.generate.vectors.error", e=eb.format_exc(), info_level=2)
-                    return [None, [text, outputs, outputs1]]
+            try:
+                额外参数 = {}
+                if Self.Config.EMB_REASONING_FRAME.lower() == "sentencetransformer":
+                    if Self.Config.EMB_ENCODE_PROMPT_NAME:
+                        额外参数["prompt_name"] = Self.Config.EMB_ENCODE_PROMPT_NAME
+                    if Self.Config.EMB_MODEL_NORMALIZE:
+                        额外参数["normalize_embeddings"] = Self.Config.EMB_MODEL_NORMALIZE
+                    向量列表 = await asyncio.to_thread(Self.嵌入模型.encode, [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文], **额外参数)
+                elif Self.Config.EMB_REASONING_FRAME.lower() == "fastembed":
+                    向量列表 = await asyncio.to_thread(lambda: list(Self.嵌入模型.embed([Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文])))
+                向量列表 = np.asarray(向量列表, dtype=np.float32)
+                if Self.Config.VEC_DIM_CLIP != -1:
+                    向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
+                Self.Network.close_emb(工作ID)
+                return (向量列表, 原文)
+            except Exception:
+                Self.日志("log.core.locally.generate.vectors.error", e=eb.format_exc(), info_level=2)
+                Self.Network.close_emb(工作ID)
+                return (None, 原文)
         else:
-            会话 = TranslatorPersistence.获取会话(Self.Config.EMB_API_URL, Self.Config.EMB_API_KEY, Self.Config.EMB_MODEL, Self.Config.EMB_MAX_WORKERS, Self.Config.EMB_RETRY_COEF, Self.Config.EMB_MAX_RETRY)
-            while 重试次数 < Self.Config.EMB_MAX_RETRY:
+            
+            Json数据 = {
+                "input": [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文],
+                "model": 层级["model"]
+            }
+            Json数据.update(层级["api_kwargs"])
+            
+            while True:
                 try:
-                    请求结果 = 会话.post(url=Self.Config.EMB_API_URL, json={"input": text,"model": Self.Config.EMB_MODEL}, timeout=(Self.Config.EMB_CONN_TIMEOUT, Self.Config.EMB_TIMEOUT))
-                    请求结果.raise_for_status()
-                    请求结果 = 请求结果.json()
-                    向量列表 = []
-                    for index in range(len(text)):
-                        向量列表.append(请求结果['data'][index]['embedding'])
+                    async with 会话.post(url=层级["url"], json=Json数据, timeout=aiohttp.ClientTimeout(connect=层级["conn_timeout"], sock_read=层级["timeout"])) as 响应体:
+                        if 响应体.status >= 400:
+                            错误信息 = await Self.Module.POST获取错误(响应体, None)
+                            raise aiohttp.ClientResponseError(
+                                request_info=响应体.request_info,
+                                history=响应体.history,
+                                status=响应体.status,
+                                message=错误信息
+                            )
+                        响应体.raise_for_status()
+                        响应值 = await 响应体.json()
+                    for index in range(len(原文)):
+                        向量列表.append(响应值['data'][index]['embedding'])
                     向量列表 = np.asarray(向量列表, dtype=np.float32)
                     if Self.Config.VEC_DIM_CLIP != -1:
                         向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
-                    return [向量列表, [text, outputs, outputs1]]
-                except Exception:
+                    Self.Network.close_emb(工作ID)
+                    return (向量列表, 原文)
+                except:
                     重试次数 += 1
-                    if 重试次数 >= Self.Config.EMB_MAX_RETRY:
+                    if 重试次数 >= 层级["max_retry"]:
                         Self.日志("log.core.api.generate.vectors.error", e=eb.format_exc(), info_level=3)
-                        return [None, [text, outputs, outputs1]]
+                        Self.Network.close_emb(工作ID)
+                        return (None, 原文)
                     else:
                         Self.日志("log.core.api.generate.vectors.retry", e=eb.format_exc(), info_level=2)
-                        time.sleep((Self.Config.EMB_RETRY_COEF ** (重试次数 - 1)) * Self.Config.EMB_RETRY_TIME)
-    def 并行生成向量(Self, texts: list, use_cache: bool = True) -> list:
-        Self.日志("log.core.vector.generate.start", info_level=0)
-        if not texts:
+                        基础等待 = (层级["retry_coef"] ** (重试次数 - 1)) * 层级["retry_time"]
+                        await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
+                        
+    async def 并行生成向量(Self, texts: list, use_cache: bool = True, 查询: bool = False) -> list:
+        工作列表, 分组结果, 当前组 = [], [], []
+        缓存映射, 唯一待生成 = {}, {}
+        当前总长 = 0.0
+        生成维度, 缓存维度 = 384, 0
+        
+        文本数量 = len(texts)
+        if 文本数量 == 0:
             Self.日志("log.core.generated.vector.nan", texts=texts, info_level=3)
             return [np.array([], dtype=np.float32).reshape(0, 0), [[], [], []]]
 
-        if use_cache:
-            缓存命中, 待生成文本 = TranslatorPersistence.查询向量缓存(texts)
-        else:
-            缓存命中, 待生成文本 = {}, texts
-        if 缓存命中:
-            命中数 = len(缓存命中); 总数 = len(texts)
-            Self.日志("log.core.vector.cache.hit", rate=f"{命中数/总数:.4%}", hit=命中数, total=总数, info_level=0)
+        # ↓预分配加速
+        最终返回向量 = None
+        最终返回文本 = [None]  * 文本数量
+        最终返回附加A = [None] * 文本数量
+        最终返回附加B = [None] * 文本数量
+        
+        # 构建文本索引映射
+        文本索引映射 = {}
+        for i, item in enumerate(texts):
+            文本索引映射.setdefault(item[0], []).append(i)
 
+        # ↓查询缓存
+        缓存命中, 待生成文本 = Self.CacheVector.查询向量缓存(texts) if use_cache else ({}, texts)
+        
+        if 缓存命中:
+            命中数 = len(缓存命中)
+            Self.日志("log.core.vector.cache.hit", rate=f"{命中数/文本数量:.4%}", hit=命中数, total=文本数量, info_level=0)
+            缓存维度 = next(iter(缓存命中.values())).shape[0]
+            最终返回向量 = np.empty((文本数量, 缓存维度), dtype=np.float32) 
+            for index0, index1 in enumerate(texts):
+                原文 = index1[0]
+                if 原文 in 缓存命中:
+                    最终返回向量[index0]  = 缓存命中[原文]
+                    最终返回文本[index0]  = index1[0]
+                    最终返回附加A[index0] = index1[1]
+                    最终返回附加B[index0] = index1[2]
+
+        # ↓全部命中返回
         if not 待生成文本:
-            维度 = next(iter(缓存命中.values())).shape[0]
-            合并向量 = np.empty((len(texts), 维度), dtype=np.float32)
-            合并请求文本, 合并额外返回, 合并额外返回1 = [], [], []
-            for item in texts:
-                合并向量[len(合并请求文本)] = 缓存命中[item[0]]
-                合并请求文本.append(item[0])
-                合并额外返回.append(item[1])
-                合并额外返回1.append(item[2])
-            Self.日志("log.core.vector.generate.end", info_level=0)
-            return [合并向量, [合并请求文本, 合并额外返回, 合并额外返回1]]
+            return [最终返回向量, [最终返回文本, 最终返回附加A, 最终返回附加B]]
 
         if (not Self.Config.EMB_API_URL) and (Self.Config.EMB_MODEL):
             Self.嵌入模型 = TranslatorPersistence.获取嵌入模型(Self=Self)
+
+        # ↓Token缩放分组
         最大字符数 = Self.Config.EMB_MAX_TOKENS * Self.Config.EMB_TOKENSTOTEXT_RATIO
-        分组结果, 当前组, 当前总长 = [], [], 0.0
-        for index in 待生成文本:
+        for item in 待生成文本:
+            if item[0] not in 缓存命中:
+                唯一待生成[item[0]] = item
+        for index in 唯一待生成.values():
             长度 = len(index[0])
             if 当前总长 + 长度 > 最大字符数:
                 分组结果.append(当前组)
@@ -93,110 +135,107 @@ class Builder:
             当前组.append(index)
             当前总长 += 长度
         if 当前组: 分组结果.append(当前组)
-        待处理文本列表原文 = [[item[0] for item in group] for group in 分组结果]
-        待处理文本列表额外输出 = [[item[1] for item in group] for group in 分组结果]
-        待处理文本列表额外输出1 = [[item[2] for item in group] for group in 分组结果]
-        总待生成条数 = sum(len(g) for g in 分组结果)
-        合并向量 = None
-        维度 = None
-        当前偏移 = 0
-        偏移锁 = threading.Lock()
-        提前完成缓存 = []
-        合并请求文本 = []
-        合并额外返回 = []
-        合并额外返回1 = []
-        新增缓存条目 = {}
-        with ThreadPoolExecutor(max_workers=Self.Config.EMB_MAX_WORKERS) as 执行器:
-            未来任务映射 = {
-                执行器.submit(Self.生成向量, 原文组, 额外输出, 额外输出1): 原文组
-                for 原文组, 额外输出, 额外输出1 in zip(待处理文本列表原文, 待处理文本列表额外输出, 待处理文本列表额外输出1)
-            }
-            for 单个任务 in Self.tqdm(as_completed(未来任务映射), total=len(未来任务映射), desc="tqdm.vectors.generate"):
-                结果 = 单个任务.result()
-                if 结果[0] is None: continue
-                块 = 结果[0]
-                块长度 = 块.shape[0]
-                for i, 原文 in enumerate(结果[1][0]):
-                    新增缓存条目[原文] = 块[i].copy()
-                with 偏移锁:
-                    if 维度 is None:
-                        维度 = 块.shape[1]
-                        合并向量 = np.empty((总待生成条数, 维度), dtype=np.float32)
-                        for 缓存块, 缓存元数据 in 提前完成缓存:
-                            合并向量[当前偏移:当前偏移+缓存块.shape[0]] = 缓存块
-                            当前偏移 += 缓存块.shape[0]
-                            合并请求文本.extend(缓存元数据[0])
-                            合并额外返回.extend(缓存元数据[1])
-                            合并额外返回1.extend(缓存元数据[2])
-                        提前完成缓存.clear()
-                    elif 块.shape[1] != 维度:
-                        continue
-                    合并向量[当前偏移:当前偏移+块长度] = 块
-                    当前偏移 += 块长度
-                合并请求文本.extend(结果[1][0])
-                合并额外返回.extend(结果[1][1])
-                合并额外返回1.extend(结果[1][2])
-        最终生成向量 = 合并向量[:当前偏移] if 合并向量 is not None else np.array([], dtype=np.float32).reshape(0, 维度 or 0)
-        if 新增缓存条目 and use_cache:
-            # 仅更新内存缓存并标脏，真正写盘交由后台定时线程节流批量执行，避免并发生成时频繁全量读写
-            TranslatorPersistence.更新向量缓存(新增缓存条目)
-        总条数 = len(texts)
-        全量向量 = np.empty((总条数, 维度 or 0), dtype=np.float32) if 维度 else np.array([], dtype=np.float32).reshape(0, 0)
-        全量文本, 全量额外, 全量额外1 = [], [], []
-        生成索引 = 0
-        for item in texts:
-            if item[0] in 缓存命中:
-                全量向量[len(全量文本)] = 缓存命中[item[0]]
-            else:
-                全量向量[len(全量文本)] = 最终生成向量[生成索引]
-                生成索引 += 1
-            全量文本.append(item[0])
-            全量额外.append(item[1])
-            全量额外1.append(item[2])
+        总条目数 = sum(len(g) for g in 分组结果)
+        
+        进度条 = Self.tqdm(total=总条目数, desc="tqdm.vectors.generate")
+        async def 管理进度条(): # ↑精炼复用进度条
+            while 进度条.n < 总条目数: #↓if防止 工作列表.clear() 与 进度条任务.cancel() 之间的微小间隔导致进度条显示0
+                if 工作列表: 进度条.n = sum(i[1] for i in 工作列表 if i[0].done()); 进度条.refresh() # 更新进度条并刷新
+                await asyncio.sleep(1/Self.Config.TQDM_FPS) # 没有完成等待刷新
+        
+        Self.日志("log.core.vector.generate.start", info_level=0)
+        进度条任务 = asyncio.create_task(管理进度条()) # 刷新进度条
+        for index in 分组结果: 
+            原文 = [i[0] for i in index]
+            while True:
+                会话, 模型层级, 工作ID = Self.Network.get_emb()
+                if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
+                await asyncio.sleep(0) # 别删 删了用不了
+            工作列表.append([asyncio.create_task(Self.生成向量(原文, 会话, 模型层级, 工作ID, 查询)), len(index)])
+
+        for 任务 in asyncio.as_completed([t[0] for t in 工作列表]):
+            返回值为None = False
+            结果 = await 任务
+            向量, 原文 = 结果 if isinstance(结果, tuple) and len(结果) == 2 else (结果, [])
+            if 向量 is None: 向量, 返回值为None = np.random.randn(len(原文), 生成维度).astype(np.float32), True
+            if 最终返回向量 is None:
+                生成维度 = 向量.shape[1]
+                最终返回向量 = np.empty((文本数量, 生成维度), dtype=np.float32)
+            for index0, index1 in enumerate(原文):
+                if index1 in 文本索引映射:
+                    for index2 in 文本索引映射[index1]:
+                        最终返回向量[index2]  = 向量[index0]
+                        最终返回文本[index2]  = texts[index2][0]
+                        最终返回附加A[index2] = texts[index2][1]
+                        最终返回附加B[index2] = texts[index2][2]
+                if use_cache and not 返回值为None: 
+                    缓存映射[index1] = 向量[index0]
+        进度条任务.cancel() # 进度条下班
+        进度条.close()
+        if 缓存维度 != 0 and 生成维度 != 缓存维度: Self.日志("log.core.generated.vector.dim.mismatch.err", info_level=3)
         Self.日志("log.core.vector.generate.end", info_level=0)
-        return [全量向量, [全量文本, 全量额外, 全量额外1]]
-    def 选择相似度最高译文(Self, 请求消息: list):
+        
+        if 缓存映射 and use_cache: 
+            Self.CacheVector.更新向量缓存(缓存映射)
+            
+        return [最终返回向量, [最终返回文本, 最终返回附加A, 最终返回附加B]]
+    async def 选择相似度最高译文(Self, 请求消息: list):
         请求次数 = 0
+        响应值 = None
+        工作ID = None
         if (not Self.Config.RERANKER_API_URL) and (Self.Config.RERANKER_MODEL):
-            with Self.线程锁:
-                try:
-                    相似度 = Self.重排序模型.predict([(请求消息[0], 候选) for 候选 in 请求消息[1]], show_progress_bar=False)
-                    return [请求消息[0], 请求消息[1][相似度.argmax()], 相似度]
-                except Exception:
-                    Self.日志("log.core.translator.cache.locally.error", e=eb.format_exc(), info_level=2)
-                    return [请求消息[0], 请求消息[1][0], [0 for _ in range(len(请求消息[1]))]]
+            try:
+                相似度 = await asyncio.to_thread(Self.重排序模型.predict, [(请求消息[0], 候选) for 候选 in 请求消息[1]], show_progress_bar=False)
+                return [请求消息[0], 请求消息[1][相似度.argmax()], 相似度]
+            except Exception:
+                Self.日志("log.core.translator.cache.locally.error", e=eb.format_exc(), info_level=2)
+                return [请求消息[0], 请求消息[1][0], [0 for _ in range(len(请求消息[1]))]]
         else:
-            from TranslatorLib import TranslatorPersistence
             请求内容 = {
                 "model": Self.Config.RERANKER_MODEL,
                 "documents": 请求消息[1],
                 "query": 请求消息[0],
                 "instruct": Self.Config.RERANKER_INSTRUCT
             }
-            会话 = TranslatorPersistence.获取会话(Self.Config.RERANKER_API_URL, Self.Config.RERANKER_API_KEY, Self.Config.RERANKER_MODEL, Self.Config.RERANKER_MAX_WORKERS, Self.Config.RERANKER_RETRY_COEF, Self.Config.RERANKER_MAX_RETRY)
             while 请求次数 < Self.Config.RERANKER_MAX_RETRY:
                 try:
+                    while True:
+                        会话, 模型层级, 工作ID = Self.Network.reranker_emb()
+                        if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
+                        await asyncio.sleep(0) # 别删 删了用不了
                     相似度 = []
-                    请求结果 = 会话.post(url=Self.Config.RERANKER_API_URL, json=请求内容, timeout=(Self.Config.RERANKER_CONN_TIMEOUT, Self.Config.RERANKER_TIMEOUT))
-                    请求结果.raise_for_status()
-                    请求结果 = 请求结果.json()
-                    请求结果 = 请求结果["output"]["results"]
-                    for index in 请求结果:
+                    async with 会话.post(url=模型层级["url"], json=请求内容, timeout=aiohttp.ClientTimeout(connect=模型层级["conn_timeout"], sock_read=模型层级["timeout"])) as 响应体:
+                        if 响应体.status >= 400:
+                            错误信息 = await Self.Module.POST获取错误(响应体, None)
+                            raise aiohttp.ClientResponseError(
+                                request_info=响应体.request_info,
+                                history=响应体.history,
+                                status=响应体.status,
+                                message=错误信息
+                            )
+                        响应体.raise_for_status()
+                        响应值 = await 响应体.json()
+                    响应值 = 响应值["output"]["results"]
+                    for index in 响应值:
                         相似度.append(index["document"]["text"])
-                    return [请求消息[0], 请求结果[0]["document"]["text"], 相似度]
+                    Self.Network.close_reranker(工作ID)
+                    return [请求消息[0], 响应值[0]["document"]["text"], 相似度]
                 except Exception:
+                    if 工作ID is not None: Self.Network.close_reranker(工作ID)
                     Self.日志("log.core.translator.cache.generate.messages.error", messages=请求消息[1], e=eb.format_exc(), info_level=1)
                     请求次数 += 1
                     if 请求次数 >= Self.Config.RERANKER_MAX_RETRY:
-                        Self.日志("log.core.translator.cache.generate.error", e=eb.format_exc(), output=请求结果, info_level=2)
+                        Self.日志("log.core.translator.cache.generate.error", e=eb.format_exc(), output=响应值, info_level=2)
                         return [请求消息[0], 请求消息[1][0], [0 for _ in range(len(请求消息[1]))]]
                     else:
-                        Self.日志("log.core.translator.cache.generate.retry", e=eb.format_exc(), output=请求结果, info_level=1)
-                        time.sleep((Self.Config.RERANKER_RETRY_COEF ** (请求次数 - 1)) * Self.Config.RERANKER_RETRY_TIME)
-    def 获取相似度最高译文(Self, 输入字典: dict, 强制重排: bool=False):
+                        Self.日志("log.core.translator.cache.generate.retry", e=eb.format_exc(), output=响应值, info_level=1)
+                        基础等待 = (Self.Config.RERANKER_RETRY_COEF ** (请求次数 - 1)) * Self.Config.RERANKER_RETRY_TIME
+                        await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
+    async def 获取相似度最高译文(Self, 输入字典: dict, 强制重排: bool=False):
         请求列表 = []
         剔除列表 = []
         返回列表 = []
+        工作列表 = []
         for index in 输入字典:
             if len(输入字典[index]) == 1 and 强制重排 == False:
                 剔除列表.append([index, 输入字典[index][0], [0]])
@@ -205,16 +244,19 @@ class Builder:
         if (not Self.重排序模型) and (not Self.Config.RERANKER_API_URL) and (Self.Config.RERANKER_MODEL) and (请求列表):
             Self.重排序模型 = TranslatorPersistence.获取重排模型(Self=Self)
         Self.日志("log.core.translator.cache.generate.start", item=len(请求列表), info_level=0)
-        with ThreadPoolExecutor(max_workers=Self.Config.RERANKER_MAX_WORKERS) as 执行器:
-            未来任务映射 = {
-                执行器.submit(
-                    Self.选择相似度最高译文,
-                    请求消息 = index,
-                ): index
-                for index in 请求列表
-            }
-            for 单个任务 in Self.tqdm(as_completed(未来任务映射), total=len(未来任务映射), desc="tqdm.translator.cache.generate"):
-                返回列表.append(单个任务.result())
+        if 请求列表:
+            进度条 = Self.tqdm(total=len(请求列表), desc="tqdm.translator.cache.generate")
+            async def 管理进度条():
+                while 进度条.n < len(请求列表):
+                    if 工作列表: 进度条.n = sum(1 for i in 工作列表 if i.done()); 进度条.refresh()
+                    await asyncio.sleep(1/Self.Config.TQDM_FPS)
+            进度条任务 = asyncio.create_task(管理进度条())
+            for index in 请求列表:
+                工作列表.append(asyncio.create_task(Self.选择相似度最高译文(请求消息=index)))
+            for 单个任务 in asyncio.as_completed(工作列表):
+                返回列表.append(await 单个任务)
+            进度条任务.cancel()
+            进度条.close()
         Self.日志("log.core.translator.cache.generate.end", info_level=0)
         返回列表 += 剔除列表
         return 返回列表

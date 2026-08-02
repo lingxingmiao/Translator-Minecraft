@@ -1,17 +1,15 @@
-from TranslatorLib import (uuid, pickle, Path, threading, time, shutil, SimpleNamespace, re, np,
-                           RuntimeConfig, Log, Locale, Index, Builder, TranslatorPersistence)
+from TranslatorLib import (uuid, Path, threading, time, shutil, SimpleNamespace, re, json,
+                           Config)
 
 class Module:
-    def __init__(Self, Config: dict = None):
-        Config = Config or {}
-        Self.Config = RuntimeConfig(**Config)
-        Self.Locale = Locale(Config=Config)
-        Self.日志 = Log(Config=Config).写入日志
-        Self.Lang = Self.Locale.Lang
-        Self.tqdm = Self.Locale.Tqdm
+    def __init__(Self, App: Config):
+        Self.Config = App.Config
+        Self.Locale = App.Locale
+        Self.日志 = App.日志
+        Self.Lang = App.Lang
+        Self.tqdm = App.RichTqdm
+        Self.Index = App.Index
         Self.线程锁 = threading.Lock()
-        Self.Index = Index(Config)
-        Self.Builder = Builder(Config)
         Self.清理过期缓存()
         Self.正则表达式预编译 = SimpleNamespace()
         Self.正则表达式预编译.ZS模式 = {
@@ -24,11 +22,6 @@ class Module:
         }
     def __enter__(Self):
         return Self
-    def 翻译缓存(Self, 输入列表: list = None):
-        # 内存缓存模式：读写都在内存中进行，写盘由后台定时线程负责，避免并发生成时频繁全量 IO
-        if 输入列表:
-            TranslatorPersistence.更新翻译缓存(输入列表)
-        return TranslatorPersistence.查询翻译缓存()
     def 输出路径处理(Self, path: str):
         if not path:
             path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
@@ -58,11 +51,6 @@ class Module:
                 Self.日志("log.module.cache.clean", count=清理数, info_level=0)
         except Exception:
             pass
-    def 归一化向量(Self, 数组):
-        数组 = np.ascontiguousarray(数组, dtype=np.float32)
-        范数 = np.linalg.norm(数组, axis=1, keepdims=True)
-        范数[范数 < 1e-8] = 1e-8
-        return 数组 / 范数
     def 列表去重(Self, 列表: list):
         return list(dict.fromkeys(列表))
     def 过滤键文本(Self, 条目):
@@ -114,3 +102,52 @@ class Module:
         if 文本.isupper() and ' ' in 文本 and any(w in 文本 for w in ['ERROR', 'UNKNOWN', 'FAILED', 'EXCEPTION', 'WARNING']):
             return False
         return True
+    def 文本组件深度优先搜索(Self, 组件, 当前路径, 提取记录):
+        if isinstance(组件, str):
+            提取记录.append((当前路径, 组件))
+            return
+        if isinstance(组件, dict):
+            for k, v in 组件.items():
+                if k == "text":
+                    提取记录.append((当前路径 + [k], v))
+                elif k == "translate":
+                    if Self.过滤键文本(["", v]):
+                        提取记录.append((当前路径 + [k], v))
+                elif k == "extra" and isinstance(v, list):
+                    for i, 子组件 in enumerate(v):
+                        Self.深度优先搜索(子组件, 当前路径 + [k, i])
+                else:
+                    Self.深度优先搜索(v, 当前路径 + [k])
+            return
+        if isinstance(组件, list):
+            for i, 项目 in enumerate(组件):
+                Self.深度优先搜索(项目, 当前路径 + [i])
+            return
+    def uuid(Self): # 记不住怎么写(
+        return uuid.uuid4().hex
+    def 按路径取值(Self, 数据: dict, 路径: list, 默认值):
+        if not 路径:
+            return 默认值
+        if isinstance(路径[0], (list, tuple)):
+            for 单条路径 in 路径:
+                结果 = Self.按路径取值(数据, 单条路径, None) 
+                if 结果 is not None: 
+                    return 结果
+            return 默认值
+        当前 = 数据
+        for 键 in 路径:
+            if isinstance(当前, dict) and 键 in 当前:
+                当前 = 当前[键]
+            else:
+                return 默认值
+        return 当前
+            
+    async def POST获取错误(Self, 响应体, err):
+        try:
+            错误原文 = await 响应体.text()
+            try:
+                错误详情 = json.loads(错误原文)
+                错误信息 = 错误详情.get("error") or 错误详情.get("message") or str(错误详情)
+            except (json.JSONDecodeError, TypeError): 错误信息 = 错误原文
+        except Exception: 错误信息 = str(err)
+        return 错误信息
