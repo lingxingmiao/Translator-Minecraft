@@ -292,7 +292,7 @@ pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transfor
 pip install -U "sentence-transformers[openvino]"
 # SentenceTransformer 修改GPU 推荐自己再安装一个FA2
 pip install einops
-pip install uninstall torch
+pip uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
 # 向量处理加速（可选）
 conda install -c conda-forge cupy cuda-version=12.8 # GPU 要打包别安
