@@ -312,18 +312,19 @@ conda env remove -n Translator_Minecraft
 <details>
 <summary>历史附加模块更新日志(点击展开/收起)</summary>
 <details>
-<summary>Release.1.6 Bata.4</summary>
+<summary>Release.1.6</summary>
 
-- HEAI: 基于向量索引的HEI模糊搜索Groovy脚本
+### Release.1.6 Bata.4
+- [HEAI](https://www.mcmod.cn/post/6554.html): 基于向量索引的HEI模糊搜索Groovy脚本
     
 </details>
 </details>
 <details>
 <summary>历史软件更新日志(点击展开/收起)</summary>
 <details>
-<summary>Release.1</summary>
+<summary>Release.1.0</summary>
     
-### Release.1
+### Release.1.0
 含1个α版本与2个β版本
 - 添加 语言文件 翻译支持
 - 添加 IndexFlatL2方法RAG检索
@@ -764,13 +765,8 @@ AI给我加了一堆BUG所以不发布
     - TQ1_SVD
     - Float12_E0M12
 - 添加 aiohttp fastembed 依赖
-</details>
-</details>
 
-### Release.1.6 Bata.4（进行中）
-依旧胡闹VSCode ZooCode DeepSeek LongCat Ornith Qwopus<br>
-GTNH引力太强了我跳不起来
-#### 程序更新日志
+### Release.1.6 Bata.4
 - 添加 量化方法
     - [PolarQ](https://ar5iv.labs.arxiv.org/html/2603.29078) 4-1 bit系列(4 3 2 1.6 1)
     - Anisotropic AVQ 叠加至 _SVD_LM
@@ -813,14 +809,13 @@ GTNH引力太强了我跳不起来
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 删除 INDEX_BASE_SQ配置项
 - 添加 token-calibrator 依赖
-#### 模块更新日志
-- 添加 HEAI: 基于向量索引的HEI模糊搜索Groovy脚本
+</details>
+</details>
 
 ### Release.1.6（等待中）
+#### 程序更新日志
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
-
-### 计划
-- 添加 翻译耗时预测器
+- 添加 内置ONNX大语言模型加载![](https://img.shields.io/badge/状态-等待中-blue)
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
