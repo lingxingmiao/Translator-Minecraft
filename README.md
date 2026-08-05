@@ -814,6 +814,8 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.6（进行中）
 #### 程序更新日志
+- 添加 翻译类型
+    - Alpaca(用于数据蒸馏)![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 内置ONNX大语言模型加载![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 通用翻译部分报错返回的日志文件不带后缀的问题
