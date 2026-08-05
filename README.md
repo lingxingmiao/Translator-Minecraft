@@ -818,6 +818,7 @@ AI给我加了一堆BUG所以不发布
     - Alpaca(用于数据蒸馏)![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 内置ONNX大语言模型加载![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 输出生成翻译的日志开关
 - 修复 通用翻译部分报错返回的日志文件不带后缀的问题
 - 修复 通用翻译部分报错会返回源文件的问题
 - 修复 有向量文件但设置0个索引导致的翻译缺失问题
