@@ -790,7 +790,7 @@ AI给我加了一堆BUG所以不发布
 - 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
 - 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
 - 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
-- 修改 批量翻译从JSON List改为HTML ```<tr></tr>```
+- 修改 批量翻译从JSON List改为HTML ```<rt></rt>```
 - 修改 TPM限速修改为基于学习估算方法+
 - 修改 嵌入模型请求与重排模型改为异步请求
 - 修复 跨实例/跨函数翻译会超过模型设定并发的问题
@@ -819,6 +819,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 通用翻译部分报错返回的日志文件不带后缀的问题
 - 修复 通用翻译部分报错会返回源文件的问题
 - 修复 有向量文件但设置0个索引导致的翻译缺失问题
+- 修复 单条翻译请求也会加```<rt>```标签的问题
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
