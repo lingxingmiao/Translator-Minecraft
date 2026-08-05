@@ -818,6 +818,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 内置ONNX大语言模型加载![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 通用翻译部分报错返回的日志文件不带后缀的问题
 - 修复 通用翻译部分报错会返回源文件的问题
+- 修复 有向量文件但设置0个索引导致的翻译缺失问题
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
