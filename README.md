@@ -787,7 +787,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译缓存多语言保存
 - 重构 翻译语言列表函数
 - 优化 精简提示词部分节省Token(大约一倍)
-- 优化 初始化Config架构管理,复杂度从O(2^n)下至O(1)
+- 优化 初始化Config架构管理,复杂度从O(2^n)降至O(1)
 - 修改 RAG注入位置至user字段 ```<rag-input></rag-input>```
 - 修改 上下文除了token模式以外将写到user字段 ```<context></context>```
 - 修改 批量翻译从JSON List改为HTML ```<rt></rt>```
@@ -819,6 +819,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 内置ONNX大语言模型加载![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 输出生成翻译的日志开关
+- 优化 保存JSON/LANG语言文件构建最终输出的世界复杂度从O(n^2)降至O(n)
 - 修复 通用翻译部分报错返回的日志文件不带后缀的问题
 - 修复 通用翻译部分报错会返回源文件的问题
 - 修复 有向量文件但设置0个索引导致的翻译缺失问题
