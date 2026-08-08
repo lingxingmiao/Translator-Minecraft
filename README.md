@@ -826,6 +826,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 有向量文件但设置0个索引导致的翻译缺失问题
 - 修复 单条翻译请求也会加```<rt>```标签的问题
 - 修复 LLM的TPM与RPM限缓存变量名拼错导致的报错
+- 添加 依赖 huggingface_hub llama-cpp-python
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
