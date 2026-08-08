@@ -817,7 +817,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译类型
     - Alpaca(用于数据蒸馏)![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
-- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载
 - 添加 输出生成翻译的日志开关
 - 优化 保存JSON/LANG语言文件构建最终输出的世界复杂度从O(n^2)降至O(n)
 - 优化 翻译语言列表主文本路径内存占用从O(8n)~O(4n)降至O(4n)~O(2n)
