@@ -815,7 +815,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6（进行中）
 #### 程序更新日志
 - 添加 翻译类型
-    - Alpaca(用于数据蒸馏)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 数据集(用于数据蒸馏)
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载
 - 添加 输出生成翻译的日志开关
