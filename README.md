@@ -51,15 +51,27 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 "*"表示强制启用推理链, 闭源不记入
 
 ### WMT24++ XCOMET-XXL
-- [XiaomiResearch/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 86.6分
+- [XiaomiResearch/MiLMMT-46-12B-v1.0](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v1.0) 87.9分
+- [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 86.4分
+- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 86.2分
+- [Google/translategemma-27b-it](https://huggingface.co/google/translategemma-27b-it) 86.1分
+- [XiaomiResearch/MiLMMT-46-12B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v0.1) 85.1分
+- [XiaomiResearch/MiLMMT-46-4B-v1.0](https://huggingface.co/xiaomi-research/MiLMMT-46-4B-v1.0) 85.9分
 - [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 85.7分
 - [Google/translategemma-12b-it](https://huggingface.co/google/translategemma-12b-it) 85.5分
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 85.3分
-- [XiaomiResearch/MiLMMT-46-4B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-4B-v0.1) 84.8分
+- [Tencent/Hunyuan-MT-7B](https://huggingface.co/tencent/Hunyuan-MT-7B) 84.5分
+- [XiaomiResearch/GemmaX2-28-9B-v0.2](https://huggingface.co/xiaomi-research/GemmaX2-28-9B-v0.2) 84.2分
+- [XiaomiResearch/MiLMMT-46-4B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-4B-v0.1) 83.3分
+- [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 82.6分
+- [XiaomiResearch/GemmaX2-28-2B-v0.2](https://huggingface.co/xiaomi-research/GemmaX2-28-2B-v0.2) 81.0分
+- [XiaomiResearch/GemmaX2-28-9B-v0.1](https://huggingface.co/xiaomi-research/GemmaX2-28-9B-v0.1) 79.2分
+- [XiaomiResearch/MiLMMT-46-1B-v1.0](https://huggingface.co/xiaomi-research/MiLMMT-46-1B-v1.0) 79.0分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 78.9分
 - [Qwen/Qwen3.5-122B-A10B](https://huggingface.co/Qwen/Qwen3.5-122B-A10B) 78.3分
 - [Qwen/Qwen3.5-27B](https://huggingface.co/Qwen/Qwen3.5-27B) 77.6分
-- [XiaomiResearch/MiLMMT-46-1B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-1B-v0.1) 77.3分
+- [XiaomiResearch/GemmaX2-28-2B-v0.1](https://huggingface.co/xiaomi-research/GemmaX2-28-2B-v0.1) 76.9分
+- [XiaomiResearch/MiLMMT-46-1B-v0.1](https://huggingface.co/xiaomi-research/MiLMMT-46-1B-v0.1) 76.1分
 - [Google/translategemma-4b-it](https://huggingface.co/google/translategemma-4b-it) 76.6分
 - [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 76.3分
 - [Qwen/Qwen3-235B-A22B](https://huggingface.co/Qwen/Qwen3-235B-A22B) 75.8分
