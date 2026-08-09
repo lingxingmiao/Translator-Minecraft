@@ -852,6 +852,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 Builder忘导入Module的问题
 - 修复 Module里的文本组件深度优先搜索里的Self.深度优先搜索忘加文本组件四个字的问题
 - 修复 持久化文件索引转GPU写成index而不是向量索引的问题
+- 修复 持久化管理器可能会直接覆盖现有数据的问题
 - 添加 依赖 huggingface_hub llama-cpp-python
 
 ### 编辑需要
