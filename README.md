@@ -846,7 +846,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 向量/翻译/Token学习器缓存退出时不会保存的问题
 - 修复 翻译缓存写入开关无效的问题
 - 修复 翻译缓存写入时遇到k=v的情况还会继续写入的问题
-- 添加 依赖 huggingface_hub llama-cpp-python diskcache
+- 添加 依赖 huggingface_hub llama-cpp-python
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
