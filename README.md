@@ -826,6 +826,9 @@ AI给我加了一堆BUG所以不发布
 </details>
 
 ### Release.1.6（进行中）
+#### 模块更新日志
+- IPV-S: 搜索爱笔思画中的图像![](https://img.shields.io/badge/状态-进行中-brightgreen)
+
 #### 程序更新日志
 - 添加 翻译类型
     - 数据集(用于数据蒸馏)
