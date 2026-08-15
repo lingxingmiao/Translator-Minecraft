@@ -832,6 +832,7 @@ AI给我加了一堆BUG所以不发布
 #### 程序更新日志
 - 添加 翻译类型
     - 数据集(用于数据蒸馏)
+    - TX Loader
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组
 - 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载
 - 添加 输出生成翻译的日志开关
