@@ -842,7 +842,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 翻译模组/光影保存语言文件的时候尝试解析输出语言代码如果后两位可以转换大小写则再保存一个语言文件(仅Linux)
 - 添加 1.6-1.10用zh_CN这样的大写语言文件支持
 - 添加 翻译缓存转换数据集
-- 添加 DictMini转换DPO数据集![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 DictMini转换DPO数据集
 - 添加 单实例LLM请求并发与串行控制![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 优化 保存JSON/LANG语言文件构建最终输出的世界复杂度从O(n^2)降至O(n)
 - 优化 翻译语言列表主文本路径内存占用从O(8n)~O(4n)降至O(4n)~O(2n)
