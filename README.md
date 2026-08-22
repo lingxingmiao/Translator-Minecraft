@@ -38,7 +38,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 ### 作者
 - [海盐青茫~](https://www.mcmod.cn/author/41532.html)(所有者, 程序)
-- [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序, 美术)
+- [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序)
     - DeepSeek V4 Flash Preview
     - DeepSeek V4 Flash 0731
     - DeepSeek V4 Pro Preview
@@ -51,6 +51,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [Xiaomi MiMo](https://www.mcmod.cn/author/41549.html)(程序)
     - MiMo V2.5
     - MiMo V2.5 Pro
+- [Ornith](https://huggingface.co/ornith-ai)(程序)
+    - Ornith 1.0 35B
+- [Jackrong](https://huggingface.co/Jackrong)(程序)
+    - Qwopus3.6 27B Coder
+    - Qwopus3.6 27B v2
+    - Qwopus3.6 35B A3B v1
 
 ### 使用实例(请先安装下面安装)
 ```python
