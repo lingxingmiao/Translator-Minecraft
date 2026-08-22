@@ -1,6 +1,13 @@
 # Translator Minecraft
-Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重构版本，相比原先版本添加了更多功能(其实只是一个框架, 我想加什么就加什么)<br>
-此程序提供API服务为以下Minecraft附加组件提供便捷的翻译功能
+> **面向 Minecraft 生态的下一代 AI 驱动自动化翻译与本地化工程框架。**<br>
+> 基于大语言模型与高级检索增强生成技术，重塑游戏完整汉化工作流。
+
+## 概述
+Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的全面重构版本；<br>
+它不再是一个简单的翻译程序，而是一个高扩展性，高并发，支持极限向量压缩的翻译引擎。<br>
+我希望借此打破语言壁垒，降低Minecraft生态汉化门槛，不再为繁杂的翻译流程而束缚。
+
+### 支持的内容
 - [整合包](https://www.mcmod.cn/modpack.html)
 - 光影包
 - 资源包
@@ -23,34 +30,151 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - KubeJS
 - Lavender手册(没什么模组用暂时就不做了)
 
-您还可以导入 [DictMini.json](https://github.com/CFPATools/i18n-dict) 来提高翻译质量，也可以使用这个文件来导出数据集来微调大语言模型<br>
-您可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(别怕, 尽可能表达好就可以)<br>
-
-### 画廊 (双击Ctrl放大)
-| <img width="1920" height="1080" alt="9886e91fd0eb8eb3a605e7d2c8e802c5" src="https://github.com/user-attachments/assets/f26b2877-49dd-4a9a-a2f9-612aa563abe6" /> | <img width="1920" height="1080" alt="e30bc972ed445694c1cec45840e46281" src="https://github.com/user-attachments/assets/cced0c18-aa21-426f-bd23-9d1d60784677" /> | <img width="1920" height="1080" alt="ffa09f4b557e0fca9c74f89b8d630853" src="https://github.com/user-attachments/assets/26417c40-398c-4e6c-9500-caa2c349fcaf" /> |
-| - | - | - |
+你可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(尽可能表达好就可以www)<br>
 
 ### 支持的项目
 - [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
 - [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
 
-### 推荐配置
-- 中央处理器(程序占用)：CPU-Z多核3000分以上的64位处理器
-- 计算加速器(可选)：NVIDIA支持CUDA Toolkit 12.8的Volta以上架构 推荐16GB以上内存
-- 内存(程序占用)：最低4GB 推荐8GB
+### 作者
+- [海盐青茫~](https://www.mcmod.cn/author/41532.html)(所有者, 程序)
+- [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序, 美术)
+    - DeepSeek V4 Flash Preview
+    - DeepSeek V4 Flash 0731
+    - DeepSeek V4 Pro Preview
+- [Qwen](https://www.mcmod.cn/author/38153.html)(程序)
+    - Qwen3 Max
+    - Qwen3.6 Plus
+    - Qwen3.6 Max
+    - Qwen3.7 Plus
+    - Qwen3.7 Max
+- [Xiaomi MiMo](https://www.mcmod.cn/author/41549.html)(程序)
+    - MiMo V2.5
+    - MiMo V2.5 Pro
 
-### API
-公益API公开测试 https://api.tanslamc.top sk-123456 该API禁止商用/转发, 可自用, 自定义API请求请查看API与Config文件<br>
-公益API当前使用模型: [DeepSeek V4 Flash](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+### 使用实例(请先安装下面安装)
+```python
+from TranslatorLib import Config, Translator, Tool # 还有一堆库统一在TranslatorLib管理
 
-## 推荐模型翻译质量排名
+配置 = { # TranslatorConfig查看所有可用配置
+    "LLM_API_KWARGS": {"chat_template_kwargs": {"enable_thinking": True}} # 默认模型使用这个启用思考
+}
+配置管理器 = Config(配置) # 也可以直接写 Config() 不传参
+# 可继续堆叠临时版
+配置管理器临时 = 配置管理器.get_config_temporary({"LLM_TEMP": 1.0}) # 可不传参
+配置管理器临时临时 = 配置管理器临时.get_config_temporary({"LLM_TEMP": 1.1})
+配置管理器临时临时临时 = 配置管理器临时临时.get_config_temporary({"LLM_TEMP": 1.2})
+
+# 通用写法
+翻译器实例 = Translator(配置管理器)
+# 临时版
+翻译器实例临时 = 配置管理器.get_translator_temporary({"LLM_TEMP": 1.0}) # 可不传参
+# 配置管理器缓存版
+翻译器实例配置管理器 = 配置管理器.get_translator() # 不可传参 使用后配置管理器缓存翻译器实例
+翻译器实例配置管理器复用 = 配置管理器.Translator # 复用上面创建的
+
+# 翻译一个文件
+翻译器实例.翻译通用文件("Lang/zh_cn.json") # 可传游戏实例文件夹或文件 没法网络获取只能翻译一个本地的
+
+# 更多工具
+工具实例 = Tool(配置管理器) # 实际是 配置管理器.get_translator() 获取与复用
+
+# 分离语言文件
+工具实例.分离语言文件更新(file0="") # file1是参考文件 可不传
+
+# 合并语言文件
+工具实例.合并语言文件更新(file0="", notlang_file="") # file0是原模组/语言文件 notlang_file是要合并的语言文件或者审查文件
+```
+
+### 环境设置/API端点
+<details>
+<summary>点击展开/收起(环境设置)</summary>
+
+```powershell
+# 创建环境
+conda create -n Translator_Minecraft python=3.12 -y
+# Python3.15时懒加载库可用
+# conda create -n Translator_Minecraft python=3.15 -y
+# 激活环境
+conda activate Translator_Minecraft
+
+#          向量处理     网络请求   进度显示与艺术 搜索文本
+pip install numpy  requests aiohttp rich tqdm    faiss
+# 内置语言模型加载（可选）
+pip install huggingface_hub
+# 1处理器版本 2英伟达显卡版本 3自己编译
+pip install llama-cpp-python --extra-index-url https://parisneo.github.io/llama-cpp-python-wheels/whl/cpu/
+#pip install llama-cpp-python --extra-index-url https://parisneo.github.io/llama-cpp-python-wheels/whl/cu121/
+#pip install llama-cpp-python
+
+# API服务器（可选）
+pip install uvicorn fastapi slowapi
+
+# 性能优化（可选）
+pip install ujson
+
+# 未知伤亡DLL模组解析（可选）
+pip install dnfile pythonnet
+
+# 内置向量生成（可选）
+# FastEmbed （强烈推荐用这个）
+pip install fastembed # pip install fastembed-gpu 需要CuDNN9.0x
+# SentenceTransformer ONNX
+pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transformers[onnx-gpu]"
+# SentenceTransformer OpenVINO 需要英特尔处理器
+pip install -U "sentence-transformers[openvino]"
+# SentenceTransformer 修改GPU 推荐自己再安装一个FA2
+pip install einops
+pip uninstall torch
+pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
+
+# 向量处理加速（可选）
+conda install -c conda-forge cupy cuda-version=12.4
+pip install numba # CPU 使用IndexGSQ需要安装
+
+# 退出环境
+conda deactivate
+
+# 删除环境
+conda env remove -n Translator_Minecraft
+```
+</details>
+<details>
+<summary>点击展开/收起(API端点)</summary>
+    
+#### API
+- POST /translate 通用翻译
+- POST /separate 分离语言文件
+- POST /merge 合并语言文件
+</details>
+
+### 系统需求
+#### 最低配置
+- 需要 64 位处理器和操作系统
+- 处理器：Intel Core i3-4130 / AMD Ryzen 5 1300
+- 内存：8GB RAM
+- 存储空间: 需要 500 MB 可用空间
+#### 推荐配置
+- 需要 64 位处理器和操作系统
+- 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
+- 内存: 24GB RAM
+- 显卡：NVIDIA GeForce RTX 3060 12 GB
+- 存储空间: 需要 2 GB 可用空间
+#### 服务器配置
+- 需要 64 位处理器和操作系统
+- 处理器: Intel Xeon E-2468
+- 内存: 96GB RAM
+- 显卡: NVIDIA A100 PCIe 40 GB
+- 存储空间: 需要 12 GB 可用空间
+
+### 推荐模型翻译质量排名
 <details>
 <summary>点击展开/收起</summary>
 警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
 建议：计算加速器推荐使用TCC模式来获得更快的速度！<br>
 "*"表示强制启用推理链, 闭源不记入
 
-### WMT24++ XCOMET-XXL
+#### WMT24++ XCOMET-XXL
 - [XiaomiResearch/MiLMMT-46-12B-v1.0](https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v1.0) 87.9分
 - [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 86.4分
 - [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 86.2分
@@ -82,7 +206,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) 66.6分
 - [Qwen/Qwen3-4B-Thinking-2507](https://huggingface.co/Qwen/Qwen3-4B-Thinking-2507) 58.9分*
 - [Qwen/Qwen3-Next-80B-A3B-Thinking](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking) 57.4分*
-### WMT25 XCOMET-XXL
+#### WMT25 XCOMET-XXL
 - [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 73.6分
 - [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 69.4分
@@ -92,25 +216,16 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 60.0分
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
 - [DeepSeek/DeepSeek-V3.2](https://huggingface.co/deepseek-ai/DeepSeek-V3.2) 50.1分
-### 未知成绩
-- [Qwen/Qwen3-Next-80B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 预计 WMT24++ XCOMET-XXL 54±2分
-- [Qwen/Qwen3-30B-A3B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) 预计 WMT24++ XCOMET-XXL 65±2分
-- [Qwen/Qwen2.5-14B-Instruct-1M](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M)
-### 不可用
-- [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
-- [LiquidAI/LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B)
-- [MoonshotAI/Kimi-VL-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)
-- [Z.ai/GLM-4.7-Flash](https://huggingface.co/zai-org/GLM-4.7-Flash)
 </details>
 
-## 量化类型
+### 量化类型
 <details>
 <summary>点击展开/收起</summary>
 该区域/技术由AI管理
     
 RMSE不代表Recall@10
     
-### 类型
+#### 类型
 - _0   表示使用了 什么都没用
 - _K   表示使用了 常规块缩放
 - _M   表示使用了 中心均值化
@@ -120,7 +235,7 @@ RMSE不代表Recall@10
 - _LM  表示使用了 Lloyd-Max
 - _SVD 表示使用了 奇异值分解
 
-### 存储
+#### 存储
 | 量化方法 | B=128 | B=64 | B=32 | 公式 |
 |---------|-------|------|------|------|
 | **TQ1_SVD_LM** | 1.125 | 1.250 | 2.500 | 1 + 16/B + 2D(D+2K)/N |
@@ -171,7 +286,7 @@ RMSE不代表Recall@10
 > - K = 码本条目数（SVD_LM 用）
 > - SVD_LM 摊销 `2D(D+2K)/N`；K_M 加 `16/D`≈0.042
 
-### 使用 nomic-ai/nomic-embed-text-v1.5
+#### 使用 nomic-ai/nomic-embed-text-v1.5
 | RMSE/余弦相似度损失 | SentenceTransformer | SentenceTransformer | Llama.cpp | Llama.cpp |
 | - | - | - | - | - |
 | 范围 | [-6.3716235, 5.829162] | [-6.3716235, 5.829162] | [-0.27004412, 0.24617423] | [-0.27004412, 0.24617423] |
@@ -187,7 +302,7 @@ RMSE不代表Recall@10
 | BFloat16 | 0.0026/0.0000 |   | 0.0001/0.0000 |
 | Float8_E4M3 | 0.0405/0.0004 |   | 0.0028/0.0020 |
 
-### 使用 BAAI/bge-large-en
+#### 使用 BAAI/bge-large-en
 | R@2/R@3/R@5/R@10 | 配置 1 | 配置 2 | 配置 3 | 配置 4 | 配置 5 | 配置 6 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | 范围 | Min.-0.1631309 | Max.0.3503784 |  |  |  |  |
@@ -220,7 +335,7 @@ RMSE不代表Recall@10
 | Float8_E4M3 | 97.6%/97.1%/96.1%/95.9% | 97.6%/97.1%/96.1%/95.9% | 97.6%/97.1%/96.1%/95.9% | 97.6%/97.1%/96.1%/95.9% | 97.6%/97.1%/96.1%/95.9% | 97.6%/97.1%/96.1%/95.9% |
 | Float8_E0M7 | 98.7%/98.4%/97.6%/97.6% | 98.7%/98.4%/97.6%/97.6% | 98.7%/98.4%/97.6%/97.6% | 98.7%/98.4%/97.6%/97.6% | 98.7%/98.4%/97.6%/97.6% | 98.7%/98.4%/97.6%/97.6% |
 
-### 使用 BAAI/bge-small-en(向量重排128)
+#### 使用 BAAI/bge-small-en(向量重排128)
 | R@2/3/5/10/50/100/500/1000 | 配置 1 | 配置 2 | 配置 3 | 配置 4 | 配置 5 | 配置 6 | 配置 7 | 配置 8 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 范围 | Min.-0.4126186 | Max.0.5898929 | | | | | |
@@ -272,52 +387,6 @@ RMSE不代表Recall@10
 | **Float8_E4M3** | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB | 97.9/97.0/96.4/95.9/95.8/95.8/95.7/95.7/140.4MB |
 | **Float8_E0M7** | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB | 98.7/98.3/97.8/97.5/97.5/97.5/97.5/97.5/140.4MB |
 | **Float8_Max** | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB |
-
-
-
-</details>
-
-## 编译/环境设置
-<details>
-<summary>点击展开/收起</summary>
-
-```powershell
-# 创建环境
-conda create -n Translator_Minecraft python=3.12 -y
-# Python3.15时懒加载库可用
-# conda create -n Translator_Minecraft python=3.15 -y
-# 激活环境
-conda activate Translator_Minecraft
-#          向量处理     网络请求   进度显示与艺术 搜索文本
-pip install numpy  requests aiohttp rich tqdm    faiss
-# API服务器（可选）
-pip install uvicorn fastapi slowapi
-# 性能优化（可选）
-pip install ujson
-# 未知伤亡DLL模组解析（可选）
-pip install dnfile pythonnet
-# 内置向量生成（可选）
-# FastEmbed （强烈推荐用这个）
-pip install fastembed # pip install fastembed-gpu 需要CuDNN9.0x
-# SentenceTransformer ONNX
-pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transformers[onnx-gpu]"
-# SentenceTransformer OpenVINO 需要英特尔处理器
-pip install -U "sentence-transformers[openvino]"
-# SentenceTransformer 修改GPU 推荐自己再安装一个FA2
-pip install einops
-pip uninstall torch
-pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
-# 向量处理加速（可选）
-conda install -c conda-forge cupy cuda-version=12.8 # GPU 要打包别安
-pip install numba # CPU 使用IndexGSQ需要安装
-# 打包exe 没有做torch兼容 手动打包cupy不可用
-pip install nuitka
-nuitka --standalone --jobs=40 --include-package=rich --include-package=uvicorn TranslatorAPI.py
-# 退出环境
-conda deactivate
-# 删除环境
-conda env remove -n Translator_Minecraft
-```
 </details>
 
 ## 更新日志
@@ -872,7 +941,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 0翻译项也会翻译前总结和创建TQDM的问题
 - 修复 合并翻译语言文件会循环打包导致内存和硬盘爆炸的问题
 - 修复 MMT.txt格式保存时出现的一个转义错误
-- 添加 依赖 huggingface_hub llama-cpp-python+
+- 添加 依赖 huggingface_hub llama-cpp-python
 
 ### Release.1.7 Bata.1（未开始）
 - 添加 BM25的RAG算法
