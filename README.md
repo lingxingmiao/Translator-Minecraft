@@ -875,6 +875,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 依赖 huggingface_hub llama-cpp-python+
 
 ### Release.1.7 Bata.1（未开始）
+- 添加 BM25的RAG算法
 - 修改 翻译LLM任务添加为并行
 
 ### 编辑需要
