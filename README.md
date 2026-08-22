@@ -825,7 +825,7 @@ AI给我加了一堆BUG所以不发布
 </details>
 </details>
 
-### Release.1.6 Bata.5（进行中）
+### Release.1.6（最后的准备）
 #### 模块更新日志
 - IPVS: 搜索爱笔思画中的图像
 
@@ -834,7 +834,7 @@ AI给我加了一堆BUG所以不发布
     - 数据集(用于数据蒸馏)
     - TX Loader
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组
-- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载
+- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载(默认bloomer010/Ling-3.0-tiny-GGUF/Ling-3.0-tiny-Q3_K_S.gguf)
 - 添加 输出生成翻译的日志开关
 - 添加 生成翻译实时添加进翻译缓存
 - 添加 一键安装的用户界面(致敬GUI加了删删了加)
@@ -843,7 +843,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 1.6-1.10用zh_CN这样的大写语言文件支持
 - 添加 翻译缓存转换数据集
 - 添加 DictMini转换DPO数据集
-- 添加 单实例LLM请求并发与串行控制![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 单实例LLM请求并发与串行控制
 - 优化 保存JSON/LANG语言文件构建最终输出的世界复杂度从O(n^2)降至O(n)
 - 优化 翻译语言列表主文本路径内存占用从O(8n)~O(4n)降至O(4n)~O(2n)
 - 修改 翻译审查文件格式改为```{键: [原文, 译文], ...}```
@@ -872,7 +872,10 @@ AI给我加了一堆BUG所以不发布
 - 修复 0翻译项也会翻译前总结和创建TQDM的问题
 - 修复 合并翻译语言文件会循环打包导致内存和硬盘爆炸的问题
 - 修复 MMT.txt格式保存时出现的一个转义错误
-- 添加 依赖 huggingface_hub llama-cpp-python
+- 添加 依赖 huggingface_hub llama-cpp-python+
+
+### Release.1.7 Bata.1（未开始）
+- 修改 翻译LLM任务添加为并行
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
