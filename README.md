@@ -24,6 +24,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
 - [未知伤亡](https://store.steampowered.com/app/4576490/)dll模组(非Minecraft)(可能损坏模组)
 - [模组翻译](https://www.mcmod.cn/class/27911.html)
+- [TX Loader](https://www.mcmod.cn/class/9677.html)
 - SFT数据集(非游戏,用于蒸馏)
 
 后续计划支持以下组件(可能是大饼)
