@@ -157,14 +157,14 @@ conda env remove -n Translator_Minecraft
 ### 系统需求
 #### 最低配置
 - 需要 64 位处理器和操作系统
-- 处理器：Intel Core i3-4130 / AMD Ryzen 5 1300
-- 内存：8GB RAM
+- 处理器: Intel Core i3-4130 / AMD Ryzen 5 1300
+- 内存: 8GB RAM
 - 存储空间: 需要 500 MB 可用空间
 #### 推荐配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
 - 内存: 24GB RAM
-- 显卡：NVIDIA GeForce RTX 3060 12 GB
+- 显卡: NVIDIA GeForce RTX 3060 12 GB
 - 存储空间: 需要 2 GB 可用空间
 #### 服务器配置
 - 需要 64 位处理器和操作系统
