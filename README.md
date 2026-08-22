@@ -1,23 +1,23 @@
 # Translator Minecraft
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的重构版本，相比原先版本添加了更多功能(其实只是一个框架, 我想加什么就加什么)<br>
 此程序提供API服务为以下Minecraft附加组件提供便捷的翻译功能
-- 整合包
+- [整合包](https://www.mcmod.cn/modpack.html)
 - 光影包
 - 资源包
-- 模组
-- FTB任务
-- 更好的任务
-- 核电工艺重制版附加包
-- 数据包(含起源)
-- 帕秋莉手册
-- CraftTweaker(displayName/tooltip)
-- 自定义主菜单
-- 精致菜单
-- 困难任务
-- 未知伤亡语言文件(非Minecraft)
-- 未知伤亡dll模组(非Minecraft)
+- [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime)
+- [模组](https://www.mcmod.cn/modlist.html?sort=createtime)
+- [FTB任务](https://www.mcmod.cn/class/1423.html)
+- [更好的任务](https://www.mcmod.cn/class/944.html)
+- [核电工艺重制版](https://www.mcmod.cn/class/2483.html)附加包
+- [帕秋莉手册](https://www.mcmod.cn/class/1388.html)
+- [CraftTweaker](https://www.mcmod.cn/class/669.html)(displayName/tooltip)
+- [自定义主菜单](https://www.mcmod.cn/class/1030.html)
+- [精致菜单](https://www.mcmod.cn/class/4053.html)
+- [困难任务](https://www.mcmod.cn/class/478.html)
+- [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
+- [未知伤亡](https://store.steampowered.com/app/4576490/)dll模组(非Minecraft)(可能损坏模组)
 - [模组翻译](https://www.mcmod.cn/class/27911.html)
-- SFT数据集(非游戏)
+- SFT数据集(非游戏,用于蒸馏)
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
