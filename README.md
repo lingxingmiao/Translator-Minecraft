@@ -106,7 +106,7 @@ conda create -n Translator_Minecraft python=3.12 -y
 conda activate Translator_Minecraft
 
 #          向量处理     网络请求   进度显示与艺术 搜索文本
-pip install numpy  requests aiohttp rich tqdm    faiss
+pip install numpy  requests aiohttp rich tqdm  faiss-cpu
 # 内置语言模型加载（可选）
 pip install huggingface_hub
 # 1处理器版本 2英伟达显卡版本 3自己编译
@@ -119,6 +119,12 @@ pip install uvicorn fastapi slowapi
 
 # 性能优化（可选）
 pip install ujson
+
+# R1.6用户界面（可选）
+pip install ctk
+
+# TPM滑动窗口估算器（可选）
+pip install token-calibrator
 
 # 未知伤亡DLL模组解析（可选）
 pip install dnfile pythonnet
