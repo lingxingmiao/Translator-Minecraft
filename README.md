@@ -121,7 +121,7 @@ pip install uvicorn fastapi slowapi
 pip install ujson
 
 # R1.6用户界面（可选）
-pip install ctk
+pip install customtkinter tkinterdnd2
 
 # TPM滑动窗口估算器（可选）
 pip install token-calibrator
