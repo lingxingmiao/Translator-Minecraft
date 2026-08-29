@@ -110,8 +110,9 @@ pip install numpy  requests aiohttp rich tqdm  faiss-cpu
 # 内置语言模型加载（可选）
 pip install huggingface_hub
 # 1处理器版本 2英伟达显卡版本 3自己编译
-pip install llama-cpp-python --extra-index-url https://parisneo.github.io/llama-cpp-python-wheels/whl/cpu/
-#pip install llama-cpp-python --extra-index-url https://parisneo.github.io/llama-cpp-python-wheels/whl/cu121/
+pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu/
+#pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/vulkan/
+#pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124/
 #pip install llama-cpp-python
 
 # API服务器（可选）
@@ -164,15 +165,16 @@ conda env remove -n Translator_Minecraft
 ### 系统需求
 #### 最低配置
 - 需要 64 位处理器和操作系统
-- 处理器: Intel Core i3-4130 / AMD Ryzen 3 1300
+- 处理器: 有 L3 缓存与 AVX2 指令集
 - 内存: 8GB RAM
-- 存储空间: 需要 500 MB 可用空间
+- 显卡: 支持 Vulkan 1.2 显存大于等于 4GB
+- 存储空间: 需要 4 GB 可用空间
 #### 推荐配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
 - 内存: 24GB RAM
 - 显卡: NVIDIA GeForce RTX 3060 12 GB
-- 存储空间: 需要 2 GB 可用空间
+- 存储空间: 需要 4 GB 可用空间
 #### 服务器配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Xeon E-2468
