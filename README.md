@@ -918,10 +918,9 @@ AI给我加了一堆BUG所以不发布
     - 数据集(用于数据蒸馏)
     - TX Loader
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组
-- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载(默认bloomer010/Ling-3.0-tiny-GGUF/Ling-3.0-tiny-Q3_K_S.gguf)
+- 添加 内置[llama.cpp](https://github.com/ggml-org/llama.cpp)语言模型加载(默认Q1ngMang/Ling-3.0-tiny-sub3bit-PPLp10-GGUF/Ling-3.0-tiny-01.gguf)
 - 添加 输出生成翻译的日志开关
 - 添加 生成翻译实时添加进翻译缓存
-- 添加 一键安装的用户界面(致敬GUI加了删删了加)
 - 添加 翻译输入纯罗马数字与纯GT电压等级与纯数字剔除
 - 添加 翻译模组/光影保存语言文件的时候尝试解析输出语言代码如果后两位可以转换大小写则再保存一个语言文件(仅Linux)
 - 添加 1.6-1.10用zh_CN这样的大写语言文件支持
