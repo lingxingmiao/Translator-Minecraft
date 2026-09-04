@@ -100,7 +100,7 @@ from TranslatorLib import Config, Translator, Tool # 还有一堆库统一在Tra
 ```powershell
 # 创建环境
 conda create -n Translator_Minecraft python=3.12 -y
-# Python3.15时懒加载库可用
+# Python3.15时懒加载库可用 3.15于2026年10月1日发布
 # conda create -n Translator_Minecraft python=3.15 -y
 # 激活环境
 conda activate Translator_Minecraft
@@ -109,7 +109,7 @@ conda activate Translator_Minecraft
 pip install numpy  requests aiohttp rich tqdm  faiss-cpu
 # 内置语言模型加载（可选）
 pip install huggingface_hub
-# 1处理器版本 2Vulkan1.2 2英伟达显卡版本 3AMD显卡版本
+# 1处理器版本 2Vulkan1.2 3英伟达显卡版本 4AMD显卡版本
 pip install -U xllamacpp
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/vulkan
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/cu128
@@ -121,9 +121,6 @@ pip install uvicorn fastapi slowapi
 # 性能优化（可选）
 pip install ujson
 
-# R1.6用户界面（可选）
-pip install customtkinter tkinterdnd2
-
 # TPM滑动窗口估算器（可选）
 pip install token-calibrator
 
@@ -131,20 +128,24 @@ pip install token-calibrator
 pip install dnfile pythonnet
 
 # 内置向量生成（可选）
-# FastEmbed （强烈推荐用这个）
+## FastEmbed （强烈推荐用这个）
 pip install fastembed # pip install fastembed-gpu 需要CuDNN9.0x
-# SentenceTransformer ONNX
-pip install -U "sentence-transformers[onnx]" # pip install -U "sentence-transformers[onnx-gpu]"
-# SentenceTransformer OpenVINO 需要英特尔处理器
+## SentenceTransformer ONNX 上为处理器版本 下为CUDA版本
+pip install -U "sentence-transformers[onnx]"
+#pip install -U "sentence-transformers[onnx-gpu]"
+## SentenceTransformer OpenVINO 需要英特尔处理器
 pip install -U "sentence-transformers[openvino]"
-# SentenceTransformer 修改GPU 推荐自己再安装一个FA2
+## SentenceTransformer 修改GPU 推荐再安装一个FA2
 pip install einops
 pip uninstall torch
 pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheels/cu128
+#pip install flash-attn --no-build-isolation
 
 # 向量处理加速（可选）
+## 需要英伟达显卡 与 numba 一同安装自动禁用 numba
 conda install -c conda-forge cupy cuda-version=12.4
-pip install numba # CPU 使用IndexGSQ需要安装
+## 与 cupy 一同安装自动禁用 numba，使用IndexGSQ需要安装，默认兼容最好的版本
+pip install numba
 
 # 退出环境
 conda deactivate
