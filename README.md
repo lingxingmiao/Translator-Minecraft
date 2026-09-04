@@ -413,6 +413,9 @@ RMSE不代表Recall@10
 
 ### Release.1.6 Bata.4
 - [HEAI](https://www.mcmod.cn/post/6554.html): 基于向量索引的HEI模糊搜索Groovy脚本
+
+### Release.1.6 Bata.5
+- IPVS: 搜索爱笔思画中的图像
     
 </details>
 </details>
@@ -906,14 +909,8 @@ AI给我加了一堆BUG所以不发布
 - 删除 除动态路由以外的所有翻译LLM请求路由
 - 删除 INDEX_BASE_SQ配置项
 - 添加 token-calibrator 依赖
-</details>
-</details>
 
-### Release.1.6（最后的准备）
-#### 模块更新日志
-- IPVS: 搜索爱笔思画中的图像
-
-#### 程序更新日志
+#### Release.1.6 Bata.5
 - 添加 翻译类型
     - 数据集(用于数据蒸馏)
     - TX Loader
@@ -958,9 +955,12 @@ AI给我加了一堆BUG所以不发布
 - 修复 合并翻译语言文件会循环打包导致内存和硬盘爆炸的问题
 - 修复 MMT.txt格式保存时出现的一个转义错误
 - 修复 Cpmfig初始化PolarQ量化超长预计算阻塞的问题
+- 修复 张量链分解没法工作的问题
 - 添加 依赖 huggingface_hub xllamacpp
+</details>
+</details>
 
-### Release.1.7 Bata.1（未开始）
+### Release.1.6（未开始）
 - 添加 BM25的RAG算法
 - 修改 翻译LLM任务添加为并行
 
