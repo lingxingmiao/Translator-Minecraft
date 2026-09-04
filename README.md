@@ -109,11 +109,11 @@ conda activate Translator_Minecraft
 pip install numpy  requests aiohttp rich tqdm  faiss-cpu
 # 内置语言模型加载（可选）
 pip install huggingface_hub
-# 1处理器版本 2英伟达显卡版本 3自己编译
-pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu/
-#pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/vulkan/
-#pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124/
-#pip install llama-cpp-python
+# 1处理器版本 2Vulkan1.2 2英伟达显卡版本 3AMD显卡版本
+pip install -U xllamacpp
+#pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/vulkan
+#pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/cu128
+#pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/rocm-6.4.1
 
 # API服务器（可选）
 pip install uvicorn fastapi slowapi
@@ -957,7 +957,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 0翻译项也会翻译前总结和创建TQDM的问题
 - 修复 合并翻译语言文件会循环打包导致内存和硬盘爆炸的问题
 - 修复 MMT.txt格式保存时出现的一个转义错误
-- 添加 依赖 huggingface_hub llama-cpp-python
+- 修复 Cpmfig初始化PolarQ量化超长预计算阻塞的问题
+- 添加 依赖 huggingface_hub xllamacpp
 
 ### Release.1.7 Bata.1（未开始）
 - 添加 BM25的RAG算法
