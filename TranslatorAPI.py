@@ -117,6 +117,7 @@ class 持久化状态字典(Dict[str, Any]):
     cleanup_interval=APIConfig["api"]["task_states_cleanup_interval"]
 )
 文件哈希值 = {}
+文件哈希锁 = threading.Lock()
 
 def 设置时间():
     时间 = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + f"{int((time.time() % 1) * 10000):04d}"
@@ -218,11 +219,12 @@ def 清理任务缓存(task_id: str):
         del 任务状态字典[task_id]
         
 def 剔除任务中重复文件(task_id: str, sha: str):
-    if sha in 文件哈希值.values():
-        return True
-    else:
-        文件哈希值[task_id] = sha
-        return False
+    with 文件哈希锁:
+        if sha in 文件哈希值.values():
+            return True
+        else:
+            文件哈希值[task_id] = sha
+            return False
 def 解析字符串字典(字符串: str = Form(None)) -> dict:
     if 字符串 is None:
         return {}

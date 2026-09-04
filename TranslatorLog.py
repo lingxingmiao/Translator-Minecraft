@@ -1,5 +1,7 @@
 from TranslatorLib import (queue, Path, logging, QueueHandler, QueueListener, re, FileHandler, threading, time, atexit,
                            DEFAULT_CONFIG, Config)
+logging.addLevelName(logging.CRITICAL, 'FATAL')
+logging.addLevelName(logging.WARNING, 'WARN')
 class NoRotateHandler(FileHandler):
     def __init__(self, filename, mode='a', encoding=None, delay=False, flush_interval=5.0):
         super().__init__(filename, mode, encoding, delay)
@@ -60,7 +62,7 @@ class Log:
         Self.日志管理器.addHandler(队列处理器)
         日志文件 = Path(f"{Self.Config.LOGS_FILE_PATH}/{Self.Config.LOGS_FILE_NAME}.log").resolve()
         日志文件.parent.mkdir(parents=True, exist_ok=True)
-        格式化器 = logging.Formatter(fmt='[%(asctime)s][%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        格式化器 = logging.Formatter(fmt='[%(asctime)s] [%(levelname)s]: %(message)s', datefmt='%H:%M:%S')
         刷新间隔 = getattr(Self.Config, 'LOGS_FLUSH_INTERVAL', 5.0)
         文件处理器 = NoRotateHandler(str(日志文件), encoding='utf-8', mode='a', flush_interval=刷新间隔)
         文件处理器.setFormatter(格式化器)
@@ -98,7 +100,6 @@ class Log:
             Self.写入日志("log.module.logs.encoding.warning", info_level=1)
             return content
     def 关闭(Self):
-        """关闭队列监听器与文件处理器，释放文件句柄与后台线程，并从 logging 注册表移除本实例 logger"""
         if getattr(Self, "_队列监听器", None) is not None:
             try:
                 Self._队列监听器.stop()

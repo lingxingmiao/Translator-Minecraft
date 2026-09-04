@@ -319,6 +319,7 @@ class Quantization:
     def __init__(Self, App: Config):
         Self.Config = App.Config
         Self.日志 = App.日志
+        Self.Lang = App.Lang
         Self.tqdm = App.RichTqdm
         Self.Index = App.Index
         Self.拼接键 = ["Vector"]
@@ -363,7 +364,6 @@ class Quantization:
                 加速解包12(numpy.zeros(6, dtype=numpy.uint8), 4)
             except Exception:
                 Self.Numba加速 = False
-        Self._预计算PolarQuant质心()
         Self.编码映射 = {
             "Q8_K_M": lambda Self, 数组: Self.F32编码Q8_K_M(数组),
             "Q6_K_M": lambda Self, 数组: Self.F32编码Q6_K_M(数组),
@@ -988,6 +988,7 @@ class Quantization:
 #====================================================================================================PolarQuant量化====================================================================================================#
     def _PolarQuant编码(Self, 数组, 聚类数):
         # 参考: PolarQuant: Optimal Gaussian Weight Quantization via Hadamard Rotation for LLM Compression"""
+        Self._预计算PolarQuant质心()
         块大小 = int(Self.Config.VEC_QUANTIZATION_BLOCK_SIZE)
         数组 = np.ascontiguousarray(np.asarray(数组), dtype=np.float32)
         形状 = 数组.shape; 行数, 维度 = 形状
@@ -1561,31 +1562,44 @@ class Quantization:
             prod = 2 ** k
             if prod < d:
                 TT形状 = [d // prod] + TT形状
+                prod = int(np.prod(TT形状))  # 修正: 重新计算实际乘积
         else:
             prod = int(np.prod(TT形状))
         if prod != d:
-            raise ValueError(f"TT形状乘积 {prod} != 维度 {d}")
+            raise ValueError(Self.Lang("log.core.quantization.tt.shape.mismatch", prod=prod, dim=d))
         均值 = np.mean(数据, axis=0, dtype=np.float32)
         中心数据 = 数据 - 均值
         k = len(TT形状)
-        累积核心 = [np.zeros((1, TT形状[0], TT秩), dtype=np.float32) for _ in range(k)]
+        累积核心 = []
+        for i in range(k):
+            if i == 0:
+                累积核心.append(np.zeros((1, TT形状[0], TT秩), dtype=np.float64))
+            elif i < k - 1:
+                累积核心.append(np.zeros((TT秩, TT形状[i], TT秩), dtype=np.float64))
+            else:
+                累积核心.append(np.zeros((TT秩, TT形状[k-1], 1), dtype=np.float64))
         采样数 = min(n, 5000)
         采样索引 = np.random.choice(n, 采样数, replace=False) if n > 采样数 else np.arange(n)
         for idx in 采样索引:
             向量 = 中心数据[idx]
             张量 = 向量.reshape(TT形状)
-            残差 = 张量.copy()
+            残差 = 张量.astype(np.float64).copy()
             秩左 = 1
             for i in range(k - 1):
                 展平 = 残差.reshape(秩左 * TT形状[i], -1)
-                U, S, Vt = np.linalg.svd(展平.astype(np.float64), full_matrices=False)
+                U, S, Vt = np.linalg.svd(展平, full_matrices=False)
                 截断秩 = min(TT秩, len(S))
-                U = U[:, :截断秩].astype(np.float32)
+                U = U[:, :截断秩]
+                # 符号对齐: 保证 U 第一列主方向一致, 防止平均时正负抵消
+                if 累积核心[i].any() and U.size > 0:
+                    if np.sum(累积核心[i].ravel()[:min(累积核心[i].size, U.size)] * U.ravel()[:min(累积核心[i].size, U.size)]) < 0:
+                        U = -U; Vt = -Vt
                 核心 = U.reshape(秩左, TT形状[i], 截断秩)
-                累积核心[i] += 核心 / 采样数
+                累积核心[i] += 核心
                 秩左 = 截断秩
                 残差 = (np.diag(S[:截断秩]) @ Vt[:截断秩, :]).reshape(截断秩, -1)
-            累积核心[k-1] += 残差.reshape(秩左, TT形状[k-1], 1).astype(np.float32) / 采样数
+            累积核心[k-1] += 残差.reshape(秩左, TT形状[k-1], 1)
+        累积核心 = [(核心 / 采样数).astype(np.float32) for 核心 in 累积核心]
         return 累积核心, 均值, TT形状
 
     def TT压缩(Self, 向量, 核心列表, 均值, TT形状):
@@ -1593,50 +1607,40 @@ class Quantization:
         张量 = 向量.reshape(TT形状)
         k = len(TT形状)
         系数列表 = []
-        残差 = 张量.copy()
+        残差 = 张量.astype(np.float64).copy()
+        秩左 = 1
         for i in range(k - 1):
             核心 = 核心列表[i]
             r_i, d_i, r_ip1 = 核心.shape
             展平 = 残差.reshape(r_i * d_i, -1)
-            核心展平 = 核心.reshape(r_i * d_i, r_ip1)
-            系数 = 核心展平.T @ 展平.astype(np.float64)
-            系数列表.append(系数.astype(np.float32).ravel())
+            核心展平 = 核心.reshape(r_i * d_i, r_ip1).astype(np.float64)
+            系数 = 核心展平.T @ 展平                    # (r_ip1, 1) 投影系数
+            系数列表.append(系数.astype(np.float32).ravel())   # 标量级, 仅 r_ip1 个元素
             重建 = 核心展平 @ 系数
-            残差 = (展平 - 重建).reshape(r_i, d_i, -1)
-        核心 = 核心列表[k-1]
-        残差 = 残差.ravel().astype(np.float64)
-        系数列表.append(残差.astype(np.float32))
-        return np.concatenate([c.ravel() for c in 系数列表])
+            残差 = (展平 - 重建).reshape(r_ip1, -1)     # 残差降至 r_ip1 维
+        核心展平 = 核心列表[k-1].reshape(核心列表[k-1].shape[0] * 核心列表[k-1].shape[1], 1).astype(np.float64)
+        最终系数 = 核心展平.T @ 残差.ravel().reshape(-1, 1)   # (1,1)
+        系数列表.append(最终系数.astype(np.float32).ravel())
+        return np.concatenate(系数列表)
 
     def TT解压(Self, TT向量, 核心列表, 均值, TT形状):
         k = len(TT形状)
+        TT向量 = np.asarray(TT向量, dtype=np.float64)
+        当前 = np.array([[1.0]], dtype=np.float64)       # (1, 1)
         偏移 = 0
-        当前 = np.array([[1.0]], dtype=np.float32)  # (1, 1)
         for i in range(k - 1):
             核心 = 核心列表[i]
             r_i, d_i, r_ip1 = 核心.shape
-            系数大小 = r_ip1 * (np.prod(TT形状[i+1:]) if i < k - 1 else 1)
-            实际大小 = len(TT向量) - 偏移
-            if i < k - 1:
-                系数取 = min(系数大小, 实际大小)
-            else:
-                系数取 = 实际大小
-            系数 = TT向量[偏移:偏移+系数取].astype(np.float64)
-            if i < k - 1:
-                剩余维 = int(np.prod(TT形状[i+1:]))
-                系数 = 系数.reshape(r_ip1, 剩余维)
-            else:
-                系数 = 系数.reshape(r_ip1, 1)
-            偏移 += 系数取
-            核心展平 = 核心.reshape(r_i * d_i, r_ip1).astype(np.float64)
-            贡献 = 核心展平 @ 系数
-            if i < k - 1:
-                贡献 = 贡献.reshape(r_i, d_i, -1)
-                当前 = np.tensordot(当前.astype(np.float64), 贡献, axes=([1], [0])).reshape(1, -1)
-            else:
-                当前 = 贡献.reshape(-1)
-        重建向量 = 当前.ravel()[:int(np.prod(TT形状))]
-        return (重建向量 + 均值).astype(np.float32)
+            系数 = TT向量[偏移:偏移 + r_ip1]             # 取 r_ip1 个标量
+            偏移 += r_ip1
+            当前 = 当前 @ 核心.reshape(r_i * d_i, r_ip1).astype(np.float64)   # (1, r_i*d_i) @ (r_i*d_i, r_ip1)
+            当前 = 当前 * 系数[np.newaxis, :]            # (1, r_ip1)
+            当前 = 当前.reshape(1, -1)                   # 展开进入下一层
+        最终系数 = TT向量[偏移]                           # 最后一个标量
+        核心 = 核心列表[k-1]
+        r_k, d_k, _ = 核心.shape
+        重建向量 = (当前 @ 核心.reshape(r_k * d_k, 1).astype(np.float64)).ravel() * 最终系数
+        return (重建向量[:int(np.prod(TT形状))] + 均值).astype(np.float32)
 
     def TT应用懒加载(Self, 向量, 向量文件):
         if 向量文件.TT_Cores is not None and 向量文件.TT_Mean is not None:

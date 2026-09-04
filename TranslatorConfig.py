@@ -1,17 +1,20 @@
 from TranslatorLib import (dataclass, replace, re, numpy, random, Path,
-                           Locale, Log, Index, Builder, Module, Quantization, File, Network, TranslationCache, VectorCache, TokenCalibratorCache, Translator)
+                           Locale, Log, Index, Builder, Module, Quantization, File, Network, Modpack, TranslationCache, VectorCache, TokenCalibratorCache, Translator)
 
 @dataclass
 class DefaultConfig:
     LANGUAGE_INPUT = "en_us"
     LANGUAGE_OUTPUT = "zh_cn"
+    LANGUAGE_VARIANT = True                                                             # 保存语言文件时是否同时生成大小写互补变体(zh_cn.lang -> zh_CN.lang) 防游戏只识别大写变体 仅Linux可用 翻译模型与整合包自动识别游戏版本范围
     
     # 可以使用 LLM0 LLM1 LLM2 多模型
-    LLM_API_URL                = ""                                       # 请求地址
-    LLM_API_KEY                = ""                                       # 请求密钥
-    LLM_API_KWARGS             = {}                                       # 请求额外参数
-    LLM_MODEL                  = ""                                       # 请求模型
-    LLM_MODE                   = "Translator"                             # 模型模式  Translator为翻译模式 Summary为翻译前总结模式
+    LLM_API_URL                = ""                                                     # 请求地址
+    LLM_API_KEY                = ""                                                     # 请求密钥
+    LLM_API_KWARGS             = {}                                                     # 请求额外参数 ↓xllamacpp加载器传参 cpuparams.n_threads float百分比采样 uint采样数量 float1时采样所有核心 uint1时采样1核 类型32位
+    LLM_LOADER_KWARGS          = {"n_gpu_layers": 99, "n_ctx": 65536, "n_batch": 2048, "n_ubatch": 2048, "flash_attn": True, "type_k": 3, "type_v": 3, "enable_reasoning": 0, "n_parallel": 3, "warmup": True, "cpuparams": {"n_threads": numpy.float32(0.8)}}
+    LLM_HF_DOWNLOAD_KWARGS     = {}                                                     # hf_hub_download下载器传参 {"endpoint": "https://hf-mirror.com"}使用中国镜像站
+    LLM_MODEL                  = "Q1ngMang/Ling-3.0-tiny-sub3bit-PPLp10-GGUF/Ling-3.0-tiny-01.gguf"# 请求模型 写HuggingFace需要指定 仓库名/文件名 可写本地路 仅支持llama.cpp模型
+    LLM_MODE                   = "Translator"                                           # 模型模式  Translator为翻译模式 Summary为翻译前总结模式 只推荐一个模型用于Summary
     LLM_TOP_K                  = 30
     LLM_TOP_P                  = 0.95
     LLM_TEMP                   = 0.25
@@ -19,29 +22,29 @@ class DefaultConfig:
     LLM_PP                     = 0
     LLM_FP                     = 0
     LLM_SEED                   = random.getrandbits(32-1)-1
-    LLM_RETRY_SEED_RANDOM      = True                                     # 重试是否再次随机种子 未实装
-    LLM_MAX_WORKERS            = 24                                       # 请求最大并发数
-    LLM_MIN_COUNT              = 0                                        # 多模型最低启用翻译条目数
-    LLM_RPM                    = 0                                        # 每分钟最大请求数(Requests Per Minute), 0=不限制
-    LLM_TPM                    = 0                                        # 每分钟最大Token数(Tokens Per Minute), 0=不限制
-    LLM_TPM_MODE               = "TokenCalibrator"                        # TPM估算模式 TokenCalibrator为实时学习 Max为1个字符一个Token
-    LLM_KEEPALIVE_TIMEOUT      = 20                                       # keep-alive 连接复用超时(秒)，高并发下调小可减少服务端主动断连(ServerDisconnected)
-    LLM_TTL_DNS_CACHE          = 300                                      # DNS 解析结果缓存时间(秒)
-    LLM_ACTIVE_TIME_START      = ""                                       # 活跃时间开始 (格式 "HH:MM"，如 "00:00"，留空则全天可用)
-    LLM_ACTIVE_TIME_END        = ""                                       # 活跃时间结束 (格式 "HH:MM"，如 "08:00"，支持跨天)
-    LLM_TIER_DYNAMIC           = False                                    # 动态分配开关
+    LLM_RETRY_SEED_RANDOM      = True                                                   # 重试是否再次随机种子 未实装
+    LLM_MAX_WORKERS            = 3                                                      # 请求最大并发数
+    LLM_MIN_COUNT              = 0                                                      # 多模型最低启用翻译条目数
+    LLM_RPM                    = 0                                                      # 每分钟最大请求数(Requests Per Minute), 0=不限制
+    LLM_TPM                    = 0                                                      # 每分钟最大Token数(Tokens Per Minute), 0=不限制
+    LLM_TPM_MODE               = "TokenCalibrator"                                      # TPM估算模式 TokenCalibrator为实时学习 Max为1个字符一个Token
+    LLM_KEEPALIVE_TIMEOUT      = 20                                                     # keep-alive 连接复用超时(秒)，高并发下调小可减少服务端主动断连(ServerDisconnected)
+    LLM_TTL_DNS_CACHE          = 300                                                    # DNS 解析结果缓存时间(秒)
+    LLM_ACTIVE_TIME_START      = ""                                                     # 活跃时间开始 (格式 "HH:MM"，如 "00:00"，留空则全天可用)
+    LLM_ACTIVE_TIME_END        = ""                                                     # 活跃时间结束 (格式 "HH:MM"，如 "08:00"，支持跨天)
+    LLM_TIER_DYNAMIC           = False                                                  # 动态分配开关
     LLM_MAX_RETRY              = 8
     LLM_TIMEOUT                = 300
     LLM_CONN_TIMEOUT           = 20
-    LLM_CONN_REUSE             = False                                    # aiohttp.TCPConnector.force_close参数 服务端会中断改成True
+    LLM_CONN_REUSE             = False                                                  # aiohttp.TCPConnector.force_close参数 服务端会中断改成True
     LLM_RETRY_TIME             = 5
     LLM_RETRY_COEF             = 1.2
-    LLM_TOKEN_IN               = 0                                        # 翻译实例.Config.LLM_TOKEN_IN   获取使用了多少Token
-    LLM_TOKEN_OUT              = 0                                        # 翻译实例.Config.LLM_TOKEN_OUT  获取使用了多少Token
-    LLM_TOKEN_CACHE_HIT        = 0                                        # 翻译实例.Config.LLM_TOKEN_HIT  获取使用了多少Token 非OpenAI标准
-    LLM_TOKEN_CACHE_HIT_FIELD  = [["usage", "prompt_cache_hit_tokens"]]   # 上配置获取字段 依次尝试
-    LLM_TOKEN_CACHE_MISS       = 0                                        # 翻译实例.Config.LLM_TOKEN_MISS 获取使用了多少Token 非OpenAI标准
-    LLM_TOKEN_CACHE_MISS_FIELD = [["usage", "prompt_cache_miss_tokens"]]  # 上配置获取字段 依次尝试
+    LLM_TOKEN_IN               = 0                                                      # 翻译实例.Config.LLM_TOKEN_IN   获取使用了多少Token
+    LLM_TOKEN_OUT              = 0                                                      # 翻译实例.Config.LLM_TOKEN_OUT  获取使用了多少Token
+    LLM_TOKEN_CACHE_HIT        = 0                                                      # 翻译实例.Config.LLM_TOKEN_HIT  获取使用了多少Token 非OpenAI标准
+    LLM_TOKEN_CACHE_HIT_FIELD  = [["usage", "prompt_cache_hit_tokens"]]                 # 上配置获取字段 依次尝试
+    LLM_TOKEN_CACHE_MISS       = 0                                                      # 翻译实例.Config.LLM_TOKEN_MISS 获取使用了多少Token 非OpenAI标准
+    LLM_TOKEN_CACHE_MISS_FIELD = [["usage", "prompt_cache_miss_tokens"]]                # 上配置获取字段 依次尝试
 
     EMB_API_URL             = ""
     EMB_API_KEY             = ""
@@ -66,6 +69,8 @@ class DefaultConfig:
     EMB_CONN_REUSE          = False
     EMB_RETRY_TIME          = 5
     EMB_RETRY_COEF          = 1.2
+    EMB_IMG_MAX_SIDE        = 448                      # int: 图像最长边限制 (超出则缩放, 规避多模态 batch 限制)
+    EMB_IMG_MAX_BATCH       = 1                        # int: 图像向量每批最大张数
     
     RERANKER_API_URL           = ""
     RERANKER_API_KEY           = ""
@@ -85,16 +90,16 @@ class DefaultConfig:
 
     SESSION_CLEAN_INTERVAL = 30 # 清理无任务会话间隔时间 同时管理LLM EMB RERANKER
 
-    #GSQ_K请启用向量重排来降低重建误差 小于5w向量请使用非GSQ_K VEC_INT_DTYPE叠加向量误差较大
-    VEC_INT_DTYPE =   ["Q8_K_M" ,               "Q8_K", "GSQ8_K", "PolarQ8"          #256值 8   比特
-                       "Q6_K_M" , "Q6_SVD_LM" , "Q6_K", "GSQ6_K", "PolarQ6",         #64值  6   比特
-                       "Q5_K_M" , "Q5_SVD_LM" , "Q5_K", "GSQ5_K", "PolarQ5",         #32值  5   比特
-                       "Q4_K_M" , "Q4_SVD_LM" , "Q4_K", "GSQ4_K", "PolarQ4",         #16值  4   比特
-                       "Q3_K_M" , "Q3_SVD_LM" , "Q3_K", "GSQ3_K", "PolarQ3",         #8值   3   比特
-                       "Q2_K_M" , "Q2_SVD_LM" , "Q2_K", "GSQ2_K", "PolarQ2", "Q2_NF",#4值   2   比特
-                       "TQ1_K_M", "TQ1_SVD_LM", "PolarTQ1",                           #3值   1.585比特
-                       "Q1_K_M" , "Q1_SVD_LM" , "PolarQ1",                           #2值   1   比特
-                       "PQ"     , "OPQ"       , "AVQ",                               #残差量化
+    #GSQ_K请启用向量重排来降低重建误差 小于5w向量请使用非GSQ_K VEC_INT_DTYPE叠加向量误差较大 别问我为什么加这么多量化(闲着没事)
+    VEC_INT_DTYPE =   ["Q8_K_M" ,               "Q8_K", "GSQ8_K", "PolarQ8",         #256值 8  比特
+                       "Q6_K_M" , "Q6_SVD_LM" , "Q6_K", "GSQ6_K", "PolarQ6",         #64值  6  比特
+                       "Q5_K_M" , "Q5_SVD_LM" , "Q5_K", "GSQ5_K", "PolarQ5",         #32值  5  比特
+                       "Q4_K_M" , "Q4_SVD_LM" , "Q4_K", "GSQ4_K", "PolarQ4",         #16值  4  比特
+                       "Q3_K_M" , "Q3_SVD_LM" , "Q3_K", "GSQ3_K", "PolarQ3",         #8值   3  比特
+                       "Q2_K_M" , "Q2_SVD_LM" , "Q2_K", "GSQ2_K", "PolarQ2", "Q2_NF",#4值   2  比特
+                       "TQ1_K_M", "TQ1_SVD_LM", "PolarTQ1",                          #3值   1.6比特
+                       "Q1_K_M" , "Q1_SVD_LM" , "PolarQ1",                           #2值   1  比特
+                       "PQ"     , "OPQ"       ,                                      #乘积量化
                        ]
     VEC_FLOAT_DTYPE = ["Float32",                                                    #32 比特 Float32原生支持
                        "Float16"    , "Float16_Max", "BFloat16"  , "Float16_E0M15",  #16 比特 Float16原生支持 Float16_Max不可当作缩放
@@ -114,7 +119,7 @@ class DefaultConfig:
     VEC_PCA_DIM                  = -1                   # PCA降维维度 -1不降维
     VEC_TT_SHAPE                 = []                   # list: TT分解各维大小，空=自动拆分为2^?
     VEC_TT_RANK                  = -1                   # int: TT分解截断秩（越大精度越高，越小压缩比越高）
-    VEC_QUANTIZATION             = "GSQ6_K"             # string 或 list(2): 单一格式(如 "GSQ6_K") 或 混合格式(如 ["GSQ2_K", "Float12_Max"]) 自动按维度能量贡献分配高低精度
+    VEC_QUANTIZATION             = "GSQ6_K"             # string list(2): 单一格式(如 "GSQ6_K") 或 混合格式(如 ["GSQ2_K", "Float12_Max"]) 自动按维度能量贡献分配高低精度
     VEC_QUANTIZATION_MIX_RATIO   = 0.2                  # float: 混合模式下 高精度格式 覆盖的维度占比 (按每维度能量贡献 top% 选择)
     VEC_QUANTIZATION_MIX_TOPK    = 0                    # int: 混合模式下 每行固定取 |值| 最大的 N 个维度用高精度 (0=禁用, 用MIX_RATIO比例)
     VEC_QUANTIZATION_CLIP        = 0.998                # 分位数裁切 GSQ_K系列不受影响
@@ -169,35 +174,51 @@ class DefaultConfig:
     TOKEN_CALIBRATOR_CACHE_NAME       = "TokenCalibrator"        # Token估算器缓存文件名
     TOKEN_CALIBRATOR_CACHE_SAVE_INTERVAL = 60.0                  # Token估算器缓存定时写盘间隔（秒）
     
+    TRANSLATOR_MODE                      = "Concurrent"                           # 控制单函数实例LLM请求模式 Serial为串行 Concurrent为并发
     TRANSLATOR_CACHE_WRITE               = True
     TRANSLATOR_CACHE_READ                = True
     TRANSLATOR_CACHE_PATH                = r"./Translator_Cache"
     TRANSLATOR_CACHE_NAME                = "Translator_Cache"
     TRANSLATOR_CACHE_SAVE_INTERVAL       = 45.0                                   # 翻译缓存定时写盘间隔（秒）
     TRANSLATOR_REFINE_ROUNDS             = 0                                      # 翻译精炼次数
-    TRANSLATOR_BATCH                     = 5                                      # 单次请求翻译文本数
+    TRANSLATOR_BATCH                     = 1                                      # 单次请求翻译文本数
     TRANSLATOR_BATCH_RETRY               = 1                                      # 批量翻译重试次数 超过退回单条翻译
     TRANSLATOR_CONTEXTS_MODE             = "space"                                # string: token:最少上下文消耗 space:上下文空间最近 vector:语义空间最近
     TRANSLATOR_CONTEXTS                  = False                                  # bool int: 翻译上下文 False:无 int值:数量(对) True:无上限
     TRANSLATOR_ORIGINAL_REFERENCE        = False                                  # 文本对照 Input:UV False:紫外线 True:紫外线(UV)
     TRANSLATOR_ORIGINAL_REFERENCE_FORMAT = "{t}({o})"                             # 文本对照格式 o为原文 t为译文
-    TRANSLATOR_MODPACK_MOD_CONCURRENT    = 8                                      # 翻译整合包时翻译模组并发数
     TRANSLATOR_SUMMARY                   = False                                  # bool: 翻译前总结 用来提升语义一致性
     TRANSLATOR_SUMMARY_MAX_TEXT          = 81920                                  # int: 最大输入大小
-    TRANSLATOR_SUMMARY_SYSTEM_PROMPT     = "你是Minecraft模组内容分析器,通读待翻译文本后用{lang}语言输出一段概述(≤200字),概括主题/玩法/核心术语,不翻译具体条目。"
+    TRANSLATOR_SUMMARY_SYSTEM_PROMPT     = "你是Minecraft模组内容分析器,通读待翻译文本后用{lang}语言输出一段概述(≤200字),概括主题/玩法/核心术语,并理清哪些类别不做翻译,不翻译具体条目。"
     TRANSLATOR_SUMMARY_USER_PROMPT       = "请总结以下模组文本的内容与核心术语:\n{text}"
     TRANSLATOR_SUMMARY_TEXT              = "\nVIII以下为翻译前总结内容,请参考内容后翻译"
     TRANSLATOR_USER_PROMPT               = "翻译为{lang}语言(仅输出翻译内容):{text}"
-    TRANSLATOR_SYSTEM_PROMPT             = """你是minecraft翻译器,将文本准确一致地翻译成{lang}语言
+    TRANSLATOR_SYSTEM_PROMPT             = """你是翻译器,将文本准确一致地翻译成{lang}语言
 ##翻译规则
 I返回译文不加解释与废话(如“这是译文”“如下翻译”).
 II返回译文必须与段落及格式相同.
-III不译内容(如专名、键等),保留原文.
-IV遇&或§或%则留后一位不译.
-VHTML和Markdown语法翻译可读文本内容,不改标签或符号.
-VI<rag-input>为参考内容,不译
-VII<context>为上下文内容,不译
+III遇ULV.LV.MV.HV.EV.IV.LuV.ZPM.UV.UHV.UEV.UIV.UXV.UMV.OpV.MAX不译
+IV不译内容(如专名、键等),保留原文.
+V遇&或§或%则留后一位不译.
+VIHTML和Markdown和JSON语法翻译可读文本内容,即使语法错误,不改标签或符号.
+VII<rag-input>为参考内容,不译
+VIII<content>为上下文内容,不译
 """
+
+    MODPACK_MOD_CONCURRENT                 = 8                         # 翻译整合包时翻译模组并发数
+    MODPACK_AUTO_DOWNLOAD                  = True                      # bool: 翻译整合包时是否自动识别清单并下载缺失模组
+    MODPACK_USE_MIRROR                     = True                      # bool: 使用镜像站(MCIM) 解决中国大陆无法访问CurseForge/Modrinth
+    MODPACK_CURSEFORGE_API_KEY             = ""                        # string: CurseForge官方API Key(可选) 留空使用网页公开接口
+    MODPACK_DOWNLOAD_CONCURRENT            = 8                         # int: 模组下载并发数
+    MODPACK_DOWNLOAD_RETRY                 = 3                         # int: 单文件下载失败重试次数
+    MODPACK_DOWNLOAD_RETRY_TIME            = 3                         # float: 下载重试间隔(秒)
+    MODPACK_DOWNLOAD_TIMEOUT               = 60                        # int: 下载请求超时(秒)
+    MODPACK_DOWNLOAD_CACHE                 = True                      # bool: 是否启用下载文件缓存 同一URL重复下载时直接复用
+    MODPACK_DOWNLOAD_CACHE_PATH            = r"./Modpack_Download"     # string: 下载缓存存储路径
+    MODPACK_DOWNLOAD_CACHE_NAME            = "Modpack_Download_Cache"  # string: 下载缓存元数据文件名
+    MODPACK_DOWNLOAD_CACHE_MAX_SIZE        = 512                       # int: 缓存文件数硬上限 超限按LFU评分淘汰最低分
+    MODPACK_DOWNLOAD_CACHE_DECAY_GRACE     = 8                         # int: 淘汰宽限期(轮) 此期限内不计算衰减
+    MODPACK_DOWNLOAD_CACHE_DECAY_THRESHOLD = 0.05                      # float: 衰减分数阈值 频率/(代数差+1)低于此值淘汰
 
     PATH_CACHE           = r"./Cache"
     CACHE_CHECK_INTERVAL = 24          # 缓存清理检测间隔（小时）
@@ -207,6 +228,7 @@ VII<context>为上下文内容,不译
     LOGS_FILE_NAME       = "logs"
     LOGS_GLOBAL          = False
     LOGS_FLUSH_INTERVAL  = 3           # 日志批量刷盘间隔
+    LOGS_TRANSLATOR_INFO = True
     LANG_PATH            = r"./Lang"
     LANGUAGE             = r"zh_CN"
     TQDM_FPS             = 24
@@ -235,8 +257,8 @@ VII<context>为上下文内容,不译
     DATA_COMMAND_PATH = r"./DataPack_Command"
     DATA_COMMAND_FILE = "DataPack_Command.txt"
     
-    PACK_META_TEMPLATE_TRANSLATE         = "{name} {lang} 语言资源包\n制作: {author}, 翻译模型：{model}"
-    PACK_META_TEMPLATE_MERGE             = "{name} {lang} 语言资源包\n制作: {author}, 工具自动合并"
+    PACK_META_TEMPLATE_TRANSLATE         = "{name} {lang} 语言资源包, 制作: {author}, 翻译模型：{model}"
+    PACK_META_TEMPLATE_MERGE             = "{name} {lang} 语言资源包, 制作: {author}, 工具自动合并"
     PACK_META_TEMPLATE_CASUALTIESUNKNOWN = "{lang} 语言文件\n制作: <color=\"yellow\">{author}</color>, 翻译模型：<color=\"blue\">{model}"  # 未知伤亡
     PACK_AUTHOR                          = ""
 
@@ -290,10 +312,10 @@ VII<context>为上下文内容,不译
     INDEX_CONFIG_NEST  = {"Refine", "IVF", "IVFSQ", "IVFPQ"}
     INDEX_CONFIG_TRAIN = {"HNSW", "HNSWSQ", "HNSWPQ", "IVF", "IVFSQ", "IVFPQ"}
     
-    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "MONO_CECIL_DLL_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH"]
+    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "MONO_CECIL_DLL_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH", "MODPACK_DOWNLOAD_CACHE_PATH"]
     LLM_POAT_CONFIG = [[402, 429,], [400, 401, 422, 500, 503]]
     
-    API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE$"}
+    API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE_VARIANT$", r"^LANGUAGE$"}
     API_TRANSLATOR_CORE_CONFIG_BLACK = {}
     API_TRANSLATOR_CORE_CONFIG_RANGE = {r"^LLM\d+_TEMP$": (0.0, 1.0), r"^TRANSLATOR_BATCH$": (1, 1), r"^INDEX_\w+_K$": (0, 5)}
 DEFAULT_CONFIG = DefaultConfig()
@@ -344,6 +366,7 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
                 "model"            : str(  层级配置.get("model"             , Self.Config.LLM_MODEL            )),
                 "mode"             : str(  层级配置.get("mode"              , Self.Config.LLM_MODE             )),
                 "api_kwargs"       : dict( 层级配置.get("api_kwargs"        , Self.Config.LLM_API_KWARGS       )),
+                "loader_kwargs"    : dict( 层级配置.get("loader_kwargs"     , Self.Config.LLM_LOADER_KWARGS    )),
                 "temperature"      : float(层级配置.get("temperature"       , Self.Config.LLM_TEMP             )),
                 "top_p"            : float(层级配置.get("top_p"             , Self.Config.LLM_TOP_P            )),
                 "top_k"            : int(  层级配置.get("top_k"             , Self.Config.LLM_TOP_K            )),
@@ -367,6 +390,8 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
                 "tpm_mode"         : str(  层级配置.get("tpm_mode"          , Self.Config.LLM_TPM_MODE         )),
                 "active_time_start": str(  层级配置.get("active_time_start" , Self.Config.LLM_ACTIVE_TIME_START)),
                 "active_time_end"  : str(  层级配置.get("active_time_end"   , Self.Config.LLM_ACTIVE_TIME_END  )),
+                # 可修改值↑ ↓不可修改值
+                "线程锁": None
             }
     
     # get层级 食用方法: for inedx in 返回内容: print(index[键])
@@ -387,7 +412,7 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
             raise AttributeError(f"Unknown config key: {名称}")
         
 class Config:
-    def __init__(Self, Config: dict):
+    def __init__(Self, Config: dict, 创建缓存: bool = True):
         Self.ConfigDict = Config.copy()
         Config = RuntimeConfig(**(Config or {}))
         Self.Config: DefaultConfig = Config.Config
@@ -395,22 +420,37 @@ class Config:
         for index in Self.Config.PATH_CONFIG:
             Path(getattr(Self.Config, index)).mkdir(parents=True, exist_ok=True)
         Self.Locale: Locale = Locale(Self)
-        Self.RichTqdm = Self.Locale.RichTqdm # 标准进度条
-        Self.TqdmTqdm = Self.Locale.TqdmTqdm # 美化进度条 默认
+        Self.RichTqdm = Self.Locale.RichTqdm # 美化进度条 默认
+        Self.TqdmTqdm = Self.Locale.TqdmTqdm # 标准进度条
         Self.DiffTqdm = Self.Locale.DiffTqdm # “扩散模型风格”进度条
         Self.Lang = Self.Locale.Lang
         Self.Log: Log = Log(Self)
         Self.日志 = Self.Log.写入日志
-        Self.CacheTranslator: TranslationCache = TranslationCache(Self)
-        Self.CacheVector: VectorCache = VectorCache(Self)
-        Self.CacheTokenCalibrator: TokenCalibratorCache = TokenCalibratorCache(Self)
+        if 创建缓存:
+            Self.CacheTranslator: TranslationCache = TranslationCache(Self)
+            Self.CacheVector: VectorCache = VectorCache(Self)
+            Self.CacheTokenCalibrator: TokenCalibratorCache = TokenCalibratorCache(Self)
+        else:
+            Self.CacheTranslator = None
+            Self.CacheVector = None
+            Self.CacheTokenCalibrator = None
         Self.Index: Index = Index(Self)
         Self.Module: Module = Module(Self)
         Self.Network: Network = Network(Self) # 网络管理器核心 并发限制在此
         Self.Builder: Builder = Builder(Self)
         Self.Quantization: Quantization = Quantization(Self)
         Self.File: File = File(Self)
+        Self.Modpack: Modpack = Modpack(Self)
         Self.Translator = None
+    def 关闭(Self):
+        for 缓存 in (getattr(Self, "CacheTranslator", None),
+                    getattr(Self, "CacheVector", None),
+                    getattr(Self, "CacheTokenCalibrator", None)):
+            if 缓存 is None: continue
+            管理器 = getattr(缓存, "翻译缓存实例", None) or getattr(缓存, "向量缓存实例", None) or getattr(缓存, "Token估算器缓存实例", None)
+            if 管理器 is not None and hasattr(管理器, "关闭"):
+                try: 管理器.关闭()
+                except Exception: pass
     def get_translator(Self):
         if Self.Translator is None: Self.Translator = Translator(Self)
         return Self.Translator
@@ -433,7 +473,7 @@ class Config:
             过滤后配置[键] = 值
         return 过滤后配置
     def get_config_temporary(Self, 用户配置: dict = None):
-        临时配置 = Config(Self.ConfigDict | (Self.过滤用户配置(用户配置) or {}))
+        临时配置 = Config(Self.ConfigDict | (Self.过滤用户配置(用户配置) or {}), 创建缓存=False)
         临时配置.Network = Self.Network
         临时配置.Builder.Network = Self.Network
         临时配置.CacheVector = Self.CacheVector

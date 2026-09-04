@@ -51,20 +51,22 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
             "keepalive_timeout": Self.Config.RERANKER_KEEPALIVE_TIMEOUT,
         }
 #====================================================================================================↓限速与超时↓====================================================================================================#
-    def 限速滑动窗口抽象(Self, 时间戳列表, Token数列表):
+    def 限速滑动窗口抽象(Self, 时间戳列表, Token数列表, 工作ID列表=None):
         while 时间戳列表 and 时间戳列表[0] <= time.monotonic() - 60:
             时间戳列表.pop(0)
             Token数列表.pop(0)
+            if 工作ID列表 is not None:
+                工作ID列表.pop(0)
             
+    def 刷新限速窗口(Self, 层级):
+        Self.限速滑动窗口抽象(Self.ˀꜝ缓存ꜝˀ.翻译层级并发[层级["id"]][1], Self.ˀꜝ缓存ꜝˀ.翻译层级并发[层级["id"]][2], Self.ˀꜝ缓存ꜝˀ.翻译层级并发[层级["id"]][3])
     def TranslatorRPM(Self, 层级):
         if 层级["rpm"] <= 0: return True # 不限速直接回家
-        Self.限速滑动窗口抽象(Self.缓存.翻译层级并发[层级["id"]][1], Self.缓存.翻译层级并发[层级["id"]][2])
-        时间戳列表 = Self.缓存.翻译层级并发[层级["id"]][1]
+        时间戳列表 = Self.ˀꜝ缓存ꜝˀ.翻译层级并发[层级["id"]][1]
         return len(时间戳列表) < 层级["rpm"]
     def TranslatorTPM(Self, 层级):
         if 层级["tpm"] <= 0: return True # 不限速直接回家
-        Self.限速滑动窗口抽象(Self.缓存.翻译层级并发[层级["id"]][1], Self.缓存.翻译层级并发[层级["id"]][2])
-        Token数列表 = Self.缓存.翻译层级并发[层级["id"]][2]
+        Token数列表 = Self.ˀꜝ缓存ꜝˀ.翻译层级并发[层级["id"]][2]
         return sum(Token数列表) < 层级["tpm"]
     def 任务滑动窗口抽象(Self, 并发列表, 超时, 日志模型名):
         if len(并发列表[1]) == 0:
@@ -133,12 +135,17 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
                     pass
             已激活.append(层级)
             
+        无层级警告 = False
         if not 已激活:
             # ↓没有的化选择min_count最小的层级 Config内排序过了
             选中层级 = Self.层级列表[0]
-            Self.日志("log.network.no.tier.warn", info_level=1, model=选中层级["model"])
+            已激活 = [选中层级]
+            无层级警告 = True
         
         with Self.ˀꜝ锁锁ꜝˀ.翻译层级并发: # 需要编辑 Self.ˀꜝ缓存ꜝˀ.翻译层级并发
+            # ↓统一刷新所有已激活层级的限速窗口，避免RPM/TPM分别清理导致重复
+            for index in 已激活:
+                Self.刷新限速窗口(index)
             # ↓选中层级 按照并发数依次选中
             for index in 已激活: # 发扬index艺术
                 if (Self.ˀꜝ缓存ꜝˀ.翻译层级并发[index["id"]][0] < index["max_workers"] # 看一下该层级活跃数满了没
@@ -157,6 +164,9 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
                     break # 选中了直接滚 因为break所以不会执行else
             else:
                 return (None, None, None) # 没选中跳出翻译函数
+            
+        if 无层级警告: # byd放上面会刷屏日志
+            Self.日志("log.network.no.tier.warn", info_level=1, model=选中层级["model"])
         
         return (Self.获取异步会话(选中层级), 选中层级, 任务ID)
     
@@ -176,7 +186,7 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
         任务ID = Self.Module.uuid()
         
         with Self.ˀꜝ锁锁ꜝˀ.重排层级并发: # 需要编辑 Self.ˀꜝ缓存ꜝˀ.重排层级
-            if Self.ˀꜝ缓存ꜝˀ.重排层级并发[Self.重排层级["model"]][0] < Self.嵌入层级["max_workers"]:
+            if Self.ˀꜝ缓存ꜝˀ.重排层级并发[Self.重排层级["model"]][0] < Self.重排层级["max_workers"]:
                 Self.ˀꜝ缓存ꜝˀ.重排层级并发[Self.重排层级["model"]][0] += 1 # 活跃数加1
                 Self.ˀꜝ缓存ꜝˀ.重排层级并发[Self.重排层级["model"]][1].append(time.monotonic())
                 Self.ˀꜝ缓存ꜝˀ.重排层级并发[Self.重排层级["model"]][2].append(任务ID) # 加入任务ID

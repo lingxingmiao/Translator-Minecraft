@@ -10,6 +10,38 @@ class File:
         Self.Lang = App.Lang
         Self.tqdm = App.RichTqdm
         Self.ttqdm = App.TqdmTqdm
+
+    # ========== 通用工具 ==========
+    def 设置路径值(Self, 数据, 路径, 译文):
+        """沿路径钻取到目标容器并赋值，列表路径自动转数字索引"""
+        obj = 数据
+        for key in 路径[:-1]:
+            if isinstance(obj, list):
+                key = int(key)
+            obj = obj[key]
+        最后键 = 路径[-1]
+        if isinstance(obj, list):
+            最后键 = int(最后键)
+        obj[最后键] = 译文
+
+    def 写入Json文件(Self, 文件路径, 数据, 缩进=4):
+        """以 UTF-8 无转义缩进格式写回 JSON 文件"""
+        with open(文件路径, "w", encoding="utf-8") as f:
+            json.dump(数据, f, ensure_ascii=False, indent=缩进)
+
+    def 递归提取文本(Self, obj, 当前路径, 目标字段, 提取方法, 允许值类型=str):
+        """深度遍历 dict/list，命中目标字段时调用 提取方法(路径, 值)"""
+        if isinstance(obj, dict):
+            for 键, 值 in obj.items():
+                新路径 = 当前路径 + [键]
+                if 键 in 目标字段 and isinstance(值, 允许值类型):
+                    提取方法(新路径, 值)
+                else:
+                    Self.递归提取文本(值, 新路径, 目标字段, 提取方法, 允许值类型)
+        elif isinstance(obj, list):
+            for 序号, 元素 in enumerate(obj):
+                Self.递归提取文本(元素, 当前路径 + [序号], 目标字段, 提取方法, 允许值类型)
+
     def 读取Json文件(Self, file):
         for enc in ['utf-8-sig', 'utf-8', 'gbk', 'utf-16', locale.getpreferredencoding(False)]:
             try:
@@ -18,6 +50,26 @@ class File:
                 return 原始对象
             except (UnicodeDecodeError, json.JSONDecodeError) as e:
                 continue
+
+    def Unicode转字符串(Self, s: str) -> str:
+        return re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), s)
+
+    def 字符串转Unicode(Self, s: str) -> str:
+        parts = []
+        for c in s:
+            if c == '"':
+                parts.append('\\"')
+            elif c == '\\':
+                parts.append('\\\\')
+            elif ord(c) < 128 and c.isprintable():
+                parts.append(c)
+            elif ord(c) <= 0xFFFF:
+                parts.append(f'\\u{ord(c):04X}')
+            else:
+                parts.append(c)
+        return ''.join(parts)
+
+    # ========== FTB Quests ==========
     def 读取单个FTBQ_Snbt文件(Self, index: str):
         文本列表 = []
         try:
@@ -44,11 +96,11 @@ class File:
                             提取(值, 当前路径)
                     elif 键 in 可能含JSON的字段:
                         if isinstance(值, str):
-                            Self._尝试提取内嵌JSON(index, 当前路径, 值, 文本列表)
+                            Self.尝试提取内嵌JSON(index, 当前路径, 值, 文本列表)
                         elif isinstance(值, list):
                             for 序号, 元素 in enumerate(值):
                                 if isinstance(元素, str):
-                                    Self._尝试提取内嵌JSON(index, 当前路径 + [序号], 元素, 文本列表)
+                                    Self.尝试提取内嵌JSON(index, 当前路径 + [序号], 元素, 文本列表)
                                 else:
                                     提取(元素, 当前路径 + [序号])
                         else:
@@ -60,7 +112,8 @@ class File:
                     提取(元素, 路径 + [序号])
         提取(SNBT文件, [])
         return 文本列表
-    def _尝试提取内嵌JSON(Self, 文件, 路径前缀, 字符串, 输出列表):
+
+    def 尝试提取内嵌JSON(Self, 文件, 路径前缀, 字符串, 输出列表):
         try:
             解析结果 = json.loads(字符串)
         except (json.JSONDecodeError, TypeError):
@@ -73,6 +126,7 @@ class File:
                 输出列表.append([[文件, 路径前缀 + [解析结果, "translate"]], 解析结果["translate"]])
         else:
             输出列表.append([[文件, 路径前缀], 字符串])
+
     def 应用FTBQ翻译(Self, index: list, mode: str):
         文件映射 = {}
         for 条目 in index:
@@ -86,7 +140,7 @@ class File:
                 try:
                     当前对象 = SNBT文件
                     父对象 = None  # 【新增】用来记录倒数第二层的容器
-                    
+
                     for i, 段 in enumerate(路径):
                         if isinstance(段, dict):
                             # --- 处理内嵌 JSON 的逻辑 (保持不变) ---
@@ -101,13 +155,13 @@ class File:
                             目标[最后键] = 译文
                             新字符串 = json.dumps(解析对象, ensure_ascii=False)
                             break  # 遇到 JSON 提前跳出
-                            
+
                         # 【核心修复】：在向下钻取前，先记录当前的容器为“父对象”
                         父对象 = 当前对象
                         if isinstance(当前对象, list):
                             段 = int(段)
                         当前对象 = 当前对象[段]
-                        
+
                     else:
                         # 循环正常结束（没有遇到 JSON 提前 break），说明到了最底层
                         if 父对象 is not None:
@@ -115,16 +169,16 @@ class File:
                             if isinstance(父对象, list):
                                 最后键 = int(最后键)
                             # 【核心修复】：使用“父对象”来赋值，而不是已经变成字符串的“当前对象”
-                            父对象[最后键] = 译文  
+                            父对象[最后键] = 译文
                         continue
-                        
+
                     # --- 写回 JSON 字符串的逻辑 (保持不变) ---
                     当前对象 = SNBT文件
                     for j, 段 in enumerate(路径):
                         if isinstance(段, dict): break
                         if isinstance(当前对象, list): 段 = int(段)
                         当前对象 = 当前对象[段]
-                        
+
                     父容器 = SNBT文件
                     for j, 段 in enumerate(路径):
                         if isinstance(段, dict):
@@ -134,27 +188,20 @@ class File:
                             break
                         if isinstance(父容器, list): 段 = int(段)
                         父容器 = 父容器[段]
-                        
-                except Exception: 
+
+                except Exception:
                     Self.日志("log.module.quests.write.error", file=文件路径, path=str(路径), e=eb.format_exc(), info_level=2)
             Path(文件路径).write_text(snbtlib.dumps(SNBT文件, compact=False if mode=="H" else True), encoding='utf-8')
+
+    # ========== BetterQuesting ==========
     def 读取单个BQ_Json文件(Self, index: str):
         文件列表 = []
         try:
             NBT文件 = Self.读取Json文件(index)
-            def dfs(obj, current_path):
-                if isinstance(obj, dict):
-                    for key, value in obj.items():
-                        if key in ("name:8", "desc:8") and isinstance(value, str):
-                            文件列表.append([[index, current_path + [key]], value])
-                        else:
-                            dfs(value, current_path + [key])
-                elif isinstance(obj, list):
-                    for idx, item in enumerate(obj):
-                        dfs(item, current_path + [idx])
-            dfs(NBT文件, [])
+            Self.递归提取文本(NBT文件, [], {"name:8", "desc:8"}, lambda 路径, 值: 文件列表.append([[index, 路径], 值]))
         except Exception: Self.日志("log.module.quests.load.error", mod="BetterQuests", file=index, e=eb.format_exc(), info_level=2)
         return 文件列表
+
     def 应用BQ翻译(Self, index: list):
         文件映射 = {}
         for 条目 in index:
@@ -169,35 +216,11 @@ class File:
             except Exception: Self.日志("log.module.quests.load.error", mod="BetterQuests", file=文件路径, e=eb.format_exc(), info_level=2); continue
             for 路径, 译文 in 替换列表:
                 try:
-                    obj = 数据
-                    for key in 路径[:-1]:
-                        if isinstance(obj, list):
-                            key = int(key)
-                        obj = obj[key]
-                    最后键 = 路径[-1]
-                    if isinstance(obj, list):
-                        最后键 = int(最后键)
-                    obj[最后键] = 译文
+                    Self.设置路径值(数据, 路径, 译文)
                 except Exception: Self.日志("log.module.quests.write.error", mod="BetterQuests", file=文件路径, path=str(路径), e=eb.format_exc(), info_level=2)
-            with open(文件路径, "w", encoding="utf-8") as f:
-                json.dump(数据, f, ensure_ascii=False, indent=4)
-    def Unicode转字符串(Self, s: str) -> str:
-        return re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), s)
+            Self.写入Json文件(文件路径, 数据)
 
-    def 字符串转Unicode(Self, s: str) -> str:
-        parts = []
-        for c in s:
-            if c == '"':
-                parts.append('\\"')
-            elif c == '\\':
-                parts.append('\\\\')
-            elif ord(c) < 128 and c.isprintable():
-                parts.append(c)
-            elif ord(c) <= 0xFFFF:
-                parts.append(f'\\u{ord(c):04X}')
-            else:
-                parts.append(c)
-        return ''.join(parts)
+    # ========== ZenScript ==========
     def 读取单个ZS文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
@@ -212,6 +235,7 @@ class File:
         except Exception:
             Self.日志("log.module.script.load.error", mod="ZenScript", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+
     def 应用ZS翻译(Self, index: list) -> None:
         if not index:
             return
@@ -256,6 +280,8 @@ class File:
                 行列表[行号 - 1] = 行内容
             新内容 = "".join(行列表)
             路径.write_text(新内容, encoding="utf-8")
+
+    # ========== Custom Main Menu ==========
     def 读取单个CMM文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
@@ -274,6 +300,7 @@ class File:
         except Exception:
             Self.日志("log.module.menu.load.error", mod="CustomMainMenu", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+
     def 应用CMM翻译(Self, index: list) -> None:
         if not index:
             return
@@ -287,18 +314,10 @@ class File:
         for 文件路径, 替换列表 in 文件映射.items():
             数据 = Self.读取Json文件(文件路径)
             for 父路径, 字段名, 译文 in 替换列表:
-                obj = 数据
-                for key in 父路径:
-                    if isinstance(obj, list):
-                        key = int(key)
-                    obj = obj[key]
-                if isinstance(obj, list):
-                    obj[int(字段名)] = 译文
-                else:
-                    obj[字段名] = 译文
-            with open(文件路径, "w+", encoding="utf-8") as f:
-                json.dump(数据, f, ensure_ascii=False, indent=4)
-                
+                Self.设置路径值(数据, 父路径 + [字段名], 译文)
+            Self.写入Json文件(文件路径, 数据)
+
+    # ========== FancyMenu ==========
     def 读取单个FM文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
@@ -317,14 +336,16 @@ class File:
             if not isinstance(el, dict):
                 continue
             实例ID = el.get('instance_identifier', 'unknown')
-            if 'source' in el:
-                结果.append([[文件路径, 实例ID, 'source'], el['source']])
+            if 'source' in el and isinstance(el['source'], str):
+                source文本 = el['source']
+                if not re.match(r'^\s*\[[^\]]*\]', source文本):
+                    结果.append([[文件路径, 实例ID, 'source'], source文本])
             if 'label' in el:
                 结果.append([[文件路径, 实例ID, 'label'], el['label']])
             if 'hoverlabel' in el:
                 结果.append([[文件路径, 实例ID, 'hoverlabel'], el['hoverlabel']])
         return 结果
-    
+
     def 应用FM翻译(Self, 翻译列表: list) -> None:
         文件映射 = {}
         for 条目 in 翻译列表:
@@ -364,24 +385,16 @@ class File:
                     fancymenulib.dump(布局数据, f)
             except Exception:
                 Self.日志("log.module.menu.write.error", mod="FancyMenu", file=文件路径, e=eb.format_exc(), info_level=2)
+
+    # ========== 帕秋莉手册 ==========
     def 读取单个帕秋莉手册文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
             数据 = Self.读取Json文件(文件路径)
-            def 遍历(obj, 当前路径):
-                if isinstance(obj, dict):
-                    for 键, 值 in obj.items():
-                        新路径 = 当前路径 + [键]
-                        if 键 in {"name", "description", "landing_text", "subtitle", "text", "title", "header", "link_text", "tooltip"} and isinstance(值, str):
-                            结果.append([[文件路径, 新路径], 值])
-                        else:
-                            遍历(值, 新路径)
-                elif isinstance(obj, list):
-                    for 序号, 元素 in enumerate(obj):
-                        遍历(元素, 当前路径 + [序号])
-            遍历(数据, [])
-        except Exception: Self.日志( "log.module.book.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
+            Self.递归提取文本(数据, [], {"name", "description", "landing_text", "subtitle", "text", "title", "header", "link_text", "tooltip"}, lambda 路径, 值: 结果.append([[文件路径, 路径], 值]))
+        except Exception: Self.日志("log.module.book.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+
     def 应用帕秋莉手册翻译(Self, 翻译列表: list) -> None:
         文件映射 = {}
         for 条目 in 翻译列表:
@@ -396,18 +409,11 @@ class File:
             except Exception: Self.日志("log.module.book.load.error", file=文件路径, e=eb.format_exc(), info_level=2); continue
             for 路径, 译文 in 替换列表:
                 try:
-                    obj = 数据
-                    for key in 路径[:-1]:
-                        if isinstance(obj, list):
-                            key = int(key)
-                        obj = obj[key]
-                    最后键 = 路径[-1]
-                    if isinstance(obj, list):
-                        最后键 = int(最后键)
-                    obj[最后键] = 译文
+                    Self.设置路径值(数据, 路径, 译文)
                 except Exception: Self.日志("log.module.book.write.error", file=文件路径, path=str(路径), e=eb.format_exc(), info_level=2)
-            with open(文件路径, "w", encoding="utf-8") as f:
-                json.dump(数据, f, ensure_ascii=False, indent=4)
+            Self.写入Json文件(文件路径, 数据)
+
+    # ========== Hardcore Questing Mode ==========
     def 读取单个HQM文件(Self, 文件路径: str, mode: str = "H") -> list:
         结果 = []
         try:
@@ -415,21 +421,10 @@ class File:
                 数据 = Self.读取Json文件(文件路径)
             elif mode == "L":
                 数据 = hqmlib.load(文件路径, encoding='gbk')
-            目标字段 = {"main_description", "name", "description", "long_description", "longDescription"}
-            def 递归提取(obj, 当前路径):
-                if isinstance(obj, dict):
-                    for key, value in obj.items():
-                        新路径 = 当前路径 + [key]
-                        if key in 目标字段 and isinstance(value, str):
-                            结果.append([[文件路径, 新路径], value])
-                        else:
-                            递归提取(value, 新路径)
-                elif isinstance(obj, list):
-                    for idx, item in enumerate(obj):
-                        递归提取(item, 当前路径 + [idx])
-            递归提取(数据, [])
+            Self.递归提取文本(数据, [], {"main_description", "name", "description", "long_description", "longDescription"}, lambda 路径, 值: 结果.append([[文件路径, 路径], 值]))
         except Exception: Self.日志("log.module.quests.load.error", mod="Hardcore Questing Mode", file=文件路径, e=eb.format_exc(),  info_level=2)
         return 结果
+
     def 应用HQM翻译(Self, index: list, mode: str = "H") -> None:
         文件映射 = {}
         for 条目 in index:
@@ -447,21 +442,14 @@ class File:
             except Exception: Self.日志("log.module.quests.load.error", mod="Hardcore Questing Mode", file=文件路径, e=eb.format_exc(), info_level=2); continue
             for 路径, 译文 in 替换列表:
                 try:
-                    obj = 数据
-                    for key in 路径[:-1]:
-                        if isinstance(obj, list):
-                            key = int(key)
-                        obj = obj[key]
-                    最后键 = 路径[-1]
-                    if isinstance(obj, list):
-                        最后键 = int(最后键)
-                    obj[最后键] = 译文
-                except Exception: Self.日志( "log.module.quests.write.error", mod="Hardcore Questing Mode",  file=文件路径, path=str(路径), e=eb.format_exc(), info_level=2)
+                    Self.设置路径值(数据, 路径, 译文)
+                except Exception: Self.日志("log.module.quests.write.error", mod="Hardcore Questing Mode",  file=文件路径, path=str(路径), e=eb.format_exc(), info_level=2)
             if mode == "H":
-                with open(文件路径, "w", encoding="utf-8") as f:
-                    json.dump(数据, f, ensure_ascii=False, indent=4)
+                Self.写入Json文件(文件路径, 数据)
             elif mode == "L":
                 hqmlib.dump_to_hqm(数据, 文件路径, encoding='gbk')
+
+    # ========== MC 指令提取 ==========
     def 提取待翻译文本(Self, 命令: str, 规则: str) -> List[str]:
         """
         根据给定的规则行，从命令字符串中提取需要翻译的文本。
@@ -478,7 +466,7 @@ class File:
         返回:
             提取出的待翻译文本列表
         """
-        命令名, 翻译参数列表 = Self._解析规则(规则)
+        命令名, 翻译参数列表 = Self.解析规则(规则)
         if not 命令名:
             return []
         命令文本 = 命令.strip()
@@ -501,7 +489,7 @@ class File:
         提取结果 = []
         剩余规则 = list(翻译参数列表)
         for 参数 in 参数组:
-            json文本 = Self._尝试提取json文本(参数)
+            json文本 = Self.尝试提取json文本(参数)
             if json文本 is not None:
                 匹配规则 = next((规则项 for 规则项 in 剩余规则 if 规则项['类型'] == 'json'), None)
                 if 匹配规则:
@@ -511,13 +499,14 @@ class File:
             for 规则项 in list(剩余规则):
                 if 规则项['类型'] == 'nbt':
                     路径 = 规则项.get('额外信息', '')
-                    nbt文本 = Self._提取nbt文本(参数, 路径)
+                    nbt文本 = Self.提取nbt文本(参数, 路径)
                     if nbt文本 is not None:
                         提取结果.append(nbt文本)
                         剩余规则.remove(规则项)
                         break
         return 提取结果
-    def _解析规则(Self, 规则: str):
+
+    def 解析规则(Self, 规则: str):
         规则 = 规则.strip()
         if not 规则 or 规则.startswith('#'):
             return None, []
@@ -532,7 +521,8 @@ class File:
                     说明['额外信息'] = ':'.join(部分[2:])
                 翻译参数说明列表.append(说明)
         return 命令名, 翻译参数说明列表
-    def _尝试提取json文本(Self, 参数: str):
+
+    def 尝试提取json文本(Self, 参数: str):
         try:
             对象 = json.loads(参数)
             if isinstance(对象, dict) and 'text' in 对象:
@@ -540,7 +530,8 @@ class File:
         except (json.JSONDecodeError, TypeError):
             pass
         return None
-    def _提取nbt文本(Self, nbt参数: str, 路径: str):
+
+    def 提取nbt文本(Self, nbt参数: str, 路径: str):
         if not (nbt参数.startswith('{') and nbt参数.endswith('}')):
             return None
         键列表 = 路径.split('.')
@@ -573,6 +564,8 @@ class File:
         except (json.JSONDecodeError, TypeError):
             pass
         return None
+
+    # ========== Mine-Mod-Translator ==========
     def 读取单个MMT文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
@@ -588,6 +581,7 @@ class File:
         except Exception:
             Self.日志("log.module.mmt.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+
     def 读取单个MMT_TXT文件(Self, 文件路径: str) -> list:
         结果 = []
         try:
@@ -638,6 +632,7 @@ class File:
                 if 键:
                     结果.append([[文件路径, 当前模组ID, 键], 值])
         return 结果
+
     def 应用MMT_TXT翻译(Self, 翻译列表: list) -> None:
         if not 翻译列表:
             return
@@ -699,13 +694,14 @@ class File:
                         键 = 分隔匹配.group(1).strip()
                         if 键 in 模组条目[当前模组ID]:
                             译文 = 模组条目[当前模组ID][键]
-                            行 = re.sub(r'(\s*[^=:→]+\s*[=:→]\s*).*', r'\1' + 译文, 行)
+                            行 = re.sub(r'(\s*[^=:→]+\s*[=:→]\s*).*', lambda _m: _m.group(1) + 译文,行)
                 新行列表.append(行)
             try:
                 with open(文件路径, "w", encoding="utf-8") as f:
                     f.write("\n".join(新行列表))
             except Exception:
                 Self.日志("log.module.mmt.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
+
     def 应用MMT翻译(Self, index: list) -> None:
         if not index:
             return
@@ -725,28 +721,18 @@ class File:
                     if 模组ID in 数据["content"] and 键 in 数据["content"][模组ID].get("translations", {}):
                         数据["content"][模组ID]["translations"][键] = 译文
                 数据["header"]["translated"] = True
-                with open(文件路径, "w+", encoding="utf-8") as f:
-                    json.dump(数据, f, ensure_ascii=False, indent=2)
+                Self.写入Json文件(文件路径, 数据, 缩进=2)
             except Exception:
                 Self.日志("log.module.mmt.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
+
+    # ========== 数据包 ==========
     def 读取单个数据包文件(Self, 文件路径: str) -> list:
         结果 = []
+        文件路径 = Path(文件路径)
         if 文件路径.suffix in [".json", ".mcmeta"]:
             try:
                 数据 = Self.读取Json文件(文件路径)
-                目标字段 = {"description", "title", "name", "subtitle"}
-                def 递归提取(obj, 当前路径):
-                    if isinstance(obj, dict):
-                        for key, value in obj.items():
-                            新路径 = 当前路径 + [key]
-                            if key in 目标字段 and (isinstance(value, str) or isinstance(value, dict)):
-                                结果.append([[文件路径, 新路径], str(value)])
-                            else:
-                                递归提取(value, 新路径)
-                    elif isinstance(obj, list):
-                        for idx, item in enumerate(obj):
-                            递归提取(item, 当前路径 + [idx])
-                递归提取(数据, [])
+                Self.递归提取文本(数据, [], {"description", "title", "name", "subtitle"}, lambda 路径, 值: 结果.append([[文件路径, 路径], str(值)]), 允许值类型=(str, dict))
             except Exception: Self.日志("log.module.data.load.error", file=文件路径, e=eb.format_exc(),  info_level=2)
         elif 文件路径.suffix == ".mcfunction":
             try:
@@ -765,6 +751,7 @@ class File:
             except Exception:
                 Self.日志("log.module.data.load.error", file=文件路径, e=eb.format_exc(), info_level=2)
         return 结果
+
     def 应用数据包翻译(Self, index: list) -> None:
         文件映射 = {}
         for 条目 in index:
@@ -785,25 +772,16 @@ class File:
                 except Exception: Self.日志("log.module.data.load.error", file=文件路径, e=eb.format_exc(), info_level=2); continue
                 for 类型, 路径, 译文 in 替换列表:
                     try:
-                        obj = 数据
-                        for key in 路径[:-1]:
-                            if isinstance(obj, list):
-                                key = int(key)
-                            obj = obj[key]
-                        最后键 = 路径[-1]
-                        if isinstance(obj, list):
-                            最后键 = int(最后键)
                         if isinstance(译文, str):
                             try:
                                 译文 = json.loads(译文)
                             except json.JSONDecodeError: pass
-                        obj[最后键] = 译文
+                        Self.设置路径值(数据, 路径, 译文)
                     except Exception:
                         Self.日志("log.module.data.write.error",
                                     file=文件路径, path=str(路径),
                                     e=eb.format_exc(), info_level=2)
-                with open(文件路径, "w", encoding="utf-8") as f:
-                    json.dump(数据, f, ensure_ascii=False, indent=4)
+                Self.写入Json文件(文件路径, 数据)
             elif 文件路径.suffix == ".mcfunction":
                 try:
                     with open(文件路径, "r", encoding="utf-8") as f:
@@ -827,6 +805,8 @@ class File:
                     所有行[行号 - 1] = 行内容
                 with open(文件路径, "w", encoding="utf-8") as f:
                     f.writelines(所有行)
+
+    # ========== Casualties: Unknown ==========
     def 读取未知伤亡语言文件(Self, file: str):
         提取列表 = []
         try:
@@ -852,6 +832,7 @@ class File:
                 continue
             递归提取(顶层值, 顶层键)
         return 提取列表
+
     def 保存未知伤亡语言文件(Self, 条目列表: list, 使用模型=None):
         if not 条目列表:
             return
@@ -899,10 +880,11 @@ class File:
             if 分类键 in 数据:
                 设置值(数据[分类键], 片段[1:], 译文)
         try:
-            with open(Path(文件路径).parent / f"{Self.Config.LANGUAGE_OUTPUT}.json", "w", encoding="utf-8") as f:
-                json.dump(数据, f, ensure_ascii=False, indent=4)
+            Self.写入Json文件(Path(文件路径).parent / f"{Self.Config.LANGUAGE_OUTPUT}.json", 数据)
         except Exception:
             Self.日志("log.module.lang.write.error", mod="Casualties: Unknown", file=文件路径, e=eb.format_exc(), info_level=2)
+
+    # ========== .NET DLL ==========
     def 读取单个DLL文件(Self, 文件路径: str) -> list:
         结果 = []
         p_file = Path(文件路径)
@@ -911,7 +893,7 @@ class File:
             if not pe.net or not pe.net.user_strings:
                 return 结果
             us_data = pe.net.user_strings.__data__
-            提取到的字符串 = Self._解析NetUS堆(us_data)
+            提取到的字符串 = Self.解析NetUS堆(us_data)
             for s in 提取到的字符串:
                 结果.append([["ldstr", s], s, p_file])
         except Exception:
@@ -924,7 +906,7 @@ class File:
                     pass
         return 结果
 
-    def _解析NetUS堆(Self, data: bytes) -> list:
+    def 解析NetUS堆(Self, data: bytes) -> list:
         字符串列表 = []
         offset = 1
         while offset < len(data):
@@ -947,34 +929,35 @@ class File:
                 s = str_bytes.decode('utf-16-le')
                 if s and len(s.strip()) > 1:
                     字符串列表.append(s)
-            except UnicodeDecodeError: 
+            except UnicodeDecodeError:
                 pass
         return list(dict.fromkeys(字符串列表))
+
     def 应用DLL翻译(Self, 翻译列表: list) -> None:
         文件映射 = {}
         for 条目 in 翻译列表:
             位置信息 = 条目[0]
             译文 = 条目[1]
             文件路径对象 = 条目[2]
-            原文 = 位置信息[1]       
-            文件路径 = str(文件路径对象) 
+            原文 = 位置信息[1]
+            文件路径 = str(文件路径对象)
             文件映射.setdefault(文件路径, {})[原文] = 译文
         for 文件路径, 替换字典 in 文件映射.items():
             if not 替换字典:
                 continue
             try:
-                Self._使用Cecil回写DLL(文件路径, 替换字典)
+                Self.使用Cecil回写DLL(文件路径, 替换字典)
             except Exception:
                 Self.日志("log.module.dll.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
 
-    def _使用Cecil回写DLL(Self, 文件路径: str, 替换字典: dict) -> None:
+    def 使用Cecil回写DLL(Self, 文件路径: str, 替换字典: dict) -> None:
         p_file = Path(文件路径).resolve()
         cecil_file = Path(f"{Self.Config.MONO_CECIL_DLL_PATH}/{Self.Config.MONO_CECIL_DLL_NAME}").resolve()
         System.Reflection.Assembly.LoadFrom(str(cecil_file))
         from Mono.Cecil import ModuleDefinition, DefaultAssemblyResolver, ReaderParameters, WriterParameters  # type: ignore
         from Mono.Cecil.Cil import OpCodes  # type: ignore
         resolver = DefaultAssemblyResolver()
-        resolver.AddSearchDirectory(str(cecil_file.parent)) 
+        resolver.AddSearchDirectory(str(cecil_file.parent))
         reader_params = ReaderParameters()
         reader_params.AssemblyResolver = resolver
         module = ModuleDefinition.ReadModule(str(p_file), reader_params)
@@ -984,7 +967,7 @@ class File:
                     try:
                         field.FieldType.Resolve()
                     except Exception:
-                        field.Constant = None 
+                        field.Constant = None
                         try:
                             field.HasConstant = False
                         except:
@@ -1005,6 +988,8 @@ class File:
         module.Write(str(临时文件), writer_params)
         module.Dispose()
         临时文件.replace(p_file)
+
+    # ========== 通用语言文件 ==========
     def 读取语言文件(Self, file: str):
         with open(file, "r", encoding="utf-8") as f:
             if Path(file).suffix == ".lang":
@@ -1015,10 +1000,11 @@ class File:
             elif Path(file).suffix == ".local":
                 源文件 = [re.sub(r'\s*=\s*', '=', line) for line in f.read().splitlines() if line.strip()]
         return [
-            (lambda parts: [parts[0], parts[1], file])(line.split('=', 1)) 
-            for line in 源文件 
+            (lambda parts: [parts[0], parts[1], file])(line.split('=', 1))
+            for line in 源文件
             if (stripped := line.strip()) and stripped and '=' in stripped and not stripped.startswith(('#', '//'))
         ], [源文件, file]
+
     def 保存语言文件(Self, file: str, 保存列表: list):
         with open(file, "w+", encoding="utf-8") as f:
             if Path(file).suffix == ".lang":
@@ -1041,14 +1027,14 @@ class File:
                 for index in 保存列表:
                     k, v = index.split('=', 1)
                     try:
-                        v = ast.literal_eval(v)
+                        v = json.loads(v)
                     except Exception: pass
                     json文件[k] = v
-                def _sanitize(obj):
+                def 清洗数据(obj):
                     if isinstance(obj, dict):
-                        return {kk: _sanitize(vv) for kk, vv in obj.items()}
-                    elif isinstance(obj, list):
-                        return [_sanitize(item) for item in obj]
+                        return {kk: 清洗数据(vv) for kk, vv in obj.items()}
+                    elif isinstance(obj, (list, tuple, set, frozenset)):
+                        return [清洗数据(item) for item in obj]
                     elif hasattr(obj, 'isnan') and callable(getattr(obj, 'isnan')):
                         try:
                             if float(obj) != float(obj):
@@ -1062,10 +1048,16 @@ class File:
                     elif isinstance(obj, np.ndarray):
                         return obj.tolist()
                     return obj
-                清理后 = _sanitize(json文件)
+                清理后 = 清洗数据(json文件)
                 f.write(json.dumps(清理后, ensure_ascii=False, indent=4))
             elif Path(file).suffix == ".local":
                 f.write("\n".join([re.sub(r'\s*=\s*', ' = ', line) for line in 保存列表]))
+        if Self.Config.LANGUAGE_VARIANT and Path(file).suffix.lower() == ".lang" and Path(file).stem == Path(file).stem.lower():
+            语言变体 = Self.Module.语言代码大小写互补(Path(file).stem)
+            if 语言变体 and 语言变体 != Path(file).stem:
+                Self.保存语言文件(str(Path(file).with_name(f"{语言变体}{Path(file).suffix}")), 保存列表)
+
+    # ========== 压缩包与资源文件 ==========
     def 读取压缩文件(Self, file_path: str, cache_path: str, original_language: str, target_language: str):
         try:
             for _ in Self.tqdm(range(1), desc="tqdm.file.read"):
@@ -1093,7 +1085,8 @@ class File:
             return 可用文件列表
         except Exception:
             Self.日志("log.module.zip.read.error", e=eb.format_exc(), info_level=3)
-            raise FileNotFoundError(eb.format_exc())
+            raise FileNotFoundError(Self.Lang("log.module.zip.read.error", e=eb.format_exc()))
+
     def 读取资源文件(Self, file0: str, file1: str = "", read_error: bool = True):
         Self.日志("log.core.file.read.start", file0=file0, file1=file1)
         文件0, 文件0源文件, 文件1 = [], [], []
@@ -1146,6 +1139,8 @@ class File:
                     解析并追加([file1], 文件1)
         Self.日志("log.core.file.read.end", file0=文件0, file1=文件1)
         return 文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2
+
+    # ========== 模组 ID ==========
     def 从资源包文件夹获取I18n翻译模组ID(Self, 路径: str):
         Self.日志("log.core.modid.get.start", info_level=0)
         try:
@@ -1163,6 +1158,7 @@ class File:
             返回内容 = []
         Self.日志("log.core.modid.get.end", info_level=0)
         return 返回内容
+
     def 从模组文件夹获取模组ID(Self, 路径: str):
         Self.日志("log.core.modid.get.start", info_level=0)
         所有模组路径 = Path(f"{路径}/{"mods"}").glob('*.jar')
@@ -1216,12 +1212,87 @@ class File:
                 Self.日志("log.module.parsemodid.file.error", e=eb.format_exc())
         Self.日志("log.core.modid.get.end", info_level=0)
         return 模组ID列表
+
+    def 从模组读取游戏版本(Self, 模组文件: str, 模组ID: str = ""):
+        try:
+            with zipfile.ZipFile(模组文件, 'r') as 压缩文件:
+                文件列表 = 压缩文件.namelist()
+                for 元数据文件 in ("META-INF/mods.toml", "META-INF/neoforge.mods.toml"):
+                    if 元数据文件 not in 文件列表:
+                        continue
+                    try:
+                        with 压缩文件.open(元数据文件) as 文件:
+                            数据 = tomllib.load(文件)
+                        if 模组ID:
+                            依赖列表 = 数据.get('dependencies', {}).get(模组ID, [])
+                            for 依赖 in 依赖列表:
+                                if 依赖.get('modId') == "minecraft" and 依赖.get('versionRange'):
+                                    版本 = Self._提取版本号(str(依赖['versionRange']))
+                                    if 版本: return 版本
+                        for 段依赖 in 数据.get('dependencies', {}).values():
+                            for 依赖 in 段依赖:
+                                if 依赖.get('modId') == "minecraft" and 依赖.get('versionRange'):
+                                    版本 = Self._提取版本号(str(依赖['versionRange']))
+                                    if 版本: return 版本
+                    except Exception:
+                        continue
+                if "fabric.mod.json" in 文件列表:
+                    try:
+                        with 压缩文件.open("fabric.mod.json") as 文件:
+                            数据 = json.load(文件)
+                        for 来源 in ("depends", "recommends", "suggests"):
+                            约束 = 数据.get(来源, {}).get("minecraft")
+                            if isinstance(约束, str) and 约束:
+                                版本 = Self._提取版本号(约束)
+                                if 版本: return 版本
+                            elif isinstance(约束, dict) and 约束.get("version"):
+                                版本 = Self._提取版本号(str(约束["version"]))
+                                if 版本: return 版本
+                    except Exception:
+                        pass
+                候选文件列表 = ["mcmod.info"] if "mcmod.info" in 文件列表 else [文件名 for 文件名 in 文件列表 if 文件名.endswith('.info')]
+                for 信息文件 in 候选文件列表:
+                    try:
+                        with 压缩文件.open(信息文件) as 文件:
+                            内容 = 文件.read().decode('utf-8-sig')
+                            数据列表 = json.loads(内容)
+                            if isinstance(数据列表, list) and len(数据列表) > 0:
+                                版本 = Self._提取版本号(str(数据列表[0].get('mcversion') or 数据列表[0].get('mcVersion') or ""))
+                                if 版本: return 版本
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        匹配 = re.search(r"(?:^|[-_])(1\.\d{1,2}(?:\.\d{1,2})?)", Path(str(模组文件)).stem)
+        if 匹配:
+            return 匹配.group(1)
+        return None
+
+    def _提取版本号(Self, 约束: str):
+        匹配 = re.search(r"(1\.\d{1,2}(?:\.\d{1,2})?)", 约束)
+        return 匹配.group(1) if 匹配 else None
+
+    def 从模组文件夹获取游戏版本(Self, 路径: str) -> bool:
+        版本计数 = {}
+        for 模组文件路径 in Self.ttqdm(Path(f"{路径}/{"mods"}").glob('*.jar'), desc="tqdm.file.modver.get"):
+            try:
+                版本 = Self.从模组读取游戏版本(str(模组文件路径))
+                if 版本:
+                    版本计数[版本] = 版本计数.get(版本, 0) + 1
+            except Exception:
+                continue
+        if not 版本计数:
+            return False
+        最高版本 = max(版本计数.items(), key=lambda 项: (项[1], len(项[0].split('.')), tuple(int(段) for 段 in 项[0].split('.'))))[0]
+        版本段 = 最高版本.split('.')
+        主, 次 = (int(版本段[0]), int(版本段[1])) if len(版本段) >= 2 else (int(版本段[0]), 0)
+        return (主, 次) >= (1, 6) and (主, 次) <= (1, 10)
+
+    # ========== 审查文件 ==========
     def 读取审查文件(Self, file0: str):
         返回列表 = []
         with open(file0, 'r', encoding='utf-8') as 文件对象:
-            文件行列表 = 文件对象.read().splitlines()
-        for 单行文本 in 文件行列表:
-            数据字典 = ast.literal_eval(单行文本)
-            for 键名, 键值 in 数据字典.items():
-                返回列表.append([键名, 键值[0], 键值[1]])
+            数据字典 = json.load(文件对象)
+        for 键名, 键值 in 数据字典.items():
+            返回列表.append([键名, 键值[0], 键值[1]])
         return 返回列表

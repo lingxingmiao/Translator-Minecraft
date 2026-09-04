@@ -1,7 +1,7 @@
 from __future__ import annotations 
 
 __lazy_modules__ = ["traceback", "threading", "hashlib", "zipfile", "sqlite3", "tomllib", "asyncio", "logging", "shutil", "locale", "bisect", "pickle", "random", "atexit", "heapq", "queue", "shlex", "time", "uuid", "math", "ast", "re", "io", "json", "enum", "types", "typing", "urllib.parse", "urllib3.util.retry", "logging.handlers", "pathlib", "requests.adapters", "functools", "concurrent.futures", "contextlib", "collections", "dataclasses",
-                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "aiohttp", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os", "warnings", "copy", "tqdm", "clr", "token_calibrator"]
+                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "aiohttp", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os", "warnings", "copy", "tqdm", "clr", "token_calibrator", "diskcache"]
 
 import traceback as eb
 import threading
@@ -19,6 +19,8 @@ import bisect
 import pickle
 import random
 import atexit
+import base64
+import struct
 import heapq
 import queue
 import shlex
@@ -98,6 +100,25 @@ except:
         class TokenCalibrator: pass
         class TokenEstimator: pass
     NOT_IMPORT.append("token_calibrator")
+try:
+    import huggingface_hub
+except:
+    class huggingface_hub:
+        class hf_hub_download: pass
+    NOT_IMPORT.append("huggingface_hub")
+try:
+    import datasets
+except:
+    class datasets:
+        class load_dataset: pass
+    NOT_IMPORT.append("datasets")
+try:
+    from PIL import Image
+except:
+    class Image:
+        class open: pass
+        class save: pass
+    NOT_IMPORT.append("pillow")
 ConfigFile = Path("config.cfg").resolve()
 ConfigFile.parent.mkdir(parents=True, exist_ok=True)
 if ConfigFile.is_file():
@@ -337,7 +358,8 @@ class snbtlib:
                                 buf.append(chr(int(text[j+2:j+6], 16)))
                                 j += 4  # extra skip handled below
                             except (ValueError, IndexError):
-                                buf.append(esc)
+                                buf.append(text[j+1:j+6])  # 解析失败保留原始\uXXXX
+                                j += 4  # 跳过全部\uXXXX防止后续解析混乱
                         else:
                             # 未知转义，保留原样
                             buf.append(esc)
@@ -1896,7 +1918,7 @@ else:
 
 信息文本 = Text.from_markup(f"""
 [bold]TranslatorMinecraft Core[/bold]
-[bright_green]Version:[/] Release 1.6 Bata.4
+[bright_green]Version:[/] Release 1.6 Bata.5
 [bright_green]NumPy Accelerator:[/] {加速方法} {加速版本}""")
 
 总文本 = Text.assemble(文本, 信息文本)
@@ -1912,14 +1934,14 @@ Console(force_terminal=True, color_system="auto").print(
 )
 __all__ = [
     "aiohttp", "APIConfig", "Any", "as_completed", "ast", "asynccontextmanager", "asyncio", "atexit",  # A
-    "bisect",  # B
+    "bisect", "base64",  # B
     "Callable", "copy", "Counter",  # C
-    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime", "diff_tqdm",  # D
+    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime", "diff_tqdm", "datasets",  # D
     "eb",  # E
     "faiss", "fancymenulib", "FileHandler", "fastapi",  # F
     "GPU_ACC", "gtnhlib", # G
-    "HARDWARE_INFO", "hashlib", "hqmlib", "HTTPAdapter", "heapq",  # H
-    "io", "InconsistentValues",  # I
+    "HARDWARE_INFO", "hashlib", "hqmlib", "HTTPAdapter", "heapq", "huggingface_hub",  # H
+    "io", "InconsistentValues", "Image",  # I
     "json",  # J
     # K (无)
     "List", "locale", "logging",  # L
@@ -1929,7 +1951,7 @@ __all__ = [
     "partial", "Path", "pickle", "PurePosixPath",  # P
     "queue", "QueueHandler", "QueueListener", "quote",  # Q
     "random", "re", "replace", "requests", "Retry", "RotatingFileHandler", "rich_tqdm",  # R
-    "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "System",  # S
+    "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "System", "struct",  # S
     "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm_tqdm", "token_calibrator",# T
     "Union", "uuid",  # U
     # V, W, X, Y (无)
@@ -1954,6 +1976,7 @@ if TYPE_CHECKING:
     import TranslatorBuilder
     import TranslatorIndex
     import TranslatorNetwork
+    import TranslatorModpack
 
 import TranslatorIndexGSQ as IndexGSQ
 import TranslatorIndex
@@ -2000,6 +2023,10 @@ def Network(Config) -> "TranslatorNetwork.Network":
     from TranslatorNetwork import Network as _Class
     return _Class(Config)
 
+def Modpack(Config) -> "TranslatorModpack.Modpack":
+    from TranslatorModpack import Modpack as _Class
+    return _Class(Config)
+
 from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG, DefaultConfig, Config, Config as _Config
 
 __all__.extend([
@@ -2013,7 +2040,7 @@ __all__.extend([
     "Index", "IndexGSQ", # I
     # J, K (无)
     "Locale", "Log", # L
-    "Module", # M
+    "Module", "Modpack", # M
     "Network", # N
     # O, P (无)
     "Quantization", # Q

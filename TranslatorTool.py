@@ -111,10 +111,19 @@ class Tool:
     def 合并语言文件更新(Self, file0: str, notlang_file: str, file1: str = "", output_path: str = ""):
         Self.日志("log.core.lang.merge.start", info_level=0)
         output_path = Self.Module.输出路径处理(output_path)
-        合并列表 = []
-        输出列表 = []
-        缺失列表 = []
+        合并列表, 输出列表, 缺失列表 = [], [], []
         文件0, 文件0源文件, 文件1, 压缩路径, 输出扩展名, file2 = Self.File.读取资源文件(file0, file1)
+        
+        保存语言代码 = Self.Config.LANGUAGE_OUTPUT
+        模组版本 = Self.File.从模组读取游戏版本(file0)
+        if 模组版本: # 检查是否为1.6-1.10 因为这几个版本要用zh_CN en_US
+            try:
+                版本段 = str(模组版本).split('.')
+                主, 次 = (int(版本段[0]), int(版本段[1])) if len(版本段) >= 2 else (int(版本段[0]), 0)
+                if (1, 6) <= (主, 次) <= (1, 10):
+                    保存语言代码 = Self.Module.语言代码区域转大写(保存语言代码)
+            except Exception: pass
+        
         if 文件1:
             参考字典 = {}
             for item in 文件1:
@@ -132,7 +141,7 @@ class Tool:
             合并列表 = 文件0.copy()
         未翻译文件路径 = notlang_file 
         if Path(未翻译文件路径).suffix == ".translang":
-            缺失列表 = [[index[0], index[1], ""] for index in Self.File.读取审查文件(未翻译文件路径)]
+            缺失列表 = [[index[0], index[2], ""] for index in Self.File.读取审查文件(未翻译文件路径)]
         else:
             缺失列表 = Self.File.读取语言文件(notlang_file)[0]
         缺失列表 = {index[0]: index[1] for index in 缺失列表}
@@ -156,21 +165,20 @@ class Tool:
             输出列表.append([index[1], 输出列表缓存])
         if 压缩路径:
             for index in 输出列表:
-                Self.File.保存语言文件(f"{Path(index[0]).parent}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}", index[1])
+                Self.File.保存语言文件(f"{Path(index[0]).parent}/{保存语言代码}{输出扩展名}", index[1])
             压缩文件夹Path = Path(压缩路径)
             if file2[0] == False:
-                压缩文件夹Path = 压缩文件夹Path.parent
-                文档内容 = Self.Config.PACK_META_TEMPLATE_TRANSLATE.format(name=Path(file0).stem, lang=Self.Config.LANGUAGE_OUTPUT, author=Self.Config.PACK_AUTHOR or "海盐青茫")
+                文档内容 = Self.Config.PACK_META_TEMPLATE_MERGE.format(name=Path(file0).stem, lang=保存语言代码, author=Self.Config.PACK_AUTHOR or "海盐青茫")
                 with open(压缩文件夹Path/"pack.mcmeta", "w+", encoding="utf-8") as f:
                     f.write(json.dumps({"pack": {"description": 文档内容, "pack_format": 9999,"supported_formats": [0, 9999],"min_format": 0,"max_format": 9999}}, ensure_ascii=False, indent=4))
-            with zipfile.ZipFile(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip", 'w', zipfile.ZIP_DEFLATED) as f:
+            with zipfile.ZipFile(f"{output_path}/{Path(file0).stem}-{保存语言代码}.zip", 'w', zipfile.ZIP_DEFLATED) as f:
                 for 压缩文件 in 压缩文件夹Path.rglob('*'):
                     if 压缩文件.is_file():
                         f.write(压缩文件, arcname=压缩文件.relative_to(压缩文件夹Path))
-            Self.日志("log.core.translator.succeed", path=Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve(), info_level=0)
-            返回路径 = Path(f"{output_path}/{Path(file0).stem}-{Self.Config.LANGUAGE_OUTPUT}.zip").resolve()
+            Self.日志("log.core.translator.succeed", path=Path(f"{output_path}/{Path(file0).stem}-{保存语言代码}.zip").resolve(), info_level=0)
+            返回路径 = Path(f"{output_path}/{Path(file0).stem}-{保存语言代码}.zip").resolve()
         else:
-            输出路径 = str(f"{output_path}/{Self.Config.LANGUAGE_OUTPUT}{输出扩展名}")
+            输出路径 = str(f"{output_path}/{保存语言代码}{输出扩展名}")
             Self.File.保存语言文件(输出路径, 输出列表)
             Self.日志("log.core.settle.succeed", path=Path(输出路径).resolve(), info_level=0)
             返回路径 = Path(输出路径).resolve()
@@ -190,7 +198,7 @@ class Tool:
             文本列表 = [[index[0], index[1]] for index in 文本列表]
         Self.CacheTranslator.翻译缓存(文本列表, 语言=Self.Config.LANGUAGE_OUTPUT)
         Self.日志("log.core.file.settle.end", info_level=0)
-    def DictMini转换数据集(Self, file: str, mode: str = "Alpaca", output_file: str = "dataset.jsonl"):
+    def DictMini转换数据集(Self, file: str, mode: str = "Alpaca", max_length: int = 2147483647, output_file: str = "dataset.jsonl"):
         Self.日志("log.core.file.settle.start", info_level=0)
         待处理列表 = []
         for _ in Self.tqdm(range(1), desc="tqdm.file.read"):
@@ -199,14 +207,24 @@ class Tool:
         for index in Self.tqdm(Dict文件, desc="tqdm.file.processing"):
             for index2 in Dict文件[index]:
                 待处理列表.append([index, index2])
+        Self.转换数据集(待处理列表[:max_length], mode, output_file)
+    def 翻译缓存转换数据集(Self, mode: str = "Alpaca", output_file: str = "dataset.jsonl"):
+        Self.日志("log.core.file.settle.start", info_level=0)
+        待处理列表 = []
+        for key0, value0 in Self.tqdm(Self.Translator.CacheTranslator.翻译缓存().items(), desc="tqdm.file.processing"):
+            for key1, value1 in value0.items():
+                 待处理列表.append([key1, value1])
+        Self.转换数据集(待处理列表, mode, output_file)
+    def 转换数据集(Self, 待处理列表, mode, output_file):
         导出列表 = []
         random.shuffle(待处理列表)
-        if mode == "Alpaca-EX":
+        系统提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
+        预编译输入文本 = Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text="{text}")
+        if mode in ["Alpaca-EX", "DPO-Mini", "DPO-EX"]:
             翻译映射 = asyncio.run(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
+        if mode == "Alpaca-EX":
             提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
-            预编译输入文本 = Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text="{text}")
             所有翻译对 = []
-            
             for 原文, 译文 in 待处理列表:
                 参考列表 = 翻译映射.get(原文, [])
                 术语表原始数据 = 参考列表 if isinstance(参考列表, list) else []
@@ -269,16 +287,100 @@ class Tool:
                     输出文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的目标文本])
                 新待处理列表.append([提示词, 预编译输入文本.format(text=输入文本), 输出文本])
             待处理列表 = 新待处理列表
+        elif mode in ["DPO-Mini", "DPO-EX"]:
+            所有翻译对 = []
+            for 原文, 译文 in 待处理列表:
+                参考列表 = 翻译映射.get(原文, [])
+                术语表原始数据 = 参考列表 if isinstance(参考列表, list) else []
+                所有翻译对.append({"src": 原文, "tgt": 译文, "glossary": 术语表原始数据})
+            random.shuffle(所有翻译对)
+            参考池 = [[item["src"], item["tgt"]] for item in 所有翻译对]
+            if mode == "DPO-Mini":
+                for item in Self.tqdm(所有翻译对, desc="tqdm.file.processing"):
+                    原文, 译文 = item["src"], item["tgt"]
+                    conversations = [
+                        {"role": "system", "content": 系统提示词},
+                        {"role": "user", "content": Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text=原文)},
+                    ]
+                    chosen = {"role": "assistant", "content": 译文}
+                    for 污染 in Self.构造DPO污染(原文, 译文, item["glossary"], 系统提示词, 参考池, f"<rt>{原文}</rt>"):
+                        if 污染 == 译文: continue
+                        导出列表.append({"conversations": conversations, "chosen": chosen, "rejected": {"role": "assistant", "content": 污染}})
+                    术语表 = [t for t in (item["glossary"] or []) if isinstance(t, (list, tuple)) and len(t) >= 2]
+                    rag块 = None
+                    if 术语表:
+                        rag块 = "<rag-input>" + " ".join([f"{t[0]}={t[1]}" for t in 术语表]) + "</rag-input>"
+                    else:
+                        rag候选 = [r for r in (参考池 or []) if r[0] != 原文]
+                        if rag候选:
+                            rag块 = "<rag-input>" + " ".join([f"{r[0]}={r[1]}" for r in random.sample(rag候选, min(3, len(rag候选)))]) + "</rag-input>"
+                    if rag块:
+                        带RAG用户 = (rag块 + "\n") + Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text=f"{原文}")
+                        conversationsRAG = [
+                            {"role": "system", "content": 系统提示词},
+                            {"role": "user", "content": 带RAG用户},
+                        ]
+                        chosenRAG = {"role": "assistant", "content": 译文}
+                        for rag污染 in [rag块 + "\n" + 译文, rag块, f"<rt>{译文}</rt>\n" + rag块]:
+                            if rag污染 == 译文:
+                                continue
+                            导出列表.append({"conversations": conversationsRAG, "chosen": chosenRAG, "rejected": {"role": "assistant", "content": rag污染}})
+            else:
+                i = 0
+                while i < len(所有翻译对):
+                    剩余数量 = len(所有翻译对) - i
+                    抽样数量 = random.randint(1, min(16, 剩余数量))
+                    当前批次 = 所有翻译对[i : i + 抽样数量]
+                    i += 抽样数量
+                    选中的源文本 = [item["src"] for item in 当前批次]
+                    选中的目标文本 = [item["tgt"] for item in 当前批次]
+                    输入文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的源文本])
+                    输出文本 = "\n".join([f"<rt>{t}</rt>" for t in 选中的目标文本])
+                    合并术语表 = []
+                    见过的术语 = set()
+                    for item in 当前批次:
+                        for 术语 in item["glossary"]:
+                            if isinstance(术语, (list, tuple)) and len(术语) >= 2:
+                                术语键 = f"{术语[0]} --> {术语[1]}"
+                                if 术语键 not in 见过的术语:
+                                    见过的术语.add(术语键)
+                                    合并术语表.append(术语)
+                    conversations = [
+                        {"role": "system", "content": 系统提示词},
+                        {"role": "user", "content": Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text=输入文本)},
+                    ]
+                    chosen = {"role": "assistant", "content": 输出文本}
+                    for 污染 in Self.构造DPO污染(输入文本, 输出文本, 合并术语表, 系统提示词, 参考池, 输入文本):
+                        if 污染 == 输出文本: continue
+                        导出列表.append({"conversations": conversations, "chosen": chosen, "rejected": {"role": "assistant", "content": 污染}})
         for index in Self.tqdm(待处理列表, desc="tqdm.progress.encoding"):
+            if mode in ["DPO-Mini", "DPO-EX"]: continue
             if mode == "ChatML":
                 导出列表.append({"messages": [{"role": "system", "content": f"将下列文本翻译为{Self.Config.LANGUAGE_OUTPUT}语言"}, {"role": "user", "content": index[0]}, {"role": "assistant", "content": index[1]}]})
             elif mode == "Alpaca":
                 导出列表.append({"instruction": f"翻译为{Self.Config.LANGUAGE_OUTPUT}语言", "input": index[0], "output": index[1]})
+            elif mode == "Alpaca-Instruction":
+                导出列表.append({"instruction": Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT), "input": index[0], "output": index[1]})
             elif mode in ["Alpaca-EX", "Alpaca-EX-Mini"]:
                 导出列表.append({"instruction": index[0], "input": index[1], "output": index[2]})
         with open(output_file, 'w+', encoding='utf-8') as f:
             f.write('\n'.join(json.dumps(item, ensure_ascii=False, separators=(',', ':')) for item in Self.tqdm(导出列表, desc="tqdm.progress.encoding")))
         Self.日志("log.core.file.settle.end", info_level=0)
+    def 构造DPO污染(Self, 原文: str, 译文: str, 参考列表, 系统提示词: str, 参考池, 输入文本: str = ""):
+        污染列表 = []
+        rag项 = [f"{t[0]}={t[1]}" for t in (参考列表 or []) if isinstance(t, (list, tuple)) and len(t) >= 2]
+        if rag项:
+            污染列表.append("<rag-input>" + " ".join(rag项) + "</rag-input>\n" + 译文)
+        候选 = [r for r in (参考池 or []) if r[0] != 原文]
+        if 候选:
+            上下文内容 = " ".join([f"{r[0]}={r[1]}" for r in random.sample(候选, min(3, len(候选)))])
+            污染列表.append(f"<context>{上下文内容}</context>\n" + 译文)
+        if 输入文本:
+            污染列表.append(输入文本 + "\n" + 译文)
+        污染列表.append(系统提示词 + "\n" + 译文)
+        污染列表.append(原文)
+        污染列表.append(f"这是译文:{译文}")
+        return [p for p in 污染列表 if p and p != 译文]
     def 导入DictMini参考词(Self, file: str = None, mode: str = "dense", max_len: int = 80, reversal: bool = False):
         Self.日志("log.core.file.settle.start", info_level=0)
         待处理列表 = []
@@ -409,7 +511,8 @@ if __name__ == "__main__" and 测试:
         "EMB_MAX_WORKERS": 2,
         "DEBUG_MODE": True,
         "EMB_MAX_TOKENS": 512,
-        "VEC_FILE_NAME": "FP16_MAX", "VEC_QUANTIZATION": "Float16_Max"
+        "VEC_FILE_NAME": "FP16_MAX", "VEC_QUANTIZATION": "Float16_Max",
+        "TRANSLATOR_CACHE_NAME": "Translator_Cache2",
     }
     from TranslatorLib import Config
     配置 = Config(参数)
@@ -418,4 +521,7 @@ if __name__ == "__main__" and 测试:
     #翻译.导入未知伤亡语言文件DictMini(r"C:\Users\FengMang\Downloads\EN.json", r"C:\Users\FengMang\Downloads\zh_CN.json", r"C:\Users\FengMang\Downloads\Dict-Mini.json") #byd保留所有权利不敢用
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", mode="Alpaca-EX-Mini")
+    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", max_length=20000, mode="DPO-Mini")
+    #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
+    #翻译.合并语言文件更新(r"C:\Users\FengMang\Downloads\chestdna-1.02q-mc1.21.1-fabric.jar", r"C:\Users\FengMang\Desktop\TranslatorMinecraft\Cache\e1da873790f04e19b850843f61435bdb\zh_CN.translang")
+    #翻译.翻译缓存转换数据集()

@@ -1,4 +1,4 @@
-from TranslatorLib import (uuid, Path, threading, time, shutil, SimpleNamespace, re, json,
+from TranslatorLib import (uuid, Path, threading, time, shutil, SimpleNamespace, re, json, numpy,
                            Config)
 
 class Module:
@@ -27,6 +27,24 @@ class Module:
             path = f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}"
         Path(path).mkdir(parents=True, exist_ok=True)
         return Path(path).resolve()
+    def 语言代码大小写互补(Self, 语言: str):
+        if not isinstance(语言, str) or "_" not in 语言:
+            return None
+        try:
+            语言码, 区域码 = 语言.rsplit("_", 1)
+            区域码变体 = 区域码.lower() if 区域码.isupper() else 区域码.upper()
+            变体 = f"{语言码}_{区域码变体}"
+            return 变体 if 变体 != 语言 else None
+        except Exception:
+            return None
+    def 语言代码区域转大写(Self, 语言: str):
+        if not isinstance(语言, str) or "_" not in 语言:
+            return 语言
+        try:
+            语言码, 区域码 = 语言.rsplit("_", 1)
+            return f"{语言码}_{区域码.upper()}"
+        except Exception:
+            return 语言
     def 清理过期缓存(Self):
         try:
             缓存根 = Path(Self.Config.PATH_CACHE)
@@ -115,13 +133,13 @@ class Module:
                         提取记录.append((当前路径 + [k], v))
                 elif k == "extra" and isinstance(v, list):
                     for i, 子组件 in enumerate(v):
-                        Self.深度优先搜索(子组件, 当前路径 + [k, i])
+                        Self.文本组件深度优先搜索(子组件, 当前路径 + [k, i])
                 else:
-                    Self.深度优先搜索(v, 当前路径 + [k])
+                    Self.文本组件深度优先搜索(v, 当前路径 + [k])
             return
         if isinstance(组件, list):
             for i, 项目 in enumerate(组件):
-                Self.深度优先搜索(项目, 当前路径 + [i])
+                Self.文本组件深度优先搜索(项目, 当前路径 + [i])
             return
     def uuid(Self): # 记不住怎么写(
         return uuid.uuid4().hex
@@ -151,3 +169,27 @@ class Module:
             except (json.JSONDecodeError, TypeError): 错误信息 = 错误原文
         except Exception: 错误信息 = str(err)
         return 错误信息
+    def 解析HF引用(Self, 标识: str):
+        标识 = 标识.strip()
+        if ":" in 标识:
+            仓库ID, _, 剩余 = 标识.partition(":")
+            if "/" in 剩余:
+                修订版本, _, 文件名 = 剩余.partition("/")
+            else:
+                修订版本, 文件名 = 剩余, None
+            return 仓库ID, 文件名, 修订版本
+        if "/" in 标识:
+            仓库ID, _, 文件名 = 标识.rpartition("/")
+            return 仓库ID, 文件名, None
+        return 标识, None, None
+    def 采样器(Self, 采样, 定量, 最小值=1):
+        return max(最小值, int(采样) if isinstance(采样, numpy.uint32) or 采样 > 1 else int(定量 * 采样))
+    def 设置实例参数(Self, 实例, 参数):
+        for key, value in 参数.items():
+            if not hasattr(实例, key):
+                continue
+            attr = getattr(实例, key)
+            if isinstance(value, dict) and not isinstance(attr, (int, float, str, bool, list, tuple)):
+                Self.设置实例参数(attr, value)
+            else:
+                setattr(实例, key, value)
