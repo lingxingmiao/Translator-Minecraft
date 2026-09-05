@@ -962,7 +962,7 @@ AI给我加了一堆BUG所以不发布
 </details>
 
 ### Release.1.6（进行中）
-- 添加 BM25的RAG算法(质量较差 性能挺好)
+- 添加 BM25的RAG算法(质量与性能很差)
 - 添加 初次尝试插件架构
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
