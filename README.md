@@ -10,6 +10,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
 - [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文, 仅翻译功能。
+- 公益API: https://api.tanslamc.top sk-123456, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言
 
 ### 支持的内容
 - [整合包](https://www.mcmod.cn/modpack.html)
