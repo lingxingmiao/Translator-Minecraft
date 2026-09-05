@@ -7,6 +7,10 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 它不再是一个简单的翻译程序，而是一个高扩展性，高并发，支持极限向量压缩的翻译引擎。<br>
 我希望借此打破语言壁垒，降低Minecraft生态汉化门槛，不再为繁杂的翻译流程而束缚。
 
+### 出门左转
+- [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
+- [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文, 仅翻译功能。
+
 ### 支持的内容
 - [整合包](https://www.mcmod.cn/modpack.html)
 - 光影包
