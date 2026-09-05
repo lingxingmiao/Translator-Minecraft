@@ -961,9 +961,10 @@ AI给我加了一堆BUG所以不发布
 </details>
 </details>
 
-### Release.1.6（未开始）
-- 添加 BM25的RAG算法
-- 修改 翻译LLM任务添加为并行
+### Release.1.6（进行中）
+- 添加 BM25的RAG算法![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 初次尝试插件架构![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 翻译LLM任务添加为并行![](https://img.shields.io/badge/状态-等待中-blue)
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
