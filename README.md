@@ -970,6 +970,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 BM25的RAG算法(质量与性能很差)
 - 添加 初次尝试插件架构
 - 添加 RichTqdm与TqdmTqdm显示开关
+- 添加 内置llama.cpp嵌入模型加载![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修改 翻译LLM任务添加为并行
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 
