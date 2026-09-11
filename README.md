@@ -988,6 +988,9 @@ AI给我加了一堆BUG所以不发布
 ### 其他正在进行时
 - 研究
     - 量化类型
+        - 向量重排+GSQ
+            - 非线性量化
+            - 尾块低误差
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
