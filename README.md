@@ -942,6 +942,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 翻译LLM任务添加为并行
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 依赖 bm25s jieba
 
 ### Release.1.7 Bata.1（等待中）
