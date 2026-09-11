@@ -9,8 +9,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
-- [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文, 仅翻译功能；
-- 公益API: https://api.tanslamc.top sk-123456, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言。
+- [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文(想设置输出语言请使用API), 仅翻译功能(免费无限量不限速翻译)；
+- 公益API: https://api.tanslamc.top sk-123456, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言(公益网站使用的API)。
 
 ### 支持的内容
 - [整合包](https://www.mcmod.cn/modpack.html)
@@ -32,17 +32,21 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [TX Loader](https://www.mcmod.cn/class/9677.html)
 - SFT数据集(非游戏,用于蒸馏)
 
+即将支持以下组件
+- 附加包
+- GTNH Lang
+
 后续计划支持以下组件(可能是大饼)
 - KubeJS
 - Lavender手册(没什么模组用暂时就不做了)
 
-你可以在[工单](https://github.com/lingxingmiao/Translator-Minecraft/issues)中提交您的想法与程序中的问题(尽可能表达好就可以www)<br>
+你可以在 [工单(Issues)](https://github.com/lingxingmiao/Translator-Minecraft/issues) 中提交您的想法与程序中的问题(尽可能表达好就可以www)<br>
 
 ### 支持的项目
 - [CFPATools/i18n-dict](https://github.com/CFPATools/i18n-dict): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
 - [NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files](https://github.com/NakiriRuri/Minecraft-Shaders-zh_CN-Lang-Files): CC BY-NC-SA 4.0（非商业性使用-相同方式共享）
 
-### 作者
+### 程序创作者
 - [海盐青茫~](https://www.mcmod.cn/author/41532.html)(所有者, 程序)
 - [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序)
     - DeepSeek V4 Flash Preview
@@ -50,6 +54,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
     - DeepSeek V4.1 Flash
     - DeepSeek V4 Pro Preview
 - [Qwen](https://www.mcmod.cn/author/38153.html)(程序)
+    - Qwen2.5 Max([Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0))
     - Qwen3 Max
     - Qwen3.6 Plus
     - Qwen3.6 Max
@@ -249,7 +254,7 @@ conda env remove -n Translator_Minecraft
 ### 量化类型
 <details>
 <summary>点击展开/收起</summary>
-该区域/技术由AI管理
+该区域/技术由AI管理，海盐青茫负责提供设计。
     
 RMSE不代表Recall@10
     
@@ -369,7 +374,7 @@ RMSE不代表Recall@10
 </details>
 
 ## 更新日志
-版本：我看着水差不多了就发，看起来没毛然后下一个版本大于Bata.2我就会发一个正式版，或者后面要更新大坨的就发。
+版本控制：我看着差不多了就发，看起来没什么问题并且版本大于Bata.2我就有概率会发一个正式版，正式版前一个Bata版本一般会有大量BUG修复。
 <details>
 <summary>历史附加模块更新日志(点击展开/收起)</summary>
 <details>
@@ -978,6 +983,11 @@ AI给我加了一堆BUG所以不发布
     - 模组翻译
     - TX Loader
     - SFT数据集
+ 
+### 其他正在进行时
+- 研究
+    - 量化类型
+
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
 - 顺序：添加 -> >重构 -> 优化 -> 修改 -> 修复 -> 删除 -> 依赖(循环前面的)
