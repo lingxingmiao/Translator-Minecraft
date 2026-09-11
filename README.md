@@ -931,7 +931,7 @@ AI给我加了一堆BUG所以不发布
     - 图像嵌入模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - 重排序模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 模组类型
-    - BM25分词语言
+    - BM25分词语言(装饰器:@TranslatorLib.Mods().注册分词器(语言代码string))
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
