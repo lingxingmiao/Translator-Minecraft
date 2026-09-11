@@ -47,6 +47,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序)
     - DeepSeek V4 Flash Preview
     - DeepSeek V4 Flash 0731
+    - DeepSeek V4.1 Flash
     - DeepSeek V4 Pro Preview
 - [Qwen](https://www.mcmod.cn/author/38153.html)(程序)
     - Qwen3 Max
@@ -967,7 +968,7 @@ AI给我加了一堆BUG所以不发布
 </details>
 
 ### Release.1.6（进行中）
-- 添加 BM25的RAG算法(质量与性能很差)
+- 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 初次尝试插件架构
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 添加 内置llama.cpp嵌入、图像嵌入、重排模型加载![](https://img.shields.io/badge/状态-进行中-brightgreen)
