@@ -373,6 +373,17 @@ RMSE不代表Recall@10
 | **Float8_Max** | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB | 99.1/98.9/98.7/98.5/98.4/98.5/98.5/98.5/140.4MB |
 </details>
 
+### 模组装饰器
+<details>
+<summary>点击展开/收起</summary>
+    
+- @TranslatorLib.Mods().注册分词器(语言代码string)
+    - 输入: list[str], 返回: list[list[str]]
+    - 装饰示例: @TranslatorLib.Mods().注册分词器("zh_cn")
+    - 输入示例: ["我来到福建农林大学", "今天天气不错"]
+    - 返回示例: [["我", "来到", "福建", "农林", "大学"], ["今天", "天气", "不错"]]
+</details>
+
 ## 更新日志
 版本控制：我看着差不多了就发，看起来没什么问题并且版本大于Bata.2我就有概率会发一个正式版，正式版前一个Bata版本一般会有大量BUG修复。
 <details>
@@ -937,12 +948,38 @@ AI给我加了一堆BUG所以不发布
     - 重排序模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 模组类型
     - BM25分词语言(装饰器:@TranslatorLib.Mods().注册分词器(语言代码string))
+    - 量化类型![](https://img.shields.io/badge/状态-等待中-blue)
+        - 标量量化
+            - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)
+            - PolarQx (1~4 bit 1 1.6 2 3 4)
+            - GSQ_NL (1.6~6 bit 1.6 2 3 4 5 6)
+            - INTx_Max (8~16 bit 8 12 16)
+        - 乘积量化
+            - PQ
+            - OPQ
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
+- 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题![](https://img.shields.io/badge/状态-等待中-blue)
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题![](https://img.shields.io/badge/状态-等待中-blue)
+- 删除 量化类型![](https://img.shields.io/badge/状态-等待中-blue)
+    - Qx_K_M
+    - Qx_K
+    - Qx_SVD_LM
+    - GSQx_K
+    - Q2_NF
+    - PQ
+    - OPQ
+    - PolarQx
+    - BFloat16
+    - Float16_E0M15
+    - Float16_Max
+    - Float12_Max
+    - Float8_Max
+    - Float8_E4M3
+    - Float8_E0M7
 - 添加 依赖 bm25s jieba
 
 ### Release.1.7 Bata.1（等待中）
