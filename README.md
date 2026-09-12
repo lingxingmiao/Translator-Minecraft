@@ -996,7 +996,7 @@ AI给我加了一堆BUG所以不发布
     - Float8_Max!
     - Float8_E4M3
     - Float8_E0M7
-- 添加 依赖 bm25s jieba
+- 添加 依赖 bm25s jieba tokenizers
 
 ### Release.1.7 Bata.1（等待中）
 - 添加 模型类型
