@@ -972,12 +972,12 @@ AI给我加了一堆BUG所以不发布
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
-- 修改 PCA算法换为SpecTemp![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 PCA算法换为SpecTemp
 - 修改 IndexGSQ量化方法为GSQ_NL
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
-- 修复 API临时翻译实例内存溢出![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 API临时翻译实例内存溢出![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 量化类型
     - Qx_K_M
     - Qx_K
