@@ -123,6 +123,8 @@ pip install numpy numba requests aiohttp rich tqdm  faiss-cpu
 pip install bm25s
 ## 使用 bm25-zh_cn.py 模组需要安装
 pip install jieba
+## 使用 bm25-qwen35.py 模组需要安装
+pip install tokenizers
 
 # 内置模型加载（可选）
 pip install huggingface_hub
