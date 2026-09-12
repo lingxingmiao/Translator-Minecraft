@@ -962,6 +962,7 @@ AI给我加了一堆BUG所以不发布
             - INTx_Max (8~16 bit 8 12 16)
             - Float (8-16 E4M3 E0M7 E0M11 E0M15)
             - BFloat16
+            - Q2_NF
         - 乘积量化
             - PQ
             - OPQ
