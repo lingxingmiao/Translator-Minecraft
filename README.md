@@ -970,6 +970,7 @@ AI给我加了一堆BUG所以不发布
         - Percentile O(n)
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
+- 添加 NSG的C与L参数
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
 - 修改 PCA算法换为SpecTemp
