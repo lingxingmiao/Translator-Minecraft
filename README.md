@@ -377,11 +377,17 @@ RMSE不代表Recall@10
 <details>
 <summary>点击展开/收起</summary>
     
-- @TranslatorLib.Mods().注册分词器(语言代码string)
+- `@TranslatorLib.Mods().注册分词器(语言代码string)`
     - 输入: list[str], 返回: list[list[str]]
     - 装饰示例: @TranslatorLib.Mods().注册分词器("zh_cn")
     - 输入示例: ["我来到福建农林大学", "今天天气不错"]
     - 返回示例: [["我", "来到", "福建", "农林", "大学"], ["今天", "天气", "不错"]]
+
+
+- `@TranslatorLib.Mods().注册量化类型(注册名称, 标量基本位数)`
+    - 输入: Quantization, numpy.ndarray, 返回: dict
+- `@TranslatorLib.Mods().注册反量化类型(注册名称, 标量基本位数, 键字典(上面返回dict的键))`
+    - 输入: Quantization, 上面dict有的参数, 返回: numpy.ndarray
 </details>
 
 ## 更新日志
@@ -947,16 +953,16 @@ AI给我加了一堆BUG所以不发布
     - 图像嵌入模型
     - 重排序模型
 - 添加 模组类型
-    - BM25分词语言(装饰器:@TranslatorLib.Mods().注册分词器(语言代码string))
-    - 量化类型![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - BM25分词语言
+    - 量化类型
         - 标量量化
-            - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)
+            - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)![](https://img.shields.io/badge/状态-进行中-brightgreen)
             - PolarQx (1~4 bit 1 1.6 2 3 4)
             - GSQ_NL (1.6~6 bit 1.6 2 3 4 5 6)
-            - INTx_Max (8~16 bit 8 12 16)
+            - INTx_Max (8~16 bit 8 12 16)![](https://img.shields.io/badge/状态-进行中-brightgreen)
         - 乘积量化
-            - PQ
-            - OPQ
+            - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
+            - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
@@ -965,22 +971,22 @@ AI给我加了一堆BUG所以不发布
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 API临时翻译实例内存溢出![](https://img.shields.io/badge/状态-等待中-blue)
-- 删除 量化类型![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Qx_K_M
-    - Qx_K
-    - Qx_SVD_LM
+- 删除 量化类型
+    - Qx_K_M![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Qx_K![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Qx_SVD_LM![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - GSQx_K
-    - Q2_NF
-    - PQ
-    - OPQ
+    - Q2_NF![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - PolarQx
-    - BFloat16
-    - Float16_E0M15
-    - Float16_Max
-    - Float12_Max
-    - Float8_Max
-    - Float8_E4M3
-    - Float8_E0M7
+    - BFloat16![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float16_E0M15![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float16_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float12_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float8_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float8_E4M3![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Float8_E0M7![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 依赖 bm25s jieba
 
 ### Release.1.7 Bata.1（等待中）
@@ -1005,6 +1011,7 @@ AI给我加了一堆BUG所以不发布
         - GTNH Lang
         - SFT数据集
 - 修改 通用文件路由逻辑
+- 修改 PCA改为
 - 修复 翻译未知伤亡dll模型会翻译除字符串以外的内容导致游戏崩溃
 - 删除 翻译类型
     - 模组
