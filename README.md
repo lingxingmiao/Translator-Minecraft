@@ -945,7 +945,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 xllamacpp模型支持
     - 嵌入模型
     - 图像嵌入模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - 重排序模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 重排序模型
 - 添加 模组类型
     - BM25分词语言(装饰器:@TranslatorLib.Mods().注册分词器(语言代码string))
     - 量化类型![](https://img.shields.io/badge/状态-等待中-blue)
