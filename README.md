@@ -116,8 +116,8 @@ conda create -n Translator_Minecraft python=3.12 -y
 # 激活环境
 conda activate Translator_Minecraft
 
-#          向量处理     网络请求   进度显示与艺术 搜索文本
-pip install numpy  requests aiohttp rich tqdm  faiss-cpu
+#             向量处理       网络请求   进度显示与艺术 搜索文本
+pip install numpy numba requests aiohttp rich tqdm  faiss-cpu
 
 # BM25版本文本搜索（可选）
 pip install bm25s
@@ -161,8 +161,6 @@ pip install torch==2.9.1 torchvision -f https://mirrors.aliyun.com/pytorch-wheel
 # 向量处理加速（可选）
 ## 需要英伟达显卡 与 numba 一同安装自动禁用 numba
 conda install -c conda-forge cupy cuda-version=12.4
-## 与 cupy 一同安装自动禁用 numba，使用IndexGSQ需要安装，默认兼容最好的版本
-pip install numba
 
 # 退出环境
 conda deactivate
@@ -975,6 +973,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
 - 修改 PCA算法换为SpecTemp![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修改 IndexGSQ量化方法为GSQ_NL
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
