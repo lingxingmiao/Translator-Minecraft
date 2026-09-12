@@ -980,22 +980,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 日志内存泄露
-- 删除 量化类型
-    - Qx_K_M
-    - Qx_K
-    - Qx_SVD_LM
-    - GSQx_K
-    - Q2_NF
-    - PQ
-    - OPQ
-    - PolarQx
-    - BFloat16
-    - Float16_E0M15
-    - Float16_Max
-    - Float12_Max
-    - Float8_Max!
-    - Float8_E4M3
-    - Float8_E0M7
+- 删除 所有量化类型
 - 添加 依赖 bm25s jieba tokenizers
 
 ### Release.1.7 Bata.1（等待中）
@@ -1022,23 +1007,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 通用文件路由逻辑
 - 修改 PCA改为
 - 修复 翻译未知伤亡dll模型会翻译除字符串以外的内容导致游戏崩溃
-- 删除 翻译类型
-    - 模组
-    - 数据包
-    - FTB任务
-    - BQ任务
-    - 更好的任务
-    - 核电工艺重制版附加包
-    - 帕秋莉手册
-    - CraftTweaker
-    - 自定义主菜单
-    - 精致菜单
-    - 困难任务
-    - 未知伤亡语言文件
-    - 未知伤亡
-    - 模组翻译
-    - TX Loader
-    - SFT数据集
+- 删除 所有翻译类型
  
 ### 其他正在进行时
 - None
