@@ -380,11 +380,11 @@ RMSE不代表Recall@10
     - 装饰示例: @TranslatorLib.Mods().注册分词器("zh_cn")
     - 输入示例: ["我来到福建农林大学", "今天天气不错"]
     - 返回示例: [["我", "来到", "福建", "农林", "大学"], ["今天", "天气", "不错"]]
-- `@TranslatorLib.Mods().注册量化类型(注册名称, 标量基本位数, 是否启用分位数裁切)`
+- `@TranslatorLib.Mods().注册量化类型(注册名称string, 标量基本位数float, 是否启用分位数裁切bool)`
     - 输入: Quantization, numpy.ndarray, 返回: dict
-- `@TranslatorLib.Mods().注册反量化类型(注册名称, 标量基本位数, 键字典(上面返回dict的键))`
+- `@TranslatorLib.Mods().注册反量化类型(注册名称string, 标量基本位数float, 键字典list(上面返回dict的键))`
     - 输入: Quantization, 上面dict有的参数, 返回: numpy.ndarray
-- `@TranslatorLib.Mods().注册裁切类型(注册名称)`
+- `@TranslatorLib.Mods().注册裁切类型(注册名称string)`
     - 输入: Quantization, numpy.ndarray, 返回: numpy.ndarray
 </details>
 
