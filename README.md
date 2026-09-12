@@ -944,7 +944,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.6（进行中）
 - 添加 xllamacpp模型支持
     - 嵌入模型
-    - 图像嵌入模型![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 图像嵌入模型
     - 重排序模型
 - 添加 模组类型
     - BM25分词语言(装饰器:@TranslatorLib.Mods().注册分词器(语言代码string))
@@ -962,8 +962,8 @@ AI给我加了一堆BUG所以不发布
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
-- 修复 临时任务不会使用临时日志的问题![](https://img.shields.io/badge/状态-等待中-blue)
-- 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 临时任务不会使用临时日志的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 量化类型![](https://img.shields.io/badge/状态-等待中-blue)
     - Qx_K_M
     - Qx_K
