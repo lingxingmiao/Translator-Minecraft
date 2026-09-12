@@ -957,36 +957,42 @@ AI给我加了一堆BUG所以不发布
     - 量化类型
         - 标量量化
             - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)![](https://img.shields.io/badge/状态-进行中-brightgreen)
-            - PolarQx (1~4 bit 1 1.6 2 3 4)
+            - PolarQx (1~5 bit 1 1.6 2 3 4 5)
             - GSQ_NL (1.6~6 bit 1.6 2 3 4 5 6)
-            - INTx_Max (8~16 bit 8 12 16)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+            - INTx_Max (8~16 bit 8 12 16)
+            - Float (8-16 E4M3 E0M7 E0M11 E0M15)
+            - BFloat16
         - 乘积量化
             - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
             - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 分位数裁切
+        - Sort O(n log n)
+        - Percentile O(n)
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
+- 修改 PCA算法换为SpecTemp
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 API临时翻译实例内存溢出![](https://img.shields.io/badge/状态-等待中-blue)
 - 删除 量化类型
     - Qx_K_M![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Qx_K![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Qx_SVD_LM![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Qx_K
+    - Qx_SVD_LM
     - GSQx_K
     - Q2_NF![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - PolarQx
-    - BFloat16![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float16_E0M15![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float16_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float12_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float8_Max![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float8_E4M3![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - Float8_E0M7![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - BFloat16
+    - Float16_E0M15
+    - Float16_Max
+    - Float12_Max
+    - Float8_Max!
+    - Float8_E4M3
+    - Float8_E0M7
 - 添加 依赖 bm25s jieba
 
 ### Release.1.7 Bata.1（等待中）
