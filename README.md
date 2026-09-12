@@ -5,7 +5,7 @@
 ## 概述
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的全面重构版本；<br>
 它不再是一个简单的翻译程序，而是一个高扩展性，高并发，支持极限向量压缩的翻译引擎。<br>
-我希望借此打破语言壁垒，降低Minecraft生态汉化门槛，不再为繁杂的翻译流程而束缚。
+我希望 Minecraft 生态汉化更易参加：消除语言壁垒，精简翻译流程，摆脱繁琐束缚
 
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
