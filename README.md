@@ -382,12 +382,12 @@ RMSE不代表Recall@10
     - 装饰示例: @TranslatorLib.Mods().注册分词器("zh_cn")
     - 输入示例: ["我来到福建农林大学", "今天天气不错"]
     - 返回示例: [["我", "来到", "福建", "农林", "大学"], ["今天", "天气", "不错"]]
-
-
-- `@TranslatorLib.Mods().注册量化类型(注册名称, 标量基本位数)`
+- `@TranslatorLib.Mods().注册量化类型(注册名称, 标量基本位数, 是否启用分位数裁切)`
     - 输入: Quantization, numpy.ndarray, 返回: dict
 - `@TranslatorLib.Mods().注册反量化类型(注册名称, 标量基本位数, 键字典(上面返回dict的键))`
     - 输入: Quantization, 上面dict有的参数, 返回: numpy.ndarray
+- `@TranslatorLib.Mods().注册裁切类型(注册名称)`
+    - 输入: Quantization, numpy.ndarray, 返回: numpy.ndarray
 </details>
 
 ## 更新日志
@@ -954,17 +954,19 @@ AI给我加了一堆BUG所以不发布
     - 重排序模型
 - 添加 模组类型
     - BM25分词语言
+        - zh_cn
+        - en_us
     - 量化类型
         - 标量量化
-            - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)![](https://img.shields.io/badge/状态-进行中-brightgreen)
+            - Qx_K_M (1~8 bit 1 1.6 2 3 4 5 6 7 8)
             - PolarQx (1~5 bit 1 1.6 2 3 4 5)
             - GSQ_NL (1.6~6 bit 1.6 2 3 4 5 6)
             - INTx_Max (8~16 bit 8 12 16)
             - Float (8-16 E4M3 E0M7 E0M11 E0M15)
             - BFloat16
         - 乘积量化
-            - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
-            - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
+            - PQ
+            - OPQ
     - 分位数裁切
         - Sort O(n log n)
         - Percentile O(n)
@@ -972,19 +974,19 @@ AI给我加了一堆BUG所以不发布
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 修改 翻译LLM任务添加为并行
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
-- 修改 PCA算法换为SpecTemp
+- 修改 PCA算法换为SpecTemp![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 API临时翻译实例内存溢出![](https://img.shields.io/badge/状态-等待中-blue)
 - 删除 量化类型
-    - Qx_K_M![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Qx_K_M
     - Qx_K
     - Qx_SVD_LM
     - GSQx_K
-    - Q2_NF![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - PQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
-    - OPQ![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - Q2_NF
+    - PQ
+    - OPQ
     - PolarQx
     - BFloat16
     - Float16_E0M15
