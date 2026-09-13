@@ -27,7 +27,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [精致菜单](https://www.mcmod.cn/class/4053.html)
 - [困难任务](https://www.mcmod.cn/class/478.html)
 - [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
-- [未知伤亡](https://store.steampowered.com/app/4576490/)dll模组(非Minecraft)(可能损坏模组)
+- [未知伤亡](https://store.steampowered.com/app/4576490/)dll模组(非Minecraft)(极小概率损坏模组)
 - [模组翻译](https://www.mcmod.cn/class/27911.html)
 - [TX Loader](https://www.mcmod.cn/class/9677.html)
 - SFT数据集(非游戏,用于蒸馏)
@@ -1015,6 +1015,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 日志内存泄露
+- 修复 意外的向量维度不匹配无法缓存导致的致命错误警告
 - 删除 所有量化类型
 - 添加 依赖 bm25s jieba tokenizers
 
