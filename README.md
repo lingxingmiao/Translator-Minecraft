@@ -1010,6 +1010,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 默认嵌入模型: BAAI/bge-base-en-v1.5
 - 修改 PCA算法换为SpecTemp
 - 修改 IndexGSQ量化方法为GSQ_NL
+- 修改 Mono.Cecil改为dnlib以解决LAA标志问题
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
@@ -1039,8 +1040,6 @@ AI给我加了一堆BUG所以不发布
         - GTNH Lang
         - SFT数据集
 - 修改 通用文件路由逻辑
-- 修改 PCA改为
-- 修复 翻译未知伤亡dll模型会翻译除字符串以外的内容导致游戏崩溃
 - 删除 所有翻译类型
  
 ### 其他正在进行时
