@@ -932,7 +932,7 @@ AI给我加了一堆BUG所以不发布
     - 数据集(用于数据蒸馏)
     - TX Loader
 - 添加 xllamacpp模型支持
-    - 默认模型: Q1ngMang/Ling-3.0-tiny-sub3bit-PPLp10-GGUF/Ling-3.0-tiny-01.gguf (2.95GB)
+    - 语言模型：默认Q1ngMang/Ling-3.0-tiny-sub3bit-PPLp10-GGUF/Ling-3.0-tiny-01.gguf (2.95GB)
 - 添加 翻译CuresForge与Modrinth整合包自动下载模组
 - 添加 输出生成翻译的日志开关
 - 添加 生成翻译实时添加进翻译缓存
@@ -983,6 +983,8 @@ AI给我加了一堆BUG所以不发布
     - 嵌入模型
     - 图像嵌入模型
     - 重排序模型
+- 添加 FastEmbed 模型支持
+    - 图像重排模型![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 模组类型
     - BM25分词语言
         - qwen35
