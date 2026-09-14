@@ -983,8 +983,6 @@ AI给我加了一堆BUG所以不发布
     - 嵌入模型
     - 图像嵌入模型
     - 重排序模型
-- 添加 FastEmbed 模型支持
-    - 图像重排模型![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 模组类型
     - BM25分词语言
         - qwen35
