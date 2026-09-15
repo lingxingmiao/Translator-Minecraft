@@ -1003,14 +1003,15 @@ AI给我加了一堆BUG所以不发布
     - 分位数裁切
         - Sort O(n log n)
         - Percentile O(n)
-    - 索引方法![](https://img.shields.io/badge/状态-等待中-blue)
-        - IP
-        - HNSE
-        - NSG
-        - IVF
-        - Refine
-        - RefineLowDIm
-        - GSQ
+    - 索引方法
+        - IP(Faiss)
+        - HNSW(Faiss)
+        - NSG(Faiss)
+        - IVF(Faiss)
+        - Refine(Faiss)
+        - RefineLowDim(Index)
+        - GSQFast(IndexGSQ)
+        - GSQIVF(IndexGSQ)
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
 - 添加 NSG的C与L参数
@@ -1019,15 +1020,15 @@ AI给我加了一堆BUG所以不发布
 - 修改 PCA算法换为SpecTemp
 - 修改 IndexGSQ量化方法为GSQ_NL
 - 修改 Mono.Cecil改为dnlib以解决LAA标志问题
-- 修改 向量存储格式npz+pkl改为gguf![](https://img.shields.io/badge/状态-等待中-blue)
+- 修改 向量存储格式npz+pkl改为gguf
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
 - 修复 日志内存泄露
 - 修复 意外的向量维度不匹配无法缓存导致的致命错误警告
 - 修复 读取语言文件函数不能读取除UTF-8以外的编码
-- 删除 所有量化类型![](https://img.shields.io/badge/状态-等待中-blue)
-- 删除 所有除了BM25以外的索引方法![](https://img.shields.io/badge/状态-等待中-blue)
+- 删除 所有量化类型
+- 删除 所有除了BM25以外的索引方法
 - 添加 依赖 bm25s jieba tokenizers gguf
 
 ### Release.1.7 Bata.1（等待中）
