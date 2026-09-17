@@ -1016,7 +1016,6 @@ AI给我加了一堆BUG所以不发布
         - GSQIVF(IndexGSQ)
 - 添加 BM25的RAG算法(质量与性能很差, 我还是推荐NSGPQ)
 - 添加 RichTqdm与TqdmTqdm显示开关
-- 添加 NSG的C与L参数
 - 添加 GGML量化
 - 添加 超级块完整量化
 - 修改 翻译LLM任务添加为并行
