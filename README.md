@@ -1024,7 +1024,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 PCA算法换为SpecTemp
 - 修改 IndexGSQ量化方法为GSQ_NL
 - 修改 Mono.Cecil改为dnlib以解决LAA标志问题
-- 修改 向量存储格式npz+pkl改为gguf
+- 修改 向量存储与缓存格式从npz+pkl改为gguf
 - 修复 asyncio.Lock跨事件循环复用导致并发翻译任务报错的问题
 - 修复 临时任务不会使用临时日志的问题
 - 修复 IndexGSQ重排时重排乘数需要Int而不是Float的问题
@@ -1056,6 +1056,7 @@ AI给我加了一堆BUG所以不发布
         - TX Loader
         - GTNH Lang
         - SFT数据集
+- 添加 模组配置可通过Config管理器修改
 - 修改 通用文件路由逻辑
 - 删除 除模组以外所有的翻译类型
  
