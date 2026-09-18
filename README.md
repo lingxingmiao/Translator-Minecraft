@@ -249,11 +249,15 @@ conda env remove -n Translator_Minecraft
 - [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 73.0分
 - [Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) 69.4分
 - [DeepSeek/DeepSeek-V4-Pro](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) 66.5分
-- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 62.0分 当前公益API使用
+- [Google/Gemma-4-31B](https://huggingface.co/google/gemma-4-31B) 64.3分
+- [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) 64.2分
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 62.0分
 - [Tencent/HY-MT1.5-7B](https://huggingface.co/tencent/HY-MT1.5-7B) 61.6分
 - [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 60.0分
+- [Google/Gemma-4-E4B](https://huggingface.co/google/gemma-4-E4B) 53.5分
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
 - [DeepSeek/DeepSeek-V3.2](https://huggingface.co/deepseek-ai/DeepSeek-V3.2) 50.1分
+- [Google/Gemma-4-E2B](https://huggingface.co/google/gemma-4-E2B) 49.3分
 </details>
 
 ### 量化类型
