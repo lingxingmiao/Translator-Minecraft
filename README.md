@@ -133,7 +133,7 @@ pip install tokenizers
 
 # 内置模型加载（可选）
 pip install huggingface_hub
-# 1处理器版本 2Vulkan1.2(推荐) 3英伟达显卡版本 4AMD显卡版本
+# 1处理器版本 2Vulkan1.2(推荐) 3英伟达显卡版本 4AMD显卡版本 自由线程需要手动编译
 pip install -U xllamacpp
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/vulkan
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/cu128
@@ -148,11 +148,11 @@ pip install ujson
 # TPM滑动窗口估算器（可选）
 pip install token-calibrator
 
-# 未知伤亡DLL模组解析（可选）
+# 未知伤亡DLL模组解析（可选） pythonnet不可使用自由线程
 pip install dnfile pythonnet
 
 # 内置向量生成（可选）
-## FastEmbed （强烈推荐用这个）
+## FastEmbed （强烈推荐用这个） onnxruntime的Windows自由线程未合并
 pip install fastembed # pip install fastembed-gpu 需要CuDNN9.0x
 ## SentenceTransformer ONNX 上为处理器版本 下为CUDA版本
 pip install -U "sentence-transformers[onnx]"
