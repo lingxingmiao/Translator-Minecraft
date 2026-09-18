@@ -977,10 +977,8 @@ AI给我加了一堆BUG所以不发布
 - 修复 Cpmfig初始化PolarQ量化超长预计算阻塞的问题
 - 修复 张量链分解没法工作的问题
 - 添加 依赖 huggingface_hub xllamacpp
-</details>
-</details>
 
-### Release.1.6（进行中）
+### Release.1.6
 - 添加 xllamacpp模型支持
     - 嵌入模型
     - 图像嵌入模型
@@ -1033,9 +1031,11 @@ AI给我加了一堆BUG所以不发布
 - 删除 所有除了FP16和FP32以外的量化类型
 - 删除 所有除了BM25以外的索引方法
 - 添加 依赖 bm25s jieba tokenizers gguf
+</details>
+</details>
 
-### Release.1.7 Bata.1（等待中）
-- 添加 模型类型
+### Release.1.7 Bata.1（进行中）
+- 添加 模型类型![](https://img.shields.io/badge/状态-等待中-blue)
     - 翻译类型(未包含:附加包 未使用:GTNH Lang)
         - 模组
         - 附加包
@@ -1055,10 +1055,10 @@ AI给我加了一堆BUG所以不发布
         - TX Loader
         - GTNH Lang
         - SFT数据集
-- 添加 模组配置可通过Config管理器修改
-- 重构 API接口
-- 修改 通用文件路由逻辑
-- 删除 除模组以外所有的翻译类型
+- 添加 模组配置可通过Config管理器修改![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 重构 API接口![](https://img.shields.io/badge/状态-等待中-blue)
+- 修改 通用文件路由逻辑![](https://img.shields.io/badge/状态-等待中-blue)
+- 删除 除模组以外所有的翻译类型![](https://img.shields.io/badge/状态-等待中-blue)
  
 ### 其他正在进行时
 - 量化
