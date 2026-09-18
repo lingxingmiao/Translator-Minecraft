@@ -94,6 +94,11 @@ from TranslatorLib import Config, Translator, Tool # 还有一堆库统一在Tra
 # 翻译一个文件
 翻译器实例.翻译通用文件("Lang/zh_cn.json") # 可传游戏实例文件夹或文件 没法网络获取只能翻译一个本地的
 
+# 导入参考词
+参考配置 = 配置管理器.get_config_temporary({"INDEX_MODE": "BM25"}) # 手动指定BM25方法(需要安装bm25s)，该方法无需嵌入模型(默认使用qwen35分词器需要安装tokenizers)
+参考工具实例 = Tool(参考配置)
+参考工具实例.导入DictMini参考词("Dict-Mini.json") # 前往 https://github.com/CFPATools/i18n-dict/releases 下载 Dict-Mini.json
+
 # 更多工具
 工具实例 = Tool(配置管理器) # 实际是 配置管理器.get_translator() 获取与复用
 
