@@ -1,4 +1,4 @@
-from TranslatorLib import (np, eb, asyncio, random, aiohttp, Image, io, base64, re,
+from TranslatorLib import (np, eb, asyncio, random, aiohttp, io, base64, re,
                            TranslatorPersistence, Config)
 
 class Builder:
@@ -32,6 +32,8 @@ class Builder:
                     向量列表 = await asyncio.to_thread(Self.嵌入模型.encode, [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文], **额外参数)
                 elif Self.Config.EMB_REASONING_FRAME.lower() == "fastembed":
                     向量列表 = await asyncio.to_thread(lambda: list(Self.嵌入模型.embed([Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文])))
+                elif any(x in Self.Config.EMB_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    向量列表 = await asyncio.to_thread(lambda: [item["embedding"] for item in Self.嵌入模型.handle_embeddings({"input": [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文], "model": Self.Config.EMB_MODEL})["data"]])
                 向量列表 = np.asarray(向量列表, dtype=np.float32)
                 if Self.Config.VEC_DIM_CLIP != -1:
                     向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
@@ -80,11 +82,13 @@ class Builder:
                         基础等待 = (层级["retry_coef"] ** (重试次数 - 1)) * 层级["retry_time"]
                         await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
                         
-    async def 并行生成向量(Self, texts: list, use_cache: bool = True, 查询: bool = False) -> list:
+    async def 并行生成向量(Self, texts: list, use_cache: bool = True, 查询: bool = False, 写回缓存: bool = None, 允许重建缓存: bool = True) -> list:
         工作列表, 分组结果, 当前组 = [], [], []
         缓存映射, 唯一待生成 = {}, {}
         当前总长 = 0.0
-        生成维度, 缓存维度 = 384, 0
+        if 写回缓存 is None: 写回缓存 = use_cache
+        默认维度 = 384 # ↓实在拿不到维度时才用的兜底值
+        生成维度, 缓存维度 = 0, 0 # ↓生成维度必须从真实向量里取, 不能预设 384 否则会和缓存维度假性不匹配
         
         文本数量 = len(texts)
         if 文本数量 == 0:
@@ -160,10 +164,18 @@ class Builder:
             返回值为None = False
             结果 = await 任务
             向量, 原文 = 结果 if isinstance(结果, tuple) and len(结果) == 2 else (结果, [])
-            if 向量 is None: 向量, 返回值为None = np.random.randn(len(原文), 生成维度).astype(np.float32), True
+            if 向量 is not None and 生成维度 == 0: # ↓第一批真实向量到手, 这才是模型的真实维度
+                生成维度 = int(向量.shape[1])
+                if 缓存维度 != 0 and 生成维度 != 缓存维度 and 允许重建缓存: # ↓缓存是换模型/换裁剪之前存下的, 维度已过期, 清掉整份重跑一次
+                    Self.日志("log.core.vector.cache.dim.rebuild", 缓存维度=缓存维度, 生成维度=生成维度, info_level=1)
+                    进度条任务.cancel(); 进度条.close() # 进度条下班
+                    Self.CacheVector.清空()
+                    return await Self.并行生成向量(texts, use_cache=False, 查询=查询, 写回缓存=True, 允许重建缓存=False)
+            if 向量 is None: # ↓生成失败, 按已知维度造随机向量兜底(缓存维度优先, 免得和已预分配的结果矩阵对不上)
+                向量, 返回值为None = np.random.randn(len(原文), 缓存维度 or 生成维度 or 默认维度).astype(np.float32), True
             if 最终返回向量 is None:
-                生成维度 = 向量.shape[1]
-                最终返回向量 = np.empty((文本数量, 生成维度), dtype=np.float32)
+                生成维度 = 生成维度 or 向量.shape[1]
+                最终返回向量 = np.empty((文本数量, 缓存维度 or 生成维度), dtype=np.float32)
             for index0, index1 in enumerate(原文):
                 if index1 in 文本索引映射:
                     for index2 in 文本索引映射[index1]:
@@ -171,15 +183,15 @@ class Builder:
                         最终返回文本[index2]  = texts[index2][0]
                         最终返回附加A[index2] = texts[index2][1]
                         最终返回附加B[index2] = texts[index2][2]
-                if use_cache and not 返回值为None:
+                if 写回缓存 and not 返回值为None:
                     缓存映射[index1] = 向量[index0]
         进度条.n = 总条目数; 进度条.refresh()
         进度条任务.cancel() # 进度条下班
         进度条.close()
-        if 缓存维度 != 0 and 生成维度 != 缓存维度: Self.日志("log.core.generated.vector.dim.mismatch.err", info_level=3)
+        if 缓存维度 != 0 and 生成维度 != 0 and 生成维度 != 缓存维度: Self.日志("log.core.generated.vector.dim.mismatch.err", 缓存维度=缓存维度, 生成维度=生成维度, info_level=3)
         Self.日志("log.core.vector.generate.end", info_level=0)
         
-        if 缓存映射 and use_cache: 
+        if 缓存映射 and 写回缓存: 
             Self.CacheVector.更新向量缓存(缓存映射)
             
         return [最终返回向量, [最终返回文本, 最终返回附加A, 最终返回附加B]]
@@ -223,6 +235,14 @@ class Builder:
                     向量列表 = await asyncio.to_thread(Self.图像嵌入模型.encode, 图像列表)
                 elif Self.Config.EMB_REASONING_FRAME.lower() == "fastembed":
                     向量列表 = await asyncio.to_thread(lambda: list(Self.图像嵌入模型.embed(图像列表)))
+                elif any(x in Self.Config.EMB_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    媒体标记 = Self.媒体标记 or "<__media__>"
+                    base64列表 = [Self.图像转base64(i, 最大边长=getattr(Self.Config, "EMB_IMG_MAX_SIDE", 448)) for i in 图像列表]
+                    向量列表 = await asyncio.to_thread(lambda: [item["embedding"] for item in Self.图像嵌入模型.handle_embeddings({
+                        "input": {"prompt_string": " ".join([媒体标记] * len(base64列表)), "multimodal_data": base64列表},
+                        "model": Self.Config.EMB_MODEL,
+                        "encoding_format": "float",
+                    })["data"]])
                 向量列表 = np.asarray(向量列表, dtype=np.float32)
                 if Self.Config.VEC_DIM_CLIP != -1:
                     向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
@@ -285,11 +305,13 @@ class Builder:
                         基础等待 = (层级["retry_coef"] ** (重试次数 - 1)) * 层级["retry_time"]
                         await asyncio.sleep(基础等待 + random.uniform(0, 基础等待 * 0.3))
 
-    async def 并行生成图像向量(Self, texts: list, use_cache: bool = True) -> list:
+    async def 并行生成图像向量(Self, texts: list, use_cache: bool = True, 写回缓存: bool = None, 允许重建缓存: bool = True) -> list:
         工作列表, 分组结果, 当前组 = [], [], []
         缓存映射, 唯一待生成 = {}, {}
         当前数量 = 0
-        生成维度, 缓存维度 = 384, 0
+        if 写回缓存 is None: 写回缓存 = use_cache
+        默认维度 = 384 # ↓实在拿不到维度时才用的兜底值
+        生成维度, 缓存维度 = 0, 0 # ↓生成维度必须从真实向量里取, 不能预设 384 否则会和缓存维度假性不匹配
         文本数量 = len(texts)
         if 文本数量 == 0:
             Self.日志("log.core.image.empty.input", info_level=3)
@@ -358,10 +380,18 @@ class Builder:
             返回值为None = False
             结果 = await 任务
             向量, 原文 = 结果 if isinstance(结果, tuple) and len(结果) == 2 else (结果, [])
-            if 向量 is None: 向量, 返回值为None = np.random.randn(len(原文), 生成维度).astype(np.float32), True
+            if 向量 is not None and 生成维度 == 0: # ↓第一批真实向量到手, 这才是模型的真实维度
+                生成维度 = int(向量.shape[1])
+                if 缓存维度 != 0 and 生成维度 != 缓存维度 and 允许重建缓存: # ↓缓存是换模型/换裁剪之前存下的, 维度已过期, 清掉整份重跑一次
+                    Self.日志("log.core.image.cache.dim.rebuild", 缓存维度=缓存维度, 生成维度=生成维度, info_level=1)
+                    进度条任务.cancel(); 进度条.close()
+                    Self.CacheVector.清空()
+                    return await Self.并行生成图像向量(texts, use_cache=False, 写回缓存=True, 允许重建缓存=False)
+            if 向量 is None: # ↓生成失败, 按已知维度造随机向量兜底(缓存维度优先, 免得和已预分配的结果矩阵对不上)
+                向量, 返回值为None = np.random.randn(len(原文), 缓存维度 or 生成维度 or 默认维度).astype(np.float32), True
             if 最终返回向量 is None:
-                生成维度 = 向量.shape[1]
-                最终返回向量 = np.empty((文本数量, 生成维度), dtype=np.float32)
+                生成维度 = 生成维度 or 向量.shape[1]
+                最终返回向量 = np.empty((文本数量, 缓存维度 or 生成维度), dtype=np.float32)
             for index0, index1 in enumerate(原文):
                 if index1 in 文本索引映射:
                     for index2 in 文本索引映射[index1]:
@@ -369,15 +399,15 @@ class Builder:
                         最终返回文本[index2] = texts[index2][0]
                         最终返回附加A[index2] = texts[index2][1]
                         最终返回附加B[index2] = texts[index2][2]
-                if use_cache and not 返回值为None:
+                if 写回缓存 and not 返回值为None:
                     缓存映射[index1] = 向量[index0]
         进度条.n = 总条目数; 进度条.refresh()
         进度条任务.cancel()
         进度条.close()
-        if 缓存维度 != 0 and 生成维度 != 缓存维度: Self.日志("log.core.image.vector.dim.mismatch.err", 缓存维度=缓存维度, 生成维度=生成维度, info_level=3)
+        if 缓存维度 != 0 and 生成维度 != 0 and 生成维度 != 缓存维度: Self.日志("log.core.image.vector.dim.mismatch.err", 缓存维度=缓存维度, 生成维度=生成维度, info_level=3)
         Self.日志("log.core.vector.generate.end", info_level=0)
 
-        if 缓存映射 and use_cache:
+        if 缓存映射 and 写回缓存:
             Self.CacheVector.更新向量缓存(缓存映射)
 
         return [最终返回向量, [最终返回文本, 最终返回附加A, 最终返回附加B]]
@@ -387,8 +417,15 @@ class Builder:
         工作ID = None
         if (not Self.Config.RERANKER_API_URL) and (Self.Config.RERANKER_MODEL):
             try:
-                相似度 = await asyncio.to_thread(Self.重排序模型.predict, [(请求消息[0], 候选) for 候选 in 请求消息[1]], show_progress_bar=False)
-                return [请求消息[0], 请求消息[1][相似度.argmax()], 相似度]
+                if Self.Config.RERANKER_REASONING_FRAME.lower() == "sentencetransformer":
+                    相似度 = await asyncio.to_thread(Self.重排序模型.predict, [(请求消息[0], 候选) for 候选 in 请求消息[1]], show_progress_bar=False)
+                    return [请求消息[0], 请求消息[1][相似度.argmax()], 相似度]
+                elif any(x in Self.Config.RERANKER_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    结果 = await asyncio.to_thread(Self.重排序模型.handle_rerank, {"query": 请求消息[0], "documents": 请求消息[1]})
+                    相似度 = np.zeros(len(请求消息[1]), dtype=np.float32)
+                    for 文档 in 结果["results"]:
+                        相似度[文档["index"]] = 文档["relevance_score"]
+                    return [请求消息[0], 请求消息[1][int(相似度.argmax())], 相似度]
             except Exception:
                 Self.日志("log.core.translator.cache.locally.error", e=eb.format_exc(), info_level=2)
                 return [请求消息[0], 请求消息[1][0], [0 for _ in range(len(请求消息[1]))]]

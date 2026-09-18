@@ -124,13 +124,19 @@ class Translator: # AI禁止直接编辑该类
         Self.正则表达式预编译.模型输出转换 = re.compile(r'<rt>(.*?)</rt>', re.S)
         Self.正则表达式预编译.单词索引分割 = re.compile(r'[ _\-:]+')  
         Self.线程锁 = SimpleNamespace()
+        Self.线程锁.事件循环 = None
         Self.线程锁.上下文计数 = None # asyncio.Lock()
         Self.线程锁.Token学习器 = None # asyncio.Lock()
     def __enter__(Self):
         return Self
-    async def 生成翻译(Self, 总条目数: int, 请求列表: dict, 上下文管理器: 翻译上下文管理器, 用户提示: str, 请求提示词: list, 使用模型: set, 就绪事件: asyncio.Event, 翻译索引: int, 优先分配列表: list, 任务状态列表: list, 串行事件: asyncio.Event, 总结模式: bool=False):
-        if Self.线程锁.上下文计数 is None: Self.线程锁.上下文计数 = asyncio.Lock()
-        if Self.线程锁.Token学习器 is None: Self.线程锁.Token学习器 = asyncio.Lock()
+    async def 生成翻译(Self, 总条目数: int, 请求列表: dict, 上下文管理器: 翻译上下文管理器, 用户提示: str, 请求提示词: list, 使用模型: set,
+            就绪事件: asyncio.Event,翻译索引: int, 优先分配列表: list, 任务状态列表: list, 串行事件: asyncio.Event, 总结模式: bool=False):
+        当前循环 = asyncio.get_running_loop()
+        if Self.线程锁.事件循环 is not 当前循环:
+            Self.线程锁._事件循环 = 当前循环
+            Self.线程锁.上下文计数 = asyncio.Lock()
+            Self.线程锁.Token学习器 = asyncio.Lock()
+            
         附属文本, 消息结果 = "", ""
         响应值, 会话, 层级, 工作ID = None, None, None, None
         成功获取过会话, 降级逐条 = False, False
@@ -207,7 +213,7 @@ class Translator: # AI禁止直接编辑该类
                         "frequency_penalty": 层级["frequency_penalty"],
                         "stream"           : False}
                     Json数据.update(层级["api_kwargs"])
-                    if (not 层级["url"]) and (层级["model"]):
+                    if (not 层级["url"]) and (层级["model"]): # xllamacpp部分
                         模型 = await TranslatorPersistence.获取语言模型(Self, 层级)
                         响应值 = 模型.handle_chat_completions(Json数据)
                     else:
@@ -401,35 +407,28 @@ class Translator: # AI禁止直接编辑该类
                             未翻译列表文本组件缓存.append([文本, 文本, index[2]])
                         文本组件缓存[index[1]] = (解析数据, 当前路径映射)
                     else: 未翻译列表文本组件缓存.append(index)
-                else: 未翻译列表文本组件缓存.append(index)
-            except: 未翻译列表文本组件缓存.append(index)
-        未翻译列表 = 未翻译列表文本组件缓存
+                else:     未翻译列表文本组件缓存.append(index)
+            except:       未翻译列表文本组件缓存.append(index)
+        未翻译列表 =       未翻译列表文本组件缓存
     
         # ↓ANN前处理与开始 没有向量文件跳过
         向量文件, 文本文件 = await TranslatorPersistence.参考词预处理(Self, 查询=False)
         # ↓构建翻译参考 无ANN
         for index in 未翻译列表:
             翻译映射[index[1]] = []
-        if 向量文件 and 文本文件 and 未翻译列表: # 未翻译列表 为空本质跳过
+        if 文本文件 and 未翻译列表: # 未翻译列表 为空本质跳过
             Self.日志("log.core.index.search.start", info_level=0) # 索引开始
             
             # ↓获取所以
             向量索引 = TranslatorPersistence.缓存索引(Self, 向量文件=向量文件, 文本文件=文本文件)
+            索引器   = TranslatorPersistence.快捷搜索器(Self, 向量文件) 
             
             # ↓通用函数 减少重复代码
             async def 索引抽象(输入集合, 索引数量, 索引, 索引列表, 输出映射):
                 if not 输入集合: return  # 滚木输入集合直接跳过 防止滚木向量传入faiss触发维度断言
-                输入列表 = await Self.Builder.并行生成向量([[index, "", ""] for index in 输入集合], 查询=True) # 格式化后生成检索向量 返回格式[向量, [生成文本, 额外, 额外]]
-                向量列表 = np.asarray(输入列表[0], dtype=np.float32) # 提取向量部分
-                if 向量列表.shape[0] == 0: return  # 滚木向量直接跳过 防止faiss维度断言崩溃
-                Self.Quantization.PCA应用懒加载(向量列表, 向量文件) # PCA降维 原地修改
-                Self.Quantization.TT应用懒加载(向量列表, 向量文件) # TT解压 原地修改
-                向量列表 = 向量列表.get() if GPU_ACC else 向量列表 # GPU转换CPU
-                faiss.normalize_L2(向量列表) # L2归一化 原地修改
-                for _ in Self.tqdm(range(1), desc="tqdm.index.search"):
-                    with TranslatorPersistence.增量索引锁: # ↓search与增量索引add互斥 防止并发修改索引
-                        索引结果矩阵 = 索引.search(向量列表, 索引数量)[1] # ANN
-                for index0, index1 in zip(range(len(向量列表)), 输入列表[1][0]): # i0为向量 i1为文本
+                输入列表 = list(输入集合)
+                索引结果矩阵 = await 索引器.search(texts=输入列表, k=索引数量, index=索引)
+                for index0, index1 in enumerate(输入列表): # i0为索引 i1为文本
                     输出映射[index1] = [索引列表[i] for i in 索引结果矩阵[index0] if 0 <= i < len(索引列表)] # 剔除无效与越界索引后添加文本索引 文本索引[文本]=[索引文本, ...]
             def 范围匹配抽象(映射, 模糊范围):
                 for indexk, indexv0 in 映射.copy().items(): # 匹配映射长度范围 误差模糊范围超过直接删除 原地修改
@@ -546,18 +545,23 @@ class Translator: # AI禁止直接编辑该类
             扩散进度条.任务 = 任务状态列表
             扩散进度条.数量 = len(翻译列表)
             扩散进度条.n = 0
-            for indexq, index in enumerate(翻译列表): # ↑预分配工作列表长度
-                while True: # R1.6先这么写 我没紫砂R1.7我就会改并行
-                    就绪事件 = asyncio.Event()
-                    串行事件 = asyncio.Event()
-                    任务 = asyncio.create_task(Self.生成翻译(总条目数, index, 上下文管理器, 请求文本, 请求提示词, 使用模型, 就绪事件, indexq, 优先分配列表, 任务状态列表, 串行事件))
-                    await 就绪事件.wait()
-                    if 任务.done(): continue # ←↑检查生成翻译有没有第一时间获取到会话
-                    else:
+            信号量 = asyncio.Semaphore(Self.Config.TRANSLATOR_ALLOCATION_CONCURRENT)
+            async def 运行任务(indexq, index):
+                async with 信号量:
+                    while True:
+                        就绪事件 = asyncio.Event()
+                        串行事件 = asyncio.Event()
+                        任务 = asyncio.create_task(Self.生成翻译(总条目数, index, 上下文管理器, 请求文本, 请求提示词, 使用模型, 就绪事件, indexq, 优先分配列表, 任务状态列表, 串行事件))
+                        await 就绪事件.wait()
+                        if 任务.done():
+                            await asyncio.sleep(0.01)
+                            continue
                         工作列表.append([任务, len(index)])
                         if Self.Config.TRANSLATOR_MODE.lower() == "serial":
-                            await 串行事件.wait() # 是否串行请求
-                        break
+                            await 串行事件.wait()
+                        return 任务
+            任务列表 = [asyncio.create_task(运行任务(i, idx)) for i, idx in enumerate(翻译列表)]
+            await asyncio.gather(*任务列表)
             try:
                 工作返回列表 = await asyncio.gather(*(i[0] for i in 工作列表))
             except:
@@ -1075,7 +1079,6 @@ class Translator: # AI禁止直接编辑该类
                             ("fancymenu", "FancyMenu", 翻译流程匹配, Self.翻译FM菜单, 是否仅含指定根文件夹("fancymenu")),
                             ("hqm", "HardcoreQuestingMode", 翻译流程匹配, Self.翻译HQM任务, 是否仅含指定根文件夹("hqm")),
                             ("patchouli_books", "Patchouli", 翻译流程匹配, Self.翻译帕秋莉手册, 是否仅含指定根文件夹("patchouli_books")),
-                            ("", "DataPack", 翻译流程匹配, Self.翻译数据包, (has_path(f"data") and has_path("pack.mcmeta"))) # BUG: 压缩文件里会出现一个无内容压缩文件
                         ]
                         返回内容 = None
                         for 文件夹, 显示名, 处理函数, 额外参数, 匹配方法 in 匹配规则:
@@ -1085,7 +1088,7 @@ class Translator: # AI禁止直接编辑该类
                                 else:
                                     返回内容 = 处理函数(文件夹, 显示名, 额外参数)
                                 break
-                        else:
+                        if 返回内容 is None:
                             roots = {n.split('/')[0] for n in namelist if not n.startswith('__MACOSX/')}
                             整合包模式 = "General ModPack"
                             if has_dir('overrides'):
@@ -1094,9 +1097,11 @@ class Translator: # AI禁止直接编辑该类
                             if has_dir('minecraft'):
                                 roots = ["minecraft"]
                                 整合包模式 = "MultiMC/General ModPack"
+                            是整合包 = False
                             if len(roots) == 1:
                                 root = roots.pop()
                                 if has_dir(f'{root}/mods') or has_dir(f'{root}/config') or has_dir(f'{root}/kubejs') or has_dir(f'{root}/resources'):
+                                    是整合包 = True
                                     Self.日志("log.core.translator.general.model", model=整合包模式, info_level=0)
                                     zf.extractall(缓存文件夹)
                                     解压根目录完整路径 = Path(f"{缓存文件夹}/{root}")
@@ -1119,13 +1124,13 @@ class Translator: # AI禁止直接编辑该类
                                                         modpackzf.write(文件完整路径, arcname=arcname)
                                     Self.日志("log.core.translator.succeed", path=Path(输出Zip路径).resolve(), info_level=0)
                                     返回内容 = Path(输出Zip路径)
-                                
+                            if not 是整合包:
+                                if has_path("data") and has_path("pack.mcmeta"):
+                                    Self.日志("log.core.translator.general.model", model="DataPack", info_level=0)
+                                    返回内容 = 翻译流程匹配("", "DataPack", Self.翻译数据包)
                                 else:
                                     Self.日志("log.core.translator.general.modpack.translate.file.no", info_level=2)
                                     返回内容 = Path(Self.Config.LOGS_FILE_PATH) / f"{Self.Config.LOGS_FILE_NAME}.log"
-                            else:
-                                Self.日志("log.core.translator.general.structure.unknown", info_level=3)
-                                返回内容 = Path(Self.Config.LOGS_FILE_PATH) / f"{Self.Config.LOGS_FILE_NAME}.log"
                 else:
                     Self.日志("log.core.translator.general.structure.unknown", info_level=3)
                     返回内容 = Path(Self.Config.LOGS_FILE_PATH) / f"{Self.Config.LOGS_FILE_NAME}.log"
@@ -1153,3 +1158,5 @@ class Translator: # AI禁止直接编辑该类
             返回内容 = Path(Self.Config.LOGS_FILE_PATH) / f"{Self.Config.LOGS_FILE_NAME}.log"
         Self.日志("log.core.translator.succeed", path=返回内容.resolve(), info_level=0)
         return 返回内容.resolve()
+        
+        

@@ -1,4 +1,6 @@
-from TranslatorLib import *
+#from TranslatorLib import *
+from TranslatorLib import (threading, np, pickle, Path, hashlib, faiss, bm25s, numpy, re, defaultdict, token_calibrator, huggingface_hub, Callable, eb, asyncio, os, atexit, xllamacpp, gguf,
+                           IndexGSQ, TranslatorIndex, Mods, GPU_ACC)
 
 模型缓存 = {}
 向量文本缓存 = {}
@@ -17,12 +19,44 @@ Token估算器线程锁 = threading.Lock()
 增量索引锁 = threading.Lock()
 持久化管理器注册表 = {}
 持久化管理器注册表锁 = threading.Lock()
-
+def 创建嵌入模型实例(Self, 配置, 模型路径):
+    for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
+        模型 = xllamacpp.CommonParams()
+        模型.model.path = str(Path(模型路径))
+        模型.embedding = True
+        Self.Module.设置实例参数(模型, 配置)
+        模型 = xllamacpp.Server(模型)
+    return 模型
+def 创建语言模型实例(Self, 配置, 模型路径):
+    for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
+        模型 = xllamacpp.CommonParams()
+        模型.model.path = str(Path(模型路径))
+        Self.Module.设置实例参数(模型, 配置)
+        模型 = xllamacpp.Server(模型)
+    return 模型
+def 创建重排模型实例(Self, 配置, 模型路径):
+    for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
+        模型 = xllamacpp.CommonParams()
+        模型.model.path = str(Path(模型路径))
+        模型.embedding = True
+        模型.pooling_type = xllamacpp.llama_pooling_type.LLAMA_POOLING_TYPE_RANK
+        Self.Module.设置实例参数(模型, 配置)
+        模型 = xllamacpp.Server(模型)
+    return 模型
+def 创建图像嵌入模型实例(Self, 配置, 模型路径):
+    for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
+        模型 = xllamacpp.CommonParams()
+        模型.model.path = str(Path(模型路径))
+        模型.embedding = True
+        Self.Module.设置实例参数(模型, 配置)
+        模型 = xllamacpp.Server(模型)
+    return 模型
 def 获取嵌入模型(Self):
     缓存键 = f"{Self.Config.EMB_MODEL}|{Self.Config.EMB_MODEL_ACC_MODE}"
     if 缓存键 in 模型缓存:
         return 模型缓存[缓存键]
     设备设置 = [Self.Config.EMB_MODEL_DEVICE] if isinstance(Self.Config.EMB_MODEL_DEVICE, str) else Self.Config.EMB_MODEL_DEVICE
+    模型路径 = Path(Self.Config.EMB_MODEL)
     with 嵌入模型线程锁:
         if 缓存键 in 模型缓存:
             return 模型缓存[缓存键]
@@ -49,6 +83,22 @@ def 获取嵌入模型(Self):
                         传入参数["providers"] = ["CUDAExecutionProvider"]
                         传入参数["device_ids"] = [i.lower().split(":")[1] for i in 设备设置]
                     模型 = TextEmbedding(Self.Config.EMB_MODEL, normalize=Self.Config.EMB_MODEL_NORMALIZE, **传入参数)
+                elif any(x in Self.Config.EMB_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    Self.日志("log.core.load.emb.model.debug", info_level=0, model=模型路径)
+                    加载传参 = 传入参数.copy()
+                    加载传参.setdefault("cpuparams", {})["n_threads"] = Self.Module.采样器(加载传参.get("cpuparams", {}).get("n_threads", numpy.float32(1.0)), os.cpu_count())
+                    if 模型路径.is_file():
+                        模型 = 创建嵌入模型实例(Self, 加载传参, 模型路径)
+                        break
+                    if 模型路径.is_absolute():
+                        raise FileNotFoundError(Self.Lang("log.core.load.emb.model.file.err", path=模型路径.resolve()))
+                    else:
+                        仓库ID, 文件名, 修订版本 = Self.Module.解析HF引用(模型路径.as_posix())
+                        if not 仓库ID or not 文件名:
+                            raise ValueError(Self.Lang("log.core.load.model.hf.file.err", path=模型路径.as_posix()))
+                        for _ in Self.tqdm(range(1), desc=f"tqdm.model.download"):
+                            本地文件 = huggingface_hub.hf_hub_download(repo_id=仓库ID, filename=文件名, revision=修订版本 or "main", **Self.Config.HF_DOWNLOAD_KWARGS)
+                        模型 = 创建嵌入模型实例(Self, 加载传参, 本地文件)
             模型缓存[缓存键] = 模型
             Self.日志("log.core.load.embedded.model.succeed", model=Self.Config.EMB_MODEL, info_level=0)
             return 模型
@@ -80,6 +130,22 @@ def 获取图像嵌入模型(Self):
                         传入参数["providers"] = ["CUDAExecutionProvider"]
                         传入参数["device_ids"] = [i.lower().split(":")[1] for i in 设备设置]
                     模型 = ImageEmbedding(模型名, **传入参数)
+                elif any(x in Self.Config.EMB_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    Self.日志("log.core.load.emb.model.debug", info_level=0, model=模型名)
+                    模型路径 = Path(模型名)
+                    加载传参 = 传入参数.copy()
+                    加载传参.setdefault("cpuparams", {})["n_threads"] = Self.Module.采样器(加载传参.get("cpuparams", {}).get("n_threads", numpy.float32(1.0)), os.cpu_count())
+                    if 模型路径.is_file():
+                        模型 = 创建图像嵌入模型实例(Self, 加载传参, 模型路径)
+                        break
+                    if 模型路径.is_absolute():
+                        raise FileNotFoundError(Self.Lang("log.core.load.emb.model.file.err", path=模型路径.resolve()))
+                    仓库ID, 文件名, 修订版本 = Self.Module.解析HF引用(模型路径.as_posix())
+                    if not 仓库ID or not 文件名:
+                        raise ValueError(Self.Lang("log.core.load.model.hf.file.err", path=模型路径.as_posix()))
+                    for _ in Self.tqdm(range(1), desc=f"tqdm.model.download"):
+                        本地文件 = huggingface_hub.hf_hub_download(repo_id=仓库ID, filename=文件名, revision=修订版本 or "main", **Self.Config.HF_DOWNLOAD_KWARGS)
+                    模型 = 创建图像嵌入模型实例(Self, 加载传参, 本地文件)
             模型缓存[缓存键] = 模型
             Self.日志("log.core.image.load.embedded.model.succeed", model=模型名, info_level=0)
             return 模型
@@ -90,35 +156,45 @@ def 获取重排模型(Self):
     缓存键 = f"{Self.Config.RERANKER_MODEL}|{Self.Config.RERANKER_INSTRUCT}"
     if 缓存键 in 模型缓存:
         return 模型缓存[缓存键]
+    模型路径 = Path(Self.Config.RERANKER_MODEL)
     with 重排模型线程锁:
         if 缓存键 in 模型缓存:
             return 模型缓存[缓存键]
         try:
             for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
-                from sentence_transformers import CrossEncoder # type: ignore
-                Self.日志("log.core.load.rerank.model.debug", model=Self.Config.RERANKER_MODEL, info_level=0)
-                模型参数 = {}
-                if Self.Config.RERANKER_MODEL_DEVICE:
-                    模型参数["device"] = Self.Config.RERANKER_MODEL_DEVICE
-                if Self.Config.RERANKER_INSTRUCT:
-                    模型参数["prompts"] = {"classification": Self.Config.RERANKER_INSTRUCT}
-                    模型参数["default_prompt_name"] = "classification"
-                模型 = CrossEncoder(Self.Config.RERANKER_MODEL, trust_remote_code=True, **模型参数)
+                传入参数 = dict(Self.Config.RERANKER_LOADER_KWARGS)
+                if Self.Config.RERANKER_REASONING_FRAME.lower() == "sentencetransformer":
+                    from sentence_transformers import CrossEncoder # type: ignore
+                    Self.日志("log.core.load.rerank.model.debug", model=Self.Config.RERANKER_MODEL, info_level=0)
+                    模型参数 = {}
+                    if Self.Config.RERANKER_MODEL_DEVICE:
+                        模型参数["device"] = Self.Config.RERANKER_MODEL_DEVICE
+                    if Self.Config.RERANKER_INSTRUCT:
+                        模型参数["prompts"] = {"classification": Self.Config.RERANKER_INSTRUCT}
+                        模型参数["default_prompt_name"] = "classification"
+                    模型 = CrossEncoder(Self.Config.RERANKER_MODEL, trust_remote_code=True, **模型参数)
+                elif any(x in Self.Config.RERANKER_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
+                    Self.日志("log.core.load.rerank.model.debug", info_level=0, model=模型路径)
+                    加载传参 = 传入参数.copy()
+                    加载传参.setdefault("cpuparams", {})["n_threads"] = Self.Module.采样器(加载传参.get("cpuparams", {}).get("n_threads", numpy.float32(1.0)), os.cpu_count())
+                    if 模型路径.is_file():
+                        模型 = 创建重排模型实例(Self, 加载传参, 模型路径)
+                        break
+                    if 模型路径.is_absolute():
+                        raise FileNotFoundError(Self.Lang("log.core.load.rerank.model.file.err", path=模型路径.resolve()))
+                    else:
+                        仓库ID, 文件名, 修订版本 = Self.Module.解析HF引用(模型路径.as_posix())
+                        if not 仓库ID or not 文件名:
+                            raise ValueError(Self.Lang("log.core.load.model.hf.file.err", path=模型路径.as_posix()))
+                        for _ in Self.tqdm(range(1), desc=f"tqdm.model.download"):
+                            本地文件 = huggingface_hub.hf_hub_download(repo_id=仓库ID, filename=文件名, revision=修订版本 or "main", **Self.Config.HF_DOWNLOAD_KWARGS)
+                        模型 = 创建重排模型实例(Self, 加载传参, 本地文件)
             模型缓存[缓存键] = 模型
             Self.日志("log.core.load.rerank.model.succeed", model=Self.Config.RERANKER_MODEL, info_level=0)
             return 模型
         except Exception:
             Self.日志("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc(), info_level=3)
             raise RuntimeError(Self.Lang("log.core.load.rerank.model.error", model=Self.Config.RERANKER_MODEL, e=eb.format_exc()))
-def 创建语言模型实例(Self, 配置, 模型路径):
-    import xllamacpp
-    for _ in Self.tqdm(range(1), desc=f"tqdm.model.load"):
-        模型 = xllamacpp.CommonParams()
-        模型.model.path = str(Path(模型路径))
-        Self.Module.设置实例参数(模型, 配置)
-        模型 = xllamacpp.Server(模型)
-    return 模型
-    
 def 获取语言模型同步(Self, 层级):
     缓存键 = str(层级["model"])
     if 缓存键 in 模型缓存:
@@ -140,9 +216,9 @@ def 获取语言模型同步(Self, 层级):
                 else:
                     仓库ID, 文件名, 修订版本 = Self.Module.解析HF引用(层级["model"])
                     if not 仓库ID or not 文件名:
-                        raise ValueError(Self.Lang("log.core.load.llm.model.hf.file.err", path=层级["model"]))
+                        raise ValueError(Self.Lang("log.core.load.model.hf.file.err", path=层级["model"]))
                     for _ in Self.tqdm(range(1), desc=f"tqdm.model.download"):
-                        本地文件 = huggingface_hub.hf_hub_download(repo_id=仓库ID, filename=文件名, revision=修订版本 or "main", **Self.Config.LLM_HF_DOWNLOAD_KWARGS)
+                        本地文件 = huggingface_hub.hf_hub_download(repo_id=仓库ID, filename=文件名, revision=修订版本 or "main", **Self.Config.HF_DOWNLOAD_KWARGS)
                     模型 = 创建语言模型实例(Self, 加载传参, 本地文件)
             模型缓存[缓存键] = 模型
             Self.日志("log.core.load.llm.model.succeed", model=层级["model"], info_level=0)
@@ -181,132 +257,318 @@ class 参考词预处理向量懒加载:
         Self._编码数据 = state["_编码数据"]
         Self._解码结果 = state["_解码结果"]
         Self._解码函数 = None
+def 向量GGUF形状编码(形状):
+    return "()" if len(形状) == 0 else "x".join(str(项) for 项 in 形状)
+def 向量GGUF形状解析(形状串):
+    return () if 形状串 == "()" else tuple(int(项) for 项 in 形状串.split("x"))
+def 向量GGUF张量视图(数组):
+    映射 = {np.dtype(np.uint8): np.dtype(np.int8), np.dtype(np.uint16): np.dtype(np.int16), np.dtype(np.uint32): np.dtype(np.int32),
+            np.dtype(np.uint64): np.dtype(np.int64), np.dtype(np.bool_): np.dtype(np.int8)}
+    return 数组.view(映射[数组.dtype]) if 数组.dtype in 映射 else 数组
+def 向量GGUF写入(路径: str, 向量字典 = None, 文本文件 = None, 量化 = None, 语言 = None): #Core
+    # 单 GGUF 落盘: tv.k/tv.c/tv.n/tv.s/tv.d/tv.v 记录结构与类型, 键路径即张量名, tv.text 存文本(pickle)
+    写入器 = gguf.GGUFWriter(路径, arch="translator")
+    def 写值(路径名, 键, 值):
+        if isinstance(值, dict):
+            # ↓ 字典: 记录子键顺序后递归(支持 dict[dict[数组]])
+            写入器.add_string(f"tv.k.{路径名}", "D")
+            if 值: 写入器.add_array(f"tv.c.{路径名}", [str(项) for 项 in 值.keys()])
+            for 子键, 子值 in 值.items(): 写值(f"{路径名}/{子键}", 子键, 子值)
+        elif isinstance(值, (list, tuple)):
+            # ↓ 列表/元组: 记录长度后递归(TT核心这类数组列表按原样还原)
+            写入器.add_string(f"tv.k.{路径名}", "L" if isinstance(值, list) else "T")
+            写入器.add_uint32(f"tv.n.{路径名}", len(值))
+            for 序号, 子值 in enumerate(值): 写值(f"{路径名}/{序号}", 键, 子值)
+        elif 值 is None:
+            写入器.add_string(f"tv.k.{路径名}", "N")
+        elif isinstance(值, str):
+            写入器.add_string(f"tv.k.{路径名}", "U"); 写入器.add_string(f"tv.v.{路径名}", 值)
+        elif isinstance(值, bool):
+            写入器.add_string(f"tv.k.{路径名}", "S"); 写入器.add_bool(f"tv.v.{路径名}", 值)
+        elif isinstance(值, int):
+            写入器.add_string(f"tv.k.{路径名}", "S"); 写入器.add_int64(f"tv.v.{路径名}", 值)
+        elif isinstance(值, float):
+            写入器.add_string(f"tv.k.{路径名}", "S"); 写入器.add_float64(f"tv.v.{路径名}", 值)
+        elif isinstance(值, np.generic):
+            # ↓ Numpy标量: 记类型保值
+            写入器.add_string(f"tv.k.{路径名}", "C"); 写入器.add_string(f"tv.d.{路径名}", str(值.dtype))
+            if 值.dtype.kind in ("U", "S"):    写入器.add_string(f"tv.v.{路径名}", str(值))
+            elif 值.dtype.kind == "b":         写入器.add_bool(f"tv.v.{路径名}", bool(值))
+            elif 值.dtype.kind in ("i", "u"):  写入器.add_int64(f"tv.v.{路径名}", int(值))
+            else:                              写入器.add_float64(f"tv.v.{路径名}", float(值))
+        else:
+            数组 = np.asarray(值)
+            if 数组.dtype.kind in ("U", "S"):
+                # ↓ 字符串数组: 空串/空数组不下盘, 靠 类型+形状 还原
+                数组 = 数组.astype("U") if 数组.dtype.kind == "S" else 数组
+                写入器.add_string(f"tv.k.{路径名}", "R")
+                写入器.add_string(f"tv.s.{路径名}", 向量GGUF形状编码(数组.shape))
+                写入器.add_string(f"tv.d.{路径名}", str(数组.dtype))
+                if 数组.ndim == 0:
+                    if 数组.item(): 写入器.add_string(f"tv.v.{路径名}", 数组.item())
+                elif 数组.size: 写入器.add_array(f"tv.v.{路径名}", 数组.ravel().tolist())
+                return
+            # ↓ 不能用 np.ascontiguousarray, 它会把 0 维数组悄悄变成 (1,)
+            数组 = 数组.copy(order="C") if not 数组.flags["C_CONTIGUOUS"] else 数组
+            写入器.add_string(f"tv.k.{路径名}", "A")
+            if not 数组.dtype.kind in ("f", "i", "u", "b"):
+                # ↓ 本函数是模块级函数没有Self, 所以语言由调用方以 语言 参数传入; 未传入时回退原硬编码文本
+                信息 = 语言("log.persistence.gguf.dtype.unsupported", dtype=str(数组.dtype))
+                raise ValueError(信息)
+            量化类型 = 量化 if isinstance(量化, str) else (量化 or {}).get(键, None)
+            if 量化类型 and 数组.dtype.kind == "f":
+                try:
+                    # ↓ GGUF原生量化落盘(浮点向量矩阵才量化, 整型的自定义编码不动)
+                    写入器.add_tensor(路径名, gguf.quantize(数组.astype(np.float32, copy=False), gguf.GGMLQuantizationType[量化类型]),
+                                      raw_dtype=gguf.GGMLQuantizationType[量化类型])
+                    return
+                except Exception:
+                    pass
+            # ↓ 原始张量: 记形状与原始类型, uint/布尔用同字节宽的有符号类型承载(位完全不变)
+            写入器.add_string(f"tv.s.{路径名}", 向量GGUF形状编码(数组.shape))
+            写入器.add_string(f"tv.d.{路径名}", str(数组.dtype))
+            写入器.add_tensor(路径名, 向量GGUF张量视图(数组))
+    if 向量字典 is not None: 写值("r", None, 向量字典)
+    if 文本文件 is not None: 写入器.add_tensor("tv.text", np.frombuffer(pickle.dumps(文本文件), dtype=np.uint8).view(np.int8))
+    写入器.write_header_to_file()
+    写入器.write_kv_data_to_file()
+    写入器.write_tensors_to_file()
+    写入器.close()
+def 向量GGUF读取(路径: str, 读取向量: bool = True): #Core
+    if not Path(路径).is_file(): return False, False
+    向量文件, 文本文件 = False, False
+    读取器 = gguf.GGUFReader(路径)
+    try:
+        张量表 = {张量项.name: 张量项 for 张量项 in 读取器.tensors}
+        def 字段取值(键):
+            字段 = 读取器.get_field(键)
+            return 字段.contents() if 字段 is not None else None
+        def 读取张量(名字):
+            张量项 = 张量表[名字]
+            if 张量项.tensor_type not in (gguf.GGMLQuantizationType.F16, gguf.GGMLQuantizationType.F32, gguf.GGMLQuantizationType.F64,
+                                          gguf.GGMLQuantizationType.I8, gguf.GGMLQuantizationType.I16, gguf.GGMLQuantizationType.I32,
+                                          gguf.GGMLQuantizationType.I64):
+                # ↓ GGUF量化张量(llama.cpp量化过的) 自动反量化为 float32
+                return gguf.dequantize(np.asarray(张量项.data, dtype=np.uint8), 张量项.tensor_type)
+            数组 = np.array(张量项.data)
+            类型 = 字段取值(f"tv.d.{名字}")
+            if 类型 is not None: 数组 = 数组.view(np.dtype(类型))
+            形状 = 字段取值(f"tv.s.{名字}")
+            if 形状 is not None: 数组 = 数组.reshape(向量GGUF形状解析(形状))
+            return 数组
+        def 读取节点(路径名):
+            类型 = 字段取值(f"tv.k.{路径名}")
+            if 类型 == "D": return {键: 读取节点(f"{路径名}/{键}") for 键 in (字段取值(f"tv.c.{路径名}") or [])}
+            if 类型 in ("L", "T"):
+                节点 = [读取节点(f"{路径名}/{序号}") for 序号 in range(int(字段取值(f"tv.n.{路径名}") or 0))]
+                return 节点 if 类型 == "L" else tuple(节点)
+            if 类型 == "N": return None
+            if 类型 == "S": return 字段取值(f"tv.v.{路径名}")
+            if 类型 == "U":
+                值 = 字段取值(f"tv.v.{路径名}")
+                return "" if 值 is None else 值
+            if 类型 == "C": return np.dtype(字段取值(f"tv.d.{路径名}")).type(字段取值(f"tv.v.{路径名}"))
+            if 类型 == "R":
+                值 = 字段取值(f"tv.v.{路径名}")
+                if 值 is None: return np.full(向量GGUF形状解析(字段取值(f"tv.s.{路径名}")), "", dtype=np.dtype(字段取值(f"tv.d.{路径名}")))
+                return np.array(值, dtype=np.dtype(字段取值(f"tv.d.{路径名}"))).reshape(向量GGUF形状解析(字段取值(f"tv.s.{路径名}")))
+            return 读取张量(路径名)
+        if 读取向量:
+            if 字段取值("tv.k.r") is not None:
+                向量文件 = 读取节点("r")
+            else:
+                # ↓ 非本模块写入的 GGUF: 张量名直接作键(量化张量同样反量化)
+                向量文件 = {名字: 读取张量(名字) for 名字 in 张量表 if 名字 != "tv.text"}
+                向量文件 = 向量文件 if 向量文件 else False
+        if "tv.text" in 张量表: 文本文件 = pickle.loads(np.array(张量表["tv.text"].data).view(np.uint8).tobytes())
+    finally:
+        del 读取器, 张量表 # ↓ 必须释放 mmap 否则 Windows 下无法覆写同名文件
+    return 向量文件, 文本文件
 async def 参考词预处理(Self, texts: list = None, uuid = None, use_cache: bool = True, 查询: bool = False, 图像: bool = False) -> tuple[参考词预处理向量懒加载, list]: #Core
     检索词, 待处理文本 = [], []
     PCA均值, PCA投影矩阵 = None, None
+    向量文件, 文本文件 = False, False
     文件路径 = Self.Config.VEC_FILE_PATH
     文件名 = uuid if uuid else Self.Config.VEC_FILE_NAME
     缓存键 = f"{文件路径}/{文件名}"
+    向量路径 = f"{缓存键}.gguf" # ↓ 单 GGUF 存储
     if texts:
-        if use_cache and Path(f"{文件路径}/{文件名}.pkl").is_file():
+        if use_cache and Path(向量路径).is_file():
             with 向量线程锁:
-                with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                    检索词 = [(item[1] if 图像 else item[0]) for item in pickle.load(f)]
-        检索词_set = set(检索词)
-        待处理文本 = [index for index in texts if (index[1] if 图像 else index[0]) not in 检索词_set]
+                检索词 = [(item[1] if 图像 else item[0]) for item in (向量GGUF读取(向量路径, 读取向量=False)[1] or [])]
+        检索词集合 = set(检索词)
+        待处理文本 = [index for index in texts if (index[1] if 图像 else index[0]) not in 检索词集合]
     elif 缓存键 in 向量文本缓存:
         return 向量文本缓存[缓存键][0], 向量文本缓存[缓存键][1]
     if (not 待处理文本) and texts and (not use_cache): 待处理文本 = texts
     Self.日志("log.core.vector.cache.start")
     if 待处理文本 and Self.Config.EMB_MODEL:
-        if 图像:
-            返回内容向量 = await Self.Builder.并行生成图像向量(待处理文本, use_cache=use_cache)
+        
+        if not "BM25" in Self.Config.INDEX_MODE:
+            # ↓ 生成向量
+            if 图像: 返回内容向量 = await Self.Builder.并行生成图像向量(待处理文本, use_cache=use_cache)
+            else:    返回内容向量 = await Self.Builder.并行生成向量(待处理文本, use_cache=use_cache, 查询=查询)
+            向量结果列表 = 返回内容向量[0]
+            
+            # ↓ SpecTemp降维
+            if Self.Config.VEC_SPECTEMP_DIM != -1:
+                向量结果列表, PCA均值, PCA投影矩阵 = Self.Quantization.SpecTemp降维(向量结果列表)
+            
+            # ↓张量链分解 类似降维
+            TT核心列表, TT均值, TT形状 = None, None, None
+            if Self.Config.VEC_TT_RANK > 0 and len(Self.Config.VEC_TT_SHAPE) > 0:
+                TT核心列表, TT均值, TT形状 = Self.Quantization.TT分解(向量结果列表, Self.Config.VEC_TT_SHAPE, Self.Config.VEC_TT_RANK)
+                向量结果列表 = np.array([Self.Quantization.TT压缩(v, TT核心列表, TT均值, TT形状) for v in 向量结果列表], dtype=np.float32)
+                
+            Self.日志("log.core.debug.vector.range", range=(向量结果列表.min(), 向量结果列表.max()), info_level=4)
+            if 图像: 文本结果列表 = [[None, 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][1]))]
+            else:    文本结果列表 = [[返回内容向量[1][0][i], 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][0]))]
+            
+            # ↓ 文本与向量文件都没有时启动新生成的向量重排
+            if not Path(向量路径).is_file():
+                if Self.Config.VEC_RERANKER:
+                    向量结果列表, 文本结果列表 = Self.Quantization.向量重排(向量结果列表, 文本结果列表)
         else:
-            返回内容向量 = await Self.Builder.并行生成向量(待处理文本, use_cache=use_cache, 查询=查询)
-        向量结果列表 = 返回内容向量[0]
-        if Self.Config.VEC_PCA_DIM != -1:
-            向量结果列表, PCA均值, PCA投影矩阵 = Self.Quantization.PCA降维(向量结果列表)
-        TT核心列表, TT均值, TT形状 = None, None, None
-        if Self.Config.VEC_TT_RANK > 0 and len(Self.Config.VEC_TT_SHAPE) > 0:
-            TT核心列表, TT均值, TT形状 = Self.Quantization.TT分解(向量结果列表, Self.Config.VEC_TT_SHAPE, Self.Config.VEC_TT_RANK)
-            向量结果列表 = np.array([Self.Quantization.TT压缩(v, TT核心列表, TT均值, TT形状) for v in 向量结果列表], dtype=np.float32)
-        Self.日志("log.core.debug.vector.range", range=(向量结果列表.min(), 向量结果列表.max()), info_level=4)
-        if 图像:
-            文本结果列表 = [[None, 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][1]))]
-        else:
-            文本结果列表 = [[返回内容向量[1][0][i], 返回内容向量[1][1][i]] for i in range(len(返回内容向量[1][0]))]
-        if not (Path(f"{文件路径}/{文件名}.npz").is_file() and Path(f"{文件路径}/{文件名}.pkl").is_file()):
-            if Self.Config.VEC_RERANKER:
-                向量结果列表, 文本结果列表 = Self.Quantization.向量重排(向量结果列表, 文本结果列表)
+            文本结果列表 = [[i[0], i[1]] for i in texts]
+                
         with 向量线程锁:
             for _ in Self.tqdm(range(1), desc="tqdm.vectors.write"):
-                if Path(f"{文件路径}/{文件名}.npz").is_file() and Path(f"{文件路径}/{文件名}.pkl").is_file():
-                    旧向量文件 = numpy.load(f"{文件路径}/{文件名}.npz", allow_pickle=True)
-                    旧向量文件 = {key: np.asarray(旧向量文件[key]) for key in 旧向量文件.files}
-                    with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                        文本文件 = pickle.load(f)
-                        
-                    if "PCA_M" in 旧向量文件 and "PCA_P" in 旧向量文件:
-                        向量结果列表 = Self.Quantization.PCA应用(向量结果列表, 旧向量文件["PCA_M"], 旧向量文件["PCA_P"])
-                    if "TT_Cores" in 旧向量文件 and "TT_Mean" in 旧向量文件:
-                        向量结果列表 = np.array([Self.Quantization.TT压缩(v, 旧向量文件["TT_Cores"], 旧向量文件["TT_Mean"], 旧向量文件["TT_Shape"]) for v in 向量结果列表], dtype=np.float32)
+                if Path(向量路径).is_file():
+                    旧向量文件, 文本文件 = 向量GGUF读取(向量路径)
+                    旧向量文件 = 旧向量文件 if 旧向量文件 else {}
+                    文本文件 = 文本文件 if 文本文件 else []
                     文本文件.extend(文本结果列表)
-                    向量文件, 文本文件 = Self.Quantization.叠加量化向量(旧向量文件, 向量结果列表, 文本文件)
                     
-                    np.savez_compressed(f"{文件路径}/{文件名}.npz", **向量文件)
-                    with open(f"{文件路径}/{文件名}.pkl", "wb") as f:
-                        pickle.dump(文本文件, f)
+                    if not "BM25" in Self.Config.INDEX_MODE:
+                        if "PCA_M" in 旧向量文件 and "PCA_P" in 旧向量文件:
+                            向量结果列表 = Self.Quantization.SpecTemp应用(向量结果列表, 旧向量文件["PCA_M"], 旧向量文件["PCA_P"])
+                        if "TT_Cores" in 旧向量文件 and "TT_Mean" in 旧向量文件:
+                            向量结果列表 = np.array([Self.Quantization.TT压缩(v, 旧向量文件["TT_Cores"], 旧向量文件["TT_Mean"], 旧向量文件["TT_Shape"]) for v in 向量结果列表], dtype=np.float32)
+                        
+                        向量文件, 文本文件 = Self.Quantization.叠加量化向量(旧向量文件, 向量结果列表, 文本文件)
+                    else:
+                        向量文件 = 旧向量文件
                 else:
-                    向量文件 = Self.Quantization.编码向量(向量结果列表)
-                    if PCA均值 is not None: 向量文件["PCA_M"] = PCA均值
-                    if PCA投影矩阵 is not None: 向量文件["PCA_P"] = PCA投影矩阵
-                    if TT核心列表 is not None: 向量文件["TT_Cores"] = TT核心列表
-                    if TT均值 is not None: 向量文件["TT_Mean"] = TT均值
-                    if TT形状 is not None: 向量文件["TT_Shape"] = TT形状
-                    np.savez_compressed(f"{文件路径}/{文件名}.npz", **向量文件)
-                    with open(f"{文件路径}/{文件名}.pkl", "wb") as f:
-                        pickle.dump(文本结果列表, f)
+                    if not "BM25" in Self.Config.INDEX_MODE:
+                        向量文件 = Self.Quantization.编码向量(向量结果列表)
+                        if PCA均值 is not None: 向量文件["PCA_M"] = PCA均值
+                        if PCA投影矩阵 is not None: 向量文件["PCA_P"] = PCA投影矩阵
+                        if TT核心列表 is not None: 向量文件["TT_Cores"] = TT核心列表
+                        if TT均值 is not None: 向量文件["TT_Mean"] = TT均值
+                        if TT形状 is not None: 向量文件["TT_Shape"] = TT形状
                     文本文件 = 文本结果列表
+                
+                向量GGUF写入(向量路径, 向量文件 if 向量文件 else None, 文本文件, Self.Config.VEC_GGUF_QUANT, Self.Lang)
     else:
-        if not (Path(f"{文件路径}/{文件名}.npz").is_file() and Path(f"{文件路径}/{文件名}.pkl").is_file()):
+        try:
+            with 向量线程锁:
+                for _ in Self.tqdm(range(1), desc="tqdm.vectors.read"):
+                    向量文件, 文本文件 = 向量GGUF读取(向量路径)
+        except Exception:
+            Self.日志("log.core.read.vevtor.error", e=eb.format_exc(), info_level=2)
             向量文件, 文本文件 = False, False
-        else:
-            try:
-                with 向量线程锁:
-                    for _ in Self.tqdm(range(1), desc="tqdm.vectors.read"):
-                        向量文件 = numpy.load(f"{文件路径}/{文件名}.npz", allow_pickle=True)
-                        向量文件 = {key: np.asarray(向量文件[key]) for key in 向量文件.files}
-                        with open(f"{文件路径}/{文件名}.pkl", "rb") as f:
-                            文本文件 = pickle.load(f)
-            except Exception:
-                Self.日志("log.core.read.vevtor.error", e=eb.format_exc(), info_level=2)
-                向量文件, 文本文件 = False, False
     Self.日志("log.core.vector.cache.end")
-    if 向量文件:
-        向量文件 = 参考词预处理向量懒加载(向量文件, Self.Quantization.解码向量, Self.Config.VEC_READ_CACHE)
+    if 向量文件: 向量文件 = 参考词预处理向量懒加载(向量文件, Self.Quantization.解码向量, Self.Config.VEC_READ_CACHE)
     向量文本缓存[缓存键] = [向量文件, 文本文件]
     return (向量文件, 文本文件)
-
+class 快捷搜索器:
+    def __init__(Self, App, 向量文件=None):
+        Self.Mode = bool(向量文件)
+        Self.向量文件 = 向量文件
+        Self.App = App
+    async def search(Self, texts, k, index=None, 增量锁=False):
+        match Self.Mode:
+            case True:
+                查询文本 = [[index, "", ""] for index in texts]
+                输入列表 = await Self.App.Builder.并行生成向量(查询文本, 查询=True) # 格式化后生成检索向量 返回格式[向量, [生成文本, 额外, 额外]]
+                向量列表 = np.asarray(输入列表[0], dtype=np.float32) # 提取向量部分
+                if 向量列表.shape[0] == 0: return  # 滚木向量直接跳过 防止faiss维度断言崩溃
+                Self.App.Quantization.SpecTemp应用懒加载(向量列表, Self.向量文件) # SpecTemp降维 原地修改
+                Self.App.Quantization.TT应用懒加载(向量列表, Self.向量文件) # TT解压 原地修改
+                向量列表 = 向量列表.get() if GPU_ACC else 向量列表 # GPU转换CPU
+                faiss.normalize_L2(向量列表) # L2归一化 原地修改
+                for _ in Self.App.tqdm(range(1), desc="tqdm.index.search"):
+                    if 增量锁:
+                        with 增量索引锁: # ↓search与增量索引add互斥 防止并发修改索引
+                            索引矩阵 = index.search(向量列表, k)[1]
+                    else:   索引矩阵 = index.search(向量列表, k)[1]
+            case False:
+                搜索列表 = list(texts)
+                if Self.Config.INDEX_TEXT_LOWER:
+                    搜索列表 = [t.lower() for t in 搜索列表]
+                for _ in Self.App.tqdm(range(1), desc="tqdm.index.search"):
+                    索引矩阵 = index.retrieve(Mods().BM25分词(Self.App, Self.App.Config.INDEX_LANGUAGE, 搜索列表), k=k)[0]
+        return 索引矩阵
+                
 def 缓存索引(Self, 向量文件: 参考词预处理向量懒加载, 文本文件, 模式 = None, 存储 = True): #Core
     索引库 = faiss
     Self.日志("log.core.index.cache.start", info_level=0)
     if not 模式:
         模式 = Self.Config.INDEX_MODE
     if 存储:
-        索引库 = TranslatorIndex if "RefineLowDim" in 模式  else IndexGSQ if "GSQFast" in 模式 else faiss
-        索引配置 = [getattr(Self.Config, key) for key in Self.Config.INDEX_CONFIG]
+        if "RefineLowDim" in 模式:
+            索引库 = TranslatorIndex
+            向量类型 = True
+        elif "GSQFast" in 模式:
+            索引库 = IndexGSQ
+            向量类型 = True
+        elif "BM25" in 模式:
+            向量类型 = False
+        else:
+            索引库 = faiss
+            向量类型 = True
+        索引配置 = [getattr(Self.Config, key) for key in Self.Config.INDEX_CONFIG] + Mods().索引配置快照()
         参考词哈希 = hashlib.md5(pickle.dumps((向量文件, 文本文件, 索引配置))).hexdigest()
+        存储路径 = f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}"
         if 参考词哈希 in 索引缓存:
             return 索引缓存[参考词哈希]
         with 索引线程锁:
-            if Path(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index-md5").is_file():
-                with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index-md5", "r") as f:
-                    参考词哈希文件 = f.read()
-                if 参考词哈希文件 == 参考词哈希:
-                    for _ in Self.tqdm(range(1), desc="tqdm.index.read"):
-                        向量索引 = 索引库.read_index(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index")
+            if 参考词哈希 in 索引缓存:
+                return 索引缓存[参考词哈希]
+            if 向量类型:
+                if Path(f"{存储路径}.index-md5").is_file():
+                    with open(f"{存储路径}.index-md5", "r") as f:
+                        参考词哈希文件 = f.read()
+                    if 参考词哈希文件 == 参考词哈希:
+                        for _ in Self.tqdm(range(1), desc="tqdm.index.read"):
+                            向量索引 = 索引库.read_index(f"{存储路径}.index")
+                    else:
+                        向量索引 = Self.Index.构建索引(向量文件.get())
+                        for _ in Self.tqdm(range(1), desc="tqdm.index.write"):
+                            with open(f"{存储路径}.index-md5", "w+") as f:
+                                f.write(参考词哈希)
+                            索引库.write_index(向量索引, f"{存储路径}.index")
                 else:
                     向量索引 = Self.Index.构建索引(向量文件.get())
                     for _ in Self.tqdm(range(1), desc="tqdm.index.write"):
-                        with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index-md5", "w+") as f:
+                        with open(f"{存储路径}.index-md5", "w+") as f:
                             f.write(参考词哈希)
-                        索引库.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index")
+                        索引库.write_index(向量索引, f"{存储路径}.index")
             else:
-                向量索引 = Self.Index.构建索引(向量文件.get())
-                for _ in Self.tqdm(range(1), desc="tqdm.index.write"):
-                    with open(f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index-md5", "w+") as f:
-                        f.write(参考词哈希)
-                    索引库.write_index(向量索引, f"{Self.Config.VEC_FILE_PATH}/{Self.Config.VEC_FILE_NAME}.index")
+                if Path(f"{存储路径}.index-md5").is_file():
+                    with open(f"{存储路径}.index-md5", "r") as f:
+                        参考词哈希文件 = f.read()
+                    if 参考词哈希文件 == 参考词哈希:
+                        for _ in Self.tqdm(range(1), desc="tqdm.index.read"):
+                            向量索引 = bm25s.BM25.load(f"{存储路径}.index")
+                    else:
+                        向量索引 = Self.Index.构建索引BM25(文本文件)
+                        for _ in Self.tqdm(range(1), desc="tqdm.index.write"):
+                            with open(f"{存储路径}.index-md5", "w+") as f:
+                                f.write(参考词哈希)
+                            向量索引.save(f"{存储路径}.index")
+                else:
+                    向量索引 = Self.Index.构建索引BM25(文本文件)
+                    for _ in Self.tqdm(range(1), desc="tqdm.index.write"):
+                        with open(f"{存储路径}.index-md5", "w+") as f:
+                            f.write(参考词哈希)
+                        向量索引.save(f"{存储路径}.index")
         索引缓存[参考词哈希] = 向量索引
     else:
-        向量索引 = Self.Index.构建索引(向量文件.get(), 模式)
+        if 向量类型:
+              向量索引 = Self.Index.构建索引(向量文件.get(), 模式)
+        else: 向量索引 = Self.Index.构建索引BM25(文本文件)
     Self.日志("log.core.index.cache.end", info_level=0)
-    try:
-        向量索引 = 索引库.index_cpu_to_gpu(向量索引)
-    except:
-        try:
-            向量索引 = 索引库.index_gpu_to_cpu(向量索引)
-        except: pass
     return 向量索引
 
 def 缓存数据包指令表(Self): #Module
@@ -487,22 +749,27 @@ class VectorCache:
         Self.向量嵌入频率: dict = {} # {text: count}
         Self.向量嵌入代数: dict = {} # {text: round}
         Self.向量保存轮次: int = 0 # 每轮保存递增，用于衰减淘汰
+        Self.文件锁 = threading.Lock()
         try:
             Self.初始化缓存实例().加载(Self.App)
         except Exception: pass
+    def 读取缓存文件(Self, 缓存路径: Path):
+        向量文件, 快照 = 向量GGUF读取(str(缓存路径))
+        if not isinstance(向量文件, dict): return None, {}
+        向量矩阵 = 向量文件.get("vec")
+        if 向量矩阵 is None: return None, {}
+        return np.asarray(向量矩阵), (快照 if isinstance(快照, dict) else {})
     def 向量加载回调(Self, app):
         try:
             基础路径 = Path(app.Config.VEC_CACHE_PATH) / app.Config.VEC_CACHE_NAME
-            if not Path(f"{基础路径}.pkl").is_file() or not Path(f"{基础路径}.npz").is_file():
-                return
-            with open(f"{基础路径}.pkl", "rb") as f:
-                原始数据 = pickle.load(f)
-            文本列表       = 原始数据.get("texts", [])
-            Self.向量嵌入频率.update(原始数据.get("frequency", {}))
-            Self.向量嵌入代数.update(原始数据.get("algebra", {}))
-            Self.向量保存轮次    = 原始数据.get("save_round", 0)
-
-            向量矩阵 = numpy.load(f"{基础路径}.npz", allow_pickle=False)["vec"]
+            with Self.文件锁:
+                向量矩阵, 快照 = Self.读取缓存文件(Path(f"{基础路径}.gguf"))
+            if 向量矩阵 is None: return
+            Self.向量嵌入频率.update(快照.get("frequency", {}) or {})
+            Self.向量嵌入代数.update(快照.get("algebra", {}) or {})
+            Self.向量保存轮次    = int(快照.get("save_round", 0) or 0)
+            文本列表 = list(快照.get("texts", []) or [])
+            if 向量矩阵.ndim == 1: 向量矩阵 = 向量矩阵.reshape(1, -1)
             for i, 文本 in enumerate(文本列表):
                 if i >= len(向量矩阵): break
                 Self.向量嵌入数据[文本] = np.asarray(向量矩阵[i]) if GPU_ACC else 向量矩阵[i].copy()
@@ -550,9 +817,11 @@ class VectorCache:
                 "algebra":      dict(Self.向量嵌入代数),
                 "save_round":   Self.向量保存轮次,
             }
-            with open(f"{基础路径}.pkl", "wb") as f:
-                pickle.dump(快照, f)
-            numpy.savez_compressed(f"{基础路径}.npz", vec=向量列表)
+            量化类型 = getattr(app.Config, "VEC_CACHE_GGUF_QUANT", "") or None
+            with Self.文件锁:
+                临时路径 = Path(f"{基础路径}.gguf.tmp")
+                向量GGUF写入(str(临时路径), {"vec": 向量列表}, 快照, 量化类型, getattr(app, "Lang", None))
+                临时路径.replace(Path(f"{基础路径}.gguf"))
         except Exception:
             app.日志("log.core.vector.cache.save.error", e=eb.format_exc(), info_level=2)
     def 向量查询回调(Self, texts=None):
@@ -597,6 +866,17 @@ class VectorCache:
         for k, v in 新增条目.items():
             Self.向量嵌入数据[k] = v
         Self.向量缓存实例.脏标记 = True
+    def 清空(Self):
+        # ↓整份丢弃缓存(通常是嵌入模型/VEC_DIM_CLIP 变了), 顺手删掉磁盘文件, 免得下次启动又把过期维度读回来
+        Self.向量嵌入数据.clear()
+        Self.向量嵌入频率.clear()
+        Self.向量嵌入代数.clear()
+        Self.向量缓存实例.脏标记 = False
+        for 后缀 in (".gguf", ".gguf.tmp"):
+            路径 = Path(Self.App.Config.VEC_CACHE_PATH) / f"{Self.App.Config.VEC_CACHE_NAME}{后缀}"
+            try:
+                if 路径.is_file(): 路径.unlink()
+            except Exception: pass
 
 class TranslationCache:
     def __init__(Self, app):

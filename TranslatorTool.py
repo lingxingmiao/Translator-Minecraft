@@ -508,20 +508,21 @@ if __name__ == "__main__" and 测试:
     参数 = {
         "LANGUAGE": "zh_CN",
         "TRANSLATOR_CACHE_READ": False,
-        "EMB_MAX_WORKERS": 2,
+        "EMB_MAX_WORKERS": 20,
         "DEBUG_MODE": True,
         "EMB_MAX_TOKENS": 512,
-        "VEC_FILE_NAME": "FP16_MAX", "VEC_QUANTIZATION": "Float16_Max",
-        "TRANSLATOR_CACHE_NAME": "Translator_Cache2",
+        "VEC_FILE_NAME": "Vector6", #"VEC_QUANTIZATION": "Float16_Max",
+        "TRANSLATOR_CACHE_NAME": "Translator_Cache3",
+        "INDEX_MODE": "BM25"
     }
     from TranslatorLib import Config
     配置 = Config(参数)
     翻译 = Tool(配置)
     #翻译.语言文件对转DictMini(r"C:\Users\FengMang\Downloads\Minecraft-Shaders-zh_CN-Lang-Files-Surisen.zip", r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.导入未知伤亡语言文件DictMini(r"C:\Users\FengMang\Downloads\EN.json", r"C:\Users\FengMang\Downloads\zh_CN.json", r"C:\Users\FengMang\Downloads\Dict-Mini.json") #byd保留所有权利不敢用
+    翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", max_length=20000, mode="DPO-Mini")
+    #翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", max_length=20000, mode="DPO-Mini")
     #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
     #翻译.合并语言文件更新(r"C:\Users\FengMang\Downloads\chestdna-1.02q-mc1.21.1-fabric.jar", r"C:\Users\FengMang\Desktop\TranslatorMinecraft\Cache\e1da873790f04e19b850843f61435bdb\zh_CN.translang")
     #翻译.翻译缓存转换数据集()

@@ -1,12 +1,31 @@
 from __future__ import annotations 
 
-__lazy_modules__ = ["traceback", "threading", "hashlib", "zipfile", "sqlite3", "tomllib", "asyncio", "logging", "shutil", "locale", "bisect", "pickle", "random", "atexit", "heapq", "queue", "shlex", "time", "uuid", "math", "ast", "re", "io", "json", "enum", "types", "typing", "urllib.parse", "urllib3.util.retry", "logging.handlers", "pathlib", "requests.adapters", "functools", "concurrent.futures", "contextlib", "collections", "dataclasses",
-                    "dnfile", "numpy", "numba", "cupy", "faiss", "ujson", "rich.console", "rich.panel", "rich.align", "rich.text", "rich.style", "rich.color", "tqdm.rich", "requests", "aiohttp", "uvicorn", "fastapi", "slowapi", "fastapi.responses", "fastapi.security", "fastapi.middleware.cors", "slowapi.util", "slowapi.errors", "datetime", "os", "warnings", "copy", "tqdm", "clr", "token_calibrator", "diskcache"]
+__lazy_modules__ = [ # 仅 Python 3.15 可用
+    "ast", "asyncio", "atexit", "base64", "bisect", "collections",
+    "concurrent.futures", "contextlib", "copy", "dataclasses", "datetime",
+    "enum", "functools", "hashlib", "heapq", "importlib", "io", "json",
+    "locale", "logging", "logging.handlers", "math", "os", "pathlib",
+    "pickle", "pkgutil", "queue", "random", "re", "shlex", "shutil",
+    "sqlite3", "struct", "sys", "threading", "time", "tomllib",
+    "traceback", "types", "typing", "urllib.parse", "urllib3.util.retry",
+    "uuid", "warnings", "zipfile",
+
+    "aiohttp", "bm25s", "clr", "cupy", "datasets", "dnfile", "faiss",
+    "fastapi", "fastapi.middleware.cors", "fastapi.responses",
+    "fastapi.security", "huggingface_hub", "numba", "numpy", "PIL.Image",
+    "requests", "requests.adapters", "rich.align", "rich.color",
+    "rich.console", "rich.panel", "rich.style", "rich.text", "slowapi",
+    "slowapi.errors", "slowapi.util", "token_calibrator", "tqdm",
+    "tqdm.rich", "ujson", "uvicorn", "xllamacpp",
+]
 
 import traceback as eb
 import threading
+import importlib
+import zipimport
 import warnings
 import datetime
+import pkgutil
 import hashlib
 import zipfile
 import sqlite3
@@ -22,6 +41,7 @@ import atexit
 import base64
 import struct
 import heapq
+import types
 import queue
 import shlex
 import time
@@ -29,6 +49,7 @@ import uuid
 import math
 import copy
 import ast
+import sys
 import os
 import re
 import io
@@ -38,9 +59,8 @@ from re import compile as _re_compile, sub as _re_sub, MULTILINE
 from json import dumps as _json_dumps, loads as _json_loads
 from enum import IntEnum
 from types import SimpleNamespace, MethodType
-from typing import TYPE_CHECKING 
 from urllib.parse import quote
-from typing import Callable, Dict, Any, Union, Optional, List, TextIO
+from typing import Callable, Dict, Any, Union, Optional, List, TextIO, Type, TYPE_CHECKING
 from urllib3.util.retry import Retry
 from logging import FileHandler
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
@@ -51,7 +71,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import asynccontextmanager
 from collections import defaultdict, deque, OrderedDict, Counter
 from dataclasses import dataclass, replace
-#需要安装↓ numpy aiohttp requests faiss
+#需要安装↓ gguf numpy aiohttp requests faiss
+import gguf
 import numpy
 import faiss
 import aiohttp
@@ -89,10 +110,22 @@ except:
     dnfile = None
     NOT_IMPORT.append("dnfile")
 try:
-    import clr; clr.AddReference("System"); import System  # type: ignore
+    import clr
 except:
-    System = None
+    clr = None
     NOT_IMPORT.append("pythonnet")
+dnlib = None
+def Dnlib加载(dll路径):
+    global dnlib
+    if dnlib is not None:
+        return dnlib
+    if clr is None:
+        return None
+    if not dll路径.is_file():
+        raise FileNotFoundError(f"dnlib not found: {dll路径}")
+    clr.AddReference(str(dll路径))
+    import dnlib # type: ignore
+    return dnlib
 try:
     import token_calibrator
 except:
@@ -119,6 +152,16 @@ except:
         class open: pass
         class save: pass
     NOT_IMPORT.append("pillow")
+try:
+    import bm25s
+except:
+    bm25s = None
+    NOT_IMPORT.append("bm25s")
+try:
+    import xllamacpp
+except:
+    class xllamacpp: pass
+    NOT_IMPORT.append("xllamacpp")
 ConfigFile = Path("config.cfg").resolve()
 ConfigFile.parent.mkdir(parents=True, exist_ok=True)
 if ConfigFile.is_file():
@@ -171,34 +214,33 @@ HARDWARE_INFO = {
         "device_id": np.cuda.runtime.getDevice()} if GPU_ACC else {}),
     "error": "None" if GPU_ACC else (numba_error if not CPU_ACC else gpu_error)
 }
-if uvicorn and fastapi and slowapi:
-    APIConfigFile = Path("config-api.cfg").resolve()
-    APIConfigFile.parent.mkdir(parents=True, exist_ok=True)
-    if APIConfigFile.is_file():
-        with open(APIConfigFile, "r", encoding="utf-8") as f:
-            APIConfig = json.load(f)
-    else:
-        APIConfig = {
-            "server": {
-                    "LOGS_GLOBAL": False
-                },
-            "api": {
-                    "host": "127.0.0.1",
-                    "port": 25561,
-                    "ssl_keyfile": None,
-                    "ssl_certfile": None,
-                    "max_concurrent": 4,
-                    "current-limiting": "8/minute",
-                    "task_states_file": "task_states.db",
-                    "task_states_save_interval": 30.0,
-                    "task_states_cleanup_hours": 24.0,
-                    "task_states_cleanup_interval": 300.0,
-                    "transalator_file_exists_del": True
-                },
-            "keys": []
-        }
-        with open(APIConfigFile, "w+", encoding="utf-8") as f:
-            json.dump(APIConfig, f, indent=4)
+APIConfigFile = Path("config-api.cfg").resolve()
+APIConfigFile.parent.mkdir(parents=True, exist_ok=True)
+if APIConfigFile.is_file():
+    with open(APIConfigFile, "r", encoding="utf-8") as f:
+        APIConfig = json.load(f)
+else:
+    APIConfig = {
+        "server": {
+                "LOGS_GLOBAL": False
+            },
+        "api": {
+                "host": "127.0.0.1",
+                "port": 25561,
+                "ssl_keyfile": None,
+                "ssl_certfile": None,
+                "max_concurrent": 4,
+                "current-limiting": "8/minute",
+                "task_states_file": "task_states.db",
+                "task_states_save_interval": 30.0,
+                "task_states_cleanup_hours": 24.0,
+                "task_states_cleanup_interval": 300.0,
+                "transalator_file_exists_del": True
+            },
+        "keys": []
+    }
+    with open(APIConfigFile, "w+", encoding="utf-8") as f:
+        json.dump(APIConfig, f, indent=4)
             
 warnings.filterwarnings("ignore", category=TqdmExperimentalWarning) # 屏蔽rich.tqdm警告
             
@@ -1918,7 +1960,7 @@ else:
 
 信息文本 = Text.from_markup(f"""
 [bold]TranslatorMinecraft Core[/bold]
-[bright_green]Version:[/] Release 1.6 Bata.5
+[bright_green]Version:[/] Release 1.6
 [bright_green]NumPy Accelerator:[/] {加速方法} {加速版本}""")
 
 总文本 = Text.assemble(文本, 信息文本)
@@ -1934,37 +1976,39 @@ Console(force_terminal=True, color_system="auto").print(
 )
 __all__ = [
     "aiohttp", "APIConfig", "Any", "as_completed", "ast", "asynccontextmanager", "asyncio", "atexit",  # A
-    "bisect", "base64",  # B
-    "Callable", "copy", "Counter",  # C
-    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime", "diff_tqdm", "datasets",  # D
+    "bisect", "base64", "bm25s",  # B
+    "Callable", "copy", "Counter", "clr",  # C
+    "dataclass", "defaultdict", "deque", "Dict", "dnfile", "datetime", "diff_tqdm", "datasets", "Dnlib加载",  # D
     "eb",  # E
     "faiss", "fancymenulib", "FileHandler", "fastapi",  # F
-    "GPU_ACC", "gtnhlib", # G
+    "GPU_ACC", "gtnhlib", "gguf", # G
     "HARDWARE_INFO", "hashlib", "hqmlib", "HTTPAdapter", "heapq", "huggingface_hub",  # H
-    "io", "InconsistentValues", "Image",  # I
+    "io", "InconsistentValues", "Image", "importlib",  # I
     "json",  # J
     # K (无)
     "List", "locale", "logging",  # L
     "math", "MethodType",  # M
     "np", "numpy", "njit", "numba", "NOT_IMPORT", # N
     "Optional", "os",  # O
-    "partial", "Path", "pickle", "PurePosixPath",  # P
+    "partial", "Path", "pickle", "PurePosixPath", "pkgutil",  # P
     "queue", "QueueHandler", "QueueListener", "quote",  # Q
     "random", "re", "replace", "requests", "Retry", "RotatingFileHandler", "rich_tqdm",  # R
-    "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "System", "struct",  # S
-    "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm_tqdm", "token_calibrator",# T
+    "shlex", "shutil", "SimpleNamespace", "snbtlib", "sqlite3", "struct",  # S
+    "ThreadPoolExecutor", "threading", "time", "tomllib", "tqdm_tqdm", "token_calibrator", "Type", # T
     "Union", "uuid",  # U
-    # V, W, X, Y (无)
-    "zipfile",  # Z
+    # V, W (无)
+    "xllamacpp", # X
+    # Y (无)
+    "zipfile", "zipimport",  # Z
     "_prange", # _
 ]
 
+# API 导入
 if all(v is not None for v in [uvicorn, fastapi, slowapi]):
     __all__.extend(["FastAPI", "UploadFile", "HTTPException", "status", "Depends", "Security", "Form", "Request", "BackgroundTasks", "FileResponse", "PlainTextResponse", "HTTPBearer", "HTTPAuthorizationCredentials", "CORSMiddleware", "Limiter", "_rate_limit_exceeded_handler", "get_remote_address", "RateLimitExceeded"])
 
 if TYPE_CHECKING:
     from TranslatorPersistence import TranslationCache, VectorCache, TokenCalibratorCache
-
 if TYPE_CHECKING:
     import TranslatorCore
     import TranslatorFile
@@ -1977,10 +2021,17 @@ if TYPE_CHECKING:
     import TranslatorIndex
     import TranslatorNetwork
     import TranslatorModpack
+    import TranslatorMods
+    import TranslatorDnlib
+
+def Mods() -> "TranslatorMods":
+    import TranslatorMods as _Class
+    return _Class
 
 import TranslatorIndexGSQ as IndexGSQ
 import TranslatorIndex
 import TranslatorPersistence
+import TranslatorQuantization
 from TranslatorPersistence import TranslationCache, VectorCache, TokenCalibratorCache
 
 def Locale(Config) -> "TranslatorLocale.Locale":
@@ -2001,6 +2052,10 @@ def Module(Config) -> "TranslatorModule.Module":
 
 def File(Config) -> "TranslatorFile.File":
     from TranslatorFile import File as _Class
+    return _Class(Config)
+
+def Dnlib(Config) -> "TranslatorDnlib.Dnlib":
+    from TranslatorDnlib import Dnlib as _Class
     return _Class(Config)
 
 def Translator(Config) -> "TranslatorCore.Translator":
@@ -2027,7 +2082,7 @@ def Modpack(Config) -> "TranslatorModpack.Modpack":
     from TranslatorModpack import Modpack as _Class
     return _Class(Config)
 
-from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG, DefaultConfig, Config, Config as _Config
+from TranslatorConfig import RuntimeConfig, DEFAULT_CONFIG, DefaultConfig, Config
 
 __all__.extend([
     # A (无)
@@ -2038,14 +2093,98 @@ __all__.extend([
     "File", # F
     # G, H (无)
     "Index", "IndexGSQ", # I
-    # J, K (无)
+    "加载模组", # J
+    # K (无)
     "Locale", "Log", # L
-    "Module", "Modpack", # M
+    "Module", "Modpack", "Mods", # M
     "Network", # N
     # O, P (无)
     "Quantization", # Q
     "RuntimeConfig", # R
     # S (无)
-    "Translator", "Tool", "TranslatorPersistence", "TranslationCache", "VectorCache", "TokenCalibratorCache", "TranslatorIndex", # T
+    "Translator", "Tool", "TranslatorPersistence", "TranslationCache", "VectorCache", "TokenCalibratorCache", "TranslatorIndex", "TranslatorQuantization", # T
     # U, V, W, X, Y, Z (无)
 ])
+
+
+
+模组目录 = None
+模组查找路径 = []
+模组包 = types.ModuleType("mods")
+模组包.__package__ = "mods"
+sys.modules.setdefault("mods", 模组包)
+
+class 压缩模组查找器:
+    def __init__(Self, 压缩文件路径: str, 相对路径: str = ""):
+        Self.压缩文件路径 = 压缩文件路径
+        Self.相对路径 = 相对路径 or 压缩文件路径
+
+    def find_spec(Self, 完整名称: str, 路径=None, 目标=None):
+        if not 完整名称.startswith("mods."):
+            return None
+        模块名 = 完整名称[len("mods."):]
+        if "." in 模块名 or not 模块名.isidentifier():
+            return None
+        来源 = f"{Self.压缩文件路径}/{模块名}.py"
+        try:
+            with zipfile.ZipFile(Self.压缩文件路径) as 压缩包:
+                if f"{模块名}.py" not in 压缩包.namelist():
+                    return None
+        except Exception:
+            return None
+        return importlib.machinery.ModuleSpec(
+            完整名称,
+            importlib.machinery.SourceFileLoader(完整名称, 来源),
+            origin=来源,
+        )
+
+def 加载压缩模组(压缩文件路径: Path):
+    压缩文件路径 = Path(压缩文件路径).resolve()
+    相对路径 = 压缩文件路径.relative_to(模组目录).as_posix()
+    绝对路径 = str(压缩文件路径)
+    with zipfile.ZipFile(压缩文件路径) as 压缩包:
+        模块名列表 = [
+            Path(名称).stem
+            for 名称 in 压缩包.namelist()
+            if 名称.endswith(".py")
+            and "/" not in 名称.rstrip("/")
+            and not 名称.startswith("_")
+            and Path(名称).stem.isidentifier()
+        ]
+    if not 模块名列表:
+        return []
+    if 绝对路径 not in 模组查找路径:
+        模组查找路径.append(绝对路径)
+    if not any(getattr(查找器, "压缩文件路径", None) == 绝对路径 for 查找器 in sys.meta_path):
+        sys.meta_path.append(压缩模组查找器(绝对路径, 相对路径))
+    return 模块名列表
+
+def 加载模组(配置):
+    global 模组目录, 模组查找路径
+    模组路径 = Path(配置.MODS_PATH)
+    模组目录 = 模组路径 if 模组路径.is_absolute() else Path(__file__).resolve().parent / 模组路径
+    模组查找路径 = [str(模组目录)]
+    模组包.__path__ = 模组查找路径
+    模组包.__spec__ = importlib.machinery.ModuleSpec("mods", None, is_package=True)
+    模组包.__spec__.submodule_search_locations = 模组查找路径
+    Mods().设置模组配置路径(配置.MODS_CFG_PATH or (模组目录 / "mods.cfg"))
+    try:
+        for 压缩文件 in sorted(模组目录.glob("*.zip")):
+            加载压缩模组(压缩文件)
+    except Exception:
+        eb.print_exc()
+
+    for _, 模块名, _ in pkgutil.iter_modules(模组查找路径):
+        if 模块名.startswith("_"):
+            continue
+        try:
+            importlib.import_module(f'mods.{模块名}')
+        except Exception:
+            eb.print_exc()
+
+    try:
+        Mods().同步模组配置()
+    except Exception:
+        eb.print_exc()
+
+Config.模组加载器 = staticmethod(加载模组)

@@ -100,11 +100,17 @@ class Log:
             Self.写入日志("log.module.logs.encoding.warning", info_level=1)
             return content
     def 关闭(Self):
-        if getattr(Self, "_队列监听器", None) is not None:
+        监听器 = getattr(Self, "_队列监听器", None)
+        if 监听器 is not None:
             try:
-                Self._队列监听器.stop()
+                监听器.stop()
             except Exception:
                 pass
+            for 处理器 in getattr(监听器, "handlers", ()):
+                try:
+                    处理器.close()
+                except Exception:
+                    pass
             Self._队列监听器 = None
         if getattr(Self, "日志管理器", None) is not None:
             for 处理器 in list(Self.日志管理器.handlers):
@@ -115,5 +121,10 @@ class Log:
                     pass
         try:
             logging.Logger.manager.loggerDict.pop(getattr(Self, "日志名称", None), None)
+        except Exception:
+            pass
+    def __del__(Self):
+        try:
+            Self.关闭()
         except Exception:
             pass

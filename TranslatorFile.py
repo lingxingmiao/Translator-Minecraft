@@ -1,10 +1,11 @@
-from TranslatorLib import (json, uuid, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, re, fancymenulib, hqmlib, List, shlex, locale, System, dnfile, np,
+from TranslatorLib import (json, uuid, zipfile, Path, eb, PurePosixPath, tomllib, snbtlib, ast, re, fancymenulib, hqmlib, List, shlex, locale, np,
                            TranslatorPersistence, Config)
 
 class File:
     def __init__(Self, App: Config):
         Self.Config = App.Config
         Self.Module = App.Module
+        Self.Dnlib = App.Dnlib
         Self.Locale = App.Locale
         Self.日志 = App.日志
         Self.Lang = App.Lang
@@ -43,13 +44,28 @@ class File:
                 Self.递归提取文本(元素, 当前路径 + [序号], 目标字段, 提取方法, 允许值类型)
 
     def 读取Json文件(Self, file):
-        for enc in ['utf-8-sig', 'utf-8', 'gbk', 'utf-16', locale.getpreferredencoding(False)]:
+        # 先按 BOM 判定编码: 带 UTF-8 BOM 的文件用 utf-8 解析时 ujson/json 会把 BOM 当非法字节
+        # 直接报 "Expected object or value"(文件本身内容完整), 所以 BOM 文件显式走 utf-8-sig 剥离 BOM
+        try:
+            with open(file, 'rb') as f:
+                文件头 = f.read(4)
+        except OSError:
+            文件头 = b''
+        优先编码 = []
+        if 文件头.startswith(b'\xef\xbb\xbf'):                                    # UTF-8 BOM
+            优先编码.append('utf-8-sig')
+        elif 文件头.startswith((b'\xff\xfe\x00\x00', b'\x00\x00\xfe\xff')):        # UTF-32 BOM(前缀与UTF-16相同, 需先判)
+            优先编码.append('utf-32')
+        elif 文件头.startswith((b'\xff\xfe', b'\xfe\xff')):                        # UTF-16 BOM
+            优先编码.append('utf-16')
+        for enc in 优先编码 + ['utf-8-sig', 'utf-8', 'gbk', 'utf-16', locale.getpreferredencoding(False)]:
             try:
                 with open(file, 'r', encoding=enc) as f:
                     原始对象 = json.load(f)
                 return 原始对象
-            except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            except (UnicodeDecodeError, ValueError):  # json.JSONDecodeError/ujson.JSONDecodeError 均为 ValueError 子类
                 continue
+        return None
 
     def Unicode转字符串(Self, s: str) -> str:
         return re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), s)
@@ -889,49 +905,11 @@ class File:
         结果 = []
         p_file = Path(文件路径)
         try:
-            pe = dnfile.dnPE(str(p_file))
-            if not pe.net or not pe.net.user_strings:
-                return 结果
-            us_data = pe.net.user_strings.__data__
-            提取到的字符串 = Self.解析NetUS堆(us_data)
-            for s in 提取到的字符串:
+            for s in Self.Dnlib.读取字符串(p_file):
                 结果.append([["ldstr", s], s, p_file])
         except Exception:
             Self.日志("log.module.dll.load.error", file=str(p_file), e=eb.format_exc(), info_level=2)
-        finally:
-            if pe is not None:
-                try:
-                    pe.close()
-                except Exception:
-                    pass
         return 结果
-
-    def 解析NetUS堆(Self, data: bytes) -> list:
-        字符串列表 = []
-        offset = 1
-        while offset < len(data):
-            b1 = data[offset]
-            if b1 == 0:
-                offset += 1
-                continue
-            if b1 < 0x80: length, offset = b1, offset + 1
-            elif b1 < 0xC0: length, offset = ((b1 & 0x3F) << 8) | data[offset+1], offset + 2
-            elif b1 < 0xE0: length, offset = ((b1 & 0x1F) << 24) | (data[offset+1] << 16) | (data[offset+2] << 8) | data[offset+3], offset + 4
-            else: break
-            if length == 0: continue
-            str_len = length - 1
-            if offset + str_len > len(data) or str_len <= 0:
-                offset += length
-                continue
-            str_bytes = data[offset:offset+str_len]
-            offset += length
-            try:
-                s = str_bytes.decode('utf-16-le')
-                if s and len(s.strip()) > 1:
-                    字符串列表.append(s)
-            except UnicodeDecodeError:
-                pass
-        return list(dict.fromkeys(字符串列表))
 
     def 应用DLL翻译(Self, 翻译列表: list) -> None:
         文件映射 = {}
@@ -946,59 +924,36 @@ class File:
             if not 替换字典:
                 continue
             try:
-                Self.使用Cecil回写DLL(文件路径, 替换字典)
-            except Exception:
-                Self.日志("log.module.dll.write.error", file=文件路径, e=eb.format_exc(), info_level=2)
-
-    def 使用Cecil回写DLL(Self, 文件路径: str, 替换字典: dict) -> None:
-        p_file = Path(文件路径).resolve()
-        cecil_file = Path(f"{Self.Config.MONO_CECIL_DLL_PATH}/{Self.Config.MONO_CECIL_DLL_NAME}").resolve()
-        System.Reflection.Assembly.LoadFrom(str(cecil_file))
-        from Mono.Cecil import ModuleDefinition, DefaultAssemblyResolver, ReaderParameters, WriterParameters  # type: ignore
-        from Mono.Cecil.Cil import OpCodes  # type: ignore
-        resolver = DefaultAssemblyResolver()
-        resolver.AddSearchDirectory(str(cecil_file.parent))
-        reader_params = ReaderParameters()
-        reader_params.AssemblyResolver = resolver
-        module = ModuleDefinition.ReadModule(str(p_file), reader_params)
-        for type_def in module.Types:
-            for field in type_def.Fields:
-                if field.HasConstant:
-                    try:
-                        field.FieldType.Resolve()
-                    except Exception:
-                        field.Constant = None
-                        try:
-                            field.HasConstant = False
-                        except:
-                            pass
-        def 处理类型(types):
-            for type_def in types:
-                for method in type_def.Methods:
-                    if not method.HasBody: continue
-                    for instr in method.Body.Instructions:
-                        if instr.OpCode == OpCodes.Ldstr:
-                            if instr.Operand in 替换字典:
-                                instr.Operand = 替换字典[instr.Operand]
-                if type_def.HasNestedTypes:
-                    处理类型(type_def.NestedTypes)
-        处理类型(module.Types)
-        临时文件 = p_file.with_name(p_file.name + ".translated")
-        writer_params = WriterParameters()
-        module.Write(str(临时文件), writer_params)
-        module.Dispose()
-        临时文件.replace(p_file)
+                统计 = Self.Dnlib.回写(文件路径, 替换字典)
+                # 回写内部已按语言键记录失败原因, 这里只补充占位符跳过这类非致命统计
+                跳过 = 统计.get("占位符跳过") or 0
+                if 跳过 and not 统计.get("回滚"):
+                    Self.日志("log.module.dll.placeholder.skip", file=文件路径,
+                              count=跳过, applied=统计.get("应用", 0), info_level=1)
+            except Exception as e:
+                # 回写失败时异常消息已本地化, 此处直接输出
+                # 注意: 不能让异常逃出本函数 —— 翻译流程用 executor.map 消费结果且未捕获,
+                # 单个 DLL 失败会中断整个翻译任务。
+                Self.日志("log.module.dll.write.error", file=文件路径, e=str(e), info_level=2)
 
     # ========== 通用语言文件 ==========
     def 读取语言文件(Self, file: str):
-        with open(file, "r", encoding="utf-8") as f:
-            if Path(file).suffix == ".lang":
-                源文件 = f.read().splitlines()
-            elif Path(file).suffix == ".json":
-                Json文件 = json.load(f)
+        后缀 = Path(file).suffix.lower()
+        源文件 = []
+        if 后缀 == ".json":
+            # 统一走 读取Json文件: 已处理 UTF-8 BOM 与多编码回退
+            Json文件 = Self.读取Json文件(file)
+            if Json文件 is None:
+                Self.日志("log.module.lang.load.error", mod="通用语言文件", file=file, e="JSON 解析失败(文件为空或编码不受支持)", info_level=2)
+            else:
                 源文件 = [f"{index}={Json文件[index]}" for index in Json文件]
-            elif Path(file).suffix == ".local":
-                源文件 = [re.sub(r'\s*=\s*', '=', line) for line in f.read().splitlines() if line.strip()]
+        else:
+            # .lang/.local 同样用 utf-8-sig: 部分模组文件带 UTF-8 BOM
+            with open(file, "r", encoding="utf-8-sig") as f:
+                if 后缀 == ".lang":
+                    源文件 = f.read().splitlines()
+                elif 后缀 == ".local":
+                    源文件 = [re.sub(r'\s*=\s*', '=', line) for line in f.read().splitlines() if line.strip()]
         return [
             (lambda parts: [parts[0], parts[1], file])(line.split('=', 1))
             for line in 源文件

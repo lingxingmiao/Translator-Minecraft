@@ -56,8 +56,8 @@ class Locale:
         return 返回值
         
     def RichTqdm(Self, iterable=None, desc=None, **kwargs):
-        return rich_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+        return rich_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, disable=not Self.Config.TQDM_RICH, **kwargs)
     def TqdmTqdm(Self, iterable=None, desc=None, **kwargs):
-        return tqdm_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)
+        return tqdm_tqdm(iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, disable=not Self.Config.TQDM_TQDM, **kwargs)
     def DiffTqdm(Self, tasks, iterable=None, desc=None, **kwargs):
         return diff_tqdm(tasks=tasks, iterable=iterable, desc=Self.Lang(desc), mininterval=Self.TQDM刷新率, **kwargs)

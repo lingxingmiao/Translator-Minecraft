@@ -1,5 +1,5 @@
 from TranslatorLib import (dataclass, replace, re, numpy, random, Path,
-                           Locale, Log, Index, Builder, Module, Quantization, File, Network, Modpack, TranslationCache, VectorCache, TokenCalibratorCache, Translator)
+                           Locale, Log, Index, Builder, Module, Quantization, File, Dnlib, Network, Modpack, TranslationCache, VectorCache, TokenCalibratorCache, Translator)
 
 @dataclass
 class DefaultConfig:
@@ -12,7 +12,6 @@ class DefaultConfig:
     LLM_API_KEY                = ""                                                     # 请求密钥
     LLM_API_KWARGS             = {}                                                     # 请求额外参数 ↓xllamacpp加载器传参 cpuparams.n_threads float百分比采样 uint采样数量 float1时采样所有核心 uint1时采样1核 类型32位
     LLM_LOADER_KWARGS          = {"n_gpu_layers": 99, "n_ctx": 65536, "n_batch": 2048, "n_ubatch": 2048, "flash_attn": True, "type_k": 3, "type_v": 3, "enable_reasoning": 0, "n_parallel": 3, "warmup": True, "cpuparams": {"n_threads": numpy.float32(0.8)}}
-    LLM_HF_DOWNLOAD_KWARGS     = {}                                                     # hf_hub_download下载器传参 {"endpoint": "https://hf-mirror.com"}使用中国镜像站
     LLM_MODEL                  = "Q1ngMang/Ling-3.0-tiny-sub3bit-PPLp10-GGUF/Ling-3.0-tiny-01.gguf"# 请求模型 写HuggingFace需要指定 仓库名/文件名 可写本地路 仅支持llama.cpp模型
     LLM_MODE                   = "Translator"                                           # 模型模式  Translator为翻译模式 Summary为翻译前总结模式 只推荐一个模型用于Summary
     LLM_TOP_K                  = 30
@@ -27,7 +26,7 @@ class DefaultConfig:
     LLM_MIN_COUNT              = 0                                                      # 多模型最低启用翻译条目数
     LLM_RPM                    = 0                                                      # 每分钟最大请求数(Requests Per Minute), 0=不限制
     LLM_TPM                    = 0                                                      # 每分钟最大Token数(Tokens Per Minute), 0=不限制
-    LLM_TPM_MODE               = "TokenCalibrator"                                      # TPM估算模式 TokenCalibrator为实时学习 Max为1个字符一个Token
+    LLM_TPM_MODE               = "TokenCalibrator"                                      # TPM估算模式 TokenCalibrator为实时学习 Max为字符与Token比例1:1
     LLM_KEEPALIVE_TIMEOUT      = 20                                                     # keep-alive 连接复用超时(秒)，高并发下调小可减少服务端主动断连(ServerDisconnected)
     LLM_TTL_DNS_CACHE          = 300                                                    # DNS 解析结果缓存时间(秒)
     LLM_ACTIVE_TIME_START      = ""                                                     # 活跃时间开始 (格式 "HH:MM"，如 "00:00"，留空则全天可用)
@@ -48,9 +47,9 @@ class DefaultConfig:
 
     EMB_API_URL             = ""
     EMB_API_KEY             = ""
-    EMB_MODEL               = "BAAI/bge-small-en-v1.5"  # string: 嵌入模型/HuggingFace仓库名
-    EMB_REASONING_FRAME     = "FastEmbed"               # string: 嵌入模型推理框架 SentenceTransformer FastEmbed
-    EMB_MODEL_ACC_MODE      = "ONNX"                    # string: None, ONNX, OpenVINO, float32, float16, bfloat16
+    EMB_MODEL               = "BAAI/bge-base-en-v1.5"   # string: 嵌入模型/HuggingFace仓库名
+    EMB_REASONING_FRAME     = "FastEmbed"               # string: 嵌入模型推理框架 SentenceTransformer FastEmbed llama.cpp
+    EMB_MODEL_ACC_MODE      = "ONNX"                    # string: None, ONNX, OpenVINO, float32, float16, bfloat16 仅SentenceTransformer可用
     EMB_MODEL_DEVICE        = "cpu"                     # string: list: cpu 或 cuda:0 ...
     EMB_ENCODE_PROMPT_NAME  = ""                        # string: 预留功能 仅当前程序加载嵌入模型可用
     EMB_PROMPT_NAME         = ["{t}", "{t}"]            # string: 提示词前缀 部分模型需要使用 [文档, 搜索] intfloat/multilingual-e5-large需要["passage: {t}", "query: {t}"]
@@ -71,11 +70,13 @@ class DefaultConfig:
     EMB_RETRY_COEF          = 1.2
     EMB_IMG_MAX_SIDE        = 448                      # int: 图像最长边限制 (超出则缩放, 规避多模态 batch 限制)
     EMB_IMG_MAX_BATCH       = 1                        # int: 图像向量每批最大张数
-    
+
     RERANKER_API_URL           = ""
     RERANKER_API_KEY           = ""
-    RERANKER_MODEL             = "Qwen/Qwen3-Reranker-0.6B"
+    RERANKER_MODEL             = "mradermacher/Qwen3-Reranker-0.6B-GGUF/Qwen3-Reranker-0.6B.IQ4_XS.gguf"
+    RERANKER_REASONING_FRAME   = "llama.cpp"  # string: 重排模型推理框架 FastEmbed llama.cpp
     RERANKER_API_KWARGS        = {}
+    RERANKER_LOADER_KWARGS     = {} # 使用图像嵌入模型 {"mmproj": {"path": "mmproj模型路径"}} 仅IPVS模块会使用到图像嵌入模型
     RERANKER_MODEL_DEVICE      = "cpu"
     RERANKER_INSTRUCT          = "Which Chinese translation best matches the meaning of the English source? Consider terminology accuracy and completeness."
     RERANKER_MAX_WORKERS       = 24
@@ -88,24 +89,9 @@ class DefaultConfig:
     RERANKER_RETRY_TIME        = 5
     RERANKER_RETRY_COEF        = 1.2
 
-    SESSION_CLEAN_INTERVAL = 30 # 清理无任务会话间隔时间 同时管理LLM EMB RERANKER
+    SESSION_CLEAN_INTERVAL = 10 # 清理无任务会话间隔时间 同时管理LLM EMB RERANKER
 
-    #GSQ_K请启用向量重排来降低重建误差 小于5w向量请使用非GSQ_K VEC_INT_DTYPE叠加向量误差较大 别问我为什么加这么多量化(闲着没事)
-    VEC_INT_DTYPE =   ["Q8_K_M" ,               "Q8_K", "GSQ8_K", "PolarQ8",         #256值 8  比特
-                       "Q6_K_M" , "Q6_SVD_LM" , "Q6_K", "GSQ6_K", "PolarQ6",         #64值  6  比特
-                       "Q5_K_M" , "Q5_SVD_LM" , "Q5_K", "GSQ5_K", "PolarQ5",         #32值  5  比特
-                       "Q4_K_M" , "Q4_SVD_LM" , "Q4_K", "GSQ4_K", "PolarQ4",         #16值  4  比特
-                       "Q3_K_M" , "Q3_SVD_LM" , "Q3_K", "GSQ3_K", "PolarQ3",         #8值   3  比特
-                       "Q2_K_M" , "Q2_SVD_LM" , "Q2_K", "GSQ2_K", "PolarQ2", "Q2_NF",#4值   2  比特
-                       "TQ1_K_M", "TQ1_SVD_LM", "PolarTQ1",                          #3值   1.6比特
-                       "Q1_K_M" , "Q1_SVD_LM" , "PolarQ1",                           #2值   1  比特
-                       "PQ"     , "OPQ"       ,                                      #乘积量化
-                       ]
-    VEC_FLOAT_DTYPE = ["Float32",                                                    #32 比特 Float32原生支持
-                       "Float16"    , "Float16_Max", "BFloat16"  , "Float16_E0M15",  #16 比特 Float16原生支持 Float16_Max不可当作缩放
-                       "Float12_Max",                                                #12 比特                全系        不可当作缩放
-                       "Float8_E4M3", "Float8_E0M7", "Float8_Max",                   #8  比特                Float8_Max  不可当作缩放
-                       ]
+    #GSQ_K请启用向量重排来降低重建误差 小于5w向量请使用非GSQ_NL
     VEC_FILE_PATH                = r"./Vectors"         # 向量存储路径
     VEC_FILE_NAME                = "Vectors"            # 向量文件名
     VEC_READ_CACHE               = False                # 读取时缓存解码后的向量到内存 应用到上面的两个配置
@@ -115,58 +101,33 @@ class DefaultConfig:
     VEC_CACHE_DECAY_GRACE        = 256                  # 宽限期（轮），此期限内不计算衰减
     VEC_CACHE_DECAY_THRESHOLD    = 0.05                 # 衰减分数阈值，低于此值淘汰
     VEC_CACHE_MAX_SIZE           = 409600               # 硬上限，超限按衰减分数淘汰最低分
+    VEC_CACHE_GGUF_QUANT         = ""                   # string: 缓存 GGUF 张量量化 空=原始张量(与原向量逐位一致) 可填 Q8_0/F16 等 与 VEC_GGUF_QUANT 独立
     VEC_DIM_CLIP                 = -1                   # 向量生成时维度裁剪 -1不裁切 仅推荐支持俄罗斯套娃表示学习的模型启用
-    VEC_PCA_DIM                  = -1                   # PCA降维维度 -1不降维
+    VEC_SPECTEMP_DIM             = -1                   # SpecTemp降维维度 -1不降维
+    VEC_SPECTEMP_TEMPER          = -1                   # -1:自适应 0:纯PCA 0<γ≤1:固定
     VEC_TT_SHAPE                 = []                   # list: TT分解各维大小，空=自动拆分为2^?
     VEC_TT_RANK                  = -1                   # int: TT分解截断秩（越大精度越高，越小压缩比越高）
-    VEC_QUANTIZATION             = "GSQ6_K"             # string list(2): 单一格式(如 "GSQ6_K") 或 混合格式(如 ["GSQ2_K", "Float12_Max"]) 自动按维度能量贡献分配高低精度
+    VEC_GGUF_QUANT               = "Q8_0"               # string: GGML原生量化
+    VEC_QUANTIZATION             = "Float32"            # string list(2): 单一格式(如 "GSQ6_NL") 或 混合格式(如 ["GSQ2_NL", "Float12_Max"]) 自动按维度能量贡献分配高低精度
     VEC_QUANTIZATION_MIX_RATIO   = 0.2                  # float: 混合模式下 高精度格式 覆盖的维度占比 (按每维度能量贡献 top% 选择)
-    VEC_QUANTIZATION_MIX_TOPK    = 0                    # int: 混合模式下 每行固定取 |值| 最大的 N 个维度用高精度 (0=禁用, 用MIX_RATIO比例)
-    VEC_QUANTIZATION_CLIP        = 0.998                # 分位数裁切 GSQ_K系列不受影响
-    VEC_QUANTIZATION_ITRS_SVD    = 50                   # _SVD步数
-    VEC_QUANTIZATION_SPL_SVD     = numpy.float32(0.05)  # _SVD采样 float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
+    VEC_QUANTIZATION_MIX_TOPK    = 8                    # int: 混合模式下 每行固定取 |值| 最大的 N 个维度用高精度 (0=禁用, 用MIX_RATIO比例)
+    VEC_QUANTIZATION_CLIP_TYPE   = "Sort"               # string: 分位裁切方法 见 mods/quant_clip-sort.py / mods/quant_clip-percentile.py
     VEC_QUANTIZATION_ITRS_LM     = 200                  # _LM步数
-    VEC_QUANTIZATION_SPL_LM      = numpy.float32(0.05)  # _LM采样  float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
     VEC_QUANTIZATION_ES_LM       = 1e-6                 # _LM早停 两步之间小于该值退出
-    VEC_QUANTIZATION_SVD_LM_ITRS = 2                    # SVD_LM 循环迭代次数 (SVD旋转 ↔ LM码本交替优化)
-    VEC_QUANTIZATION_BLOCK_SIZE  = 128                  # int: 2的倍数 最小2 最大256 默认32
-    VEC_QUANTIZATION_SCALE_TYPE  = "Float16_E0M15"      # string: VEC_FLOAT_DTYPE 选其中一个
-    VEC_QUANTIZATION_PQ_M        = 128                  # int: Product Quantization 子向量数 (必须整除维度)
-    VEC_QUANTIZATION_PQ_NBITS    = 8                    # int: Product Quantization 每子向量位数 (码本大小=2^NBITS)
-    VEC_QUANTIZATION_OPQ_ITRS    = 25                   # int: Optimized Product Quantization 迭代优化次数
-    VEC_QUANTIZATION_AVQ_ETA     = 4.125                # float: AVQ 各向异性比值 h_‖/h_⊥ (论文推荐 4.125)
+    VEC_QUANTIZATION_SCALE_TYPE  = "Int8_Max"           # string: 块缩放 注册表里的量化类型都能选(见 mods/ 与 量化方法总览.md), 支持带伴随量(MaxScale/Shape/码本)的格式
+    VEC_QUANTIZATION_SCALE_INNER_TYPE = "Float16_E0M15" # string: 块缩放的二级缩放类型 块量化器(Qx_K_M/GSQ_NL)内部的 Min/Scale/Mean 用它编码, 用来打断自递归(等价 llama.cpp 把 d/dmin 打成 fp16)
     
-      # 向量重排 仅支持GSQ_K量化与GSQ索引
+    # 向量重排 仅支持GSQ系列索引提升召回率
     VEC_RERANKER                           = True
     VEC_RERANKER_INDEX_RERANKER_BLOCK_SIZE = 128                   # 向量重排块大小(聚类)
     VEC_RERANKER_INDEX_FACTOR              = 8.0                   # 向量搜索乘数
     VEC_RERANKER_INDEX_MODE                = ["Refine", "HNSWPQ"]  # 支持嵌套数组 [类型, 子规格]，例 ["Refine", ["IVFPQ", "IP"]]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF；包装型省略子规格时默认子索引=IP
-    VEC_RERANKER_INDEX_BASE_SQ             = "Q8"                  # string: Q4, Q6, Q8, F16, BF16
-    VEC_RERANKER_INDEX_SQ                  = "Q8"
-    VEC_RERANKER_INDEX_REFINE_LOW_DIM_DIM  = 64                    # int: 粗排维度
-    VEC_RERANKER_INDEX_REFINE_LOW_DIM_MODE = None                  # strint: 降维模式 模型支持Matryoshka Representation Learning请使用MRL 否则使用PCA
     VEC_RERANKER_INDEX_SAMPLING            = numpy.float32(0.05)   # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
     VEC_RERANKER_INDEX_SAMPLING_MIN        = 1
     VEC_RERANKER_INDEX_RE_MINMAX           = False
     VEC_RERANKER_INDEX_RE_MEANSTD          = False
     VEC_RERANKER_INDEX_RE_QUANTILES        = False
     VEC_RERANKER_INDEX_RE_OPTIM            = False
-    VEC_RERANKER_INDEX_HNSW_M              = 32
-    VEC_RERANKER_INDEX_HNSW_CONSTRUCTION   = 640
-    VEC_RERANKER_INDEX_HNSW_SEARCH         = 240
-    VEC_RERANKER_INDEX_HNSW_NBITS          = 8
-    VEC_RERANKER_INDEX_HNSW_PQ_M           = 16
-    VEC_RERANKER_INDEX_NSG_R               = 64                    # NSG 图出度 R
-    VEC_RERANKER_INDEX_NSG_SEARCH          = 240                   # NSG 检索束宽 search_L (建议>=R)
-    VEC_RERANKER_INDEX_NSG_PQ_M            = 16                    # NSGPQ 子量化器数 (需整除向量维度)
-    VEC_RERANKER_INDEX_NSG_NBITS           = 8                     # NSGPQ 每子量化位数
-    VEC_RERANKER_INDEX_IVF_NLITS           = 8
-    VEC_RERANKER_INDEX_IVF_NLIST           = 0.25
-    VEC_RERANKER_INDEX_IVF_PQ_M            = 16
-    VEC_RERANKER_INDEX_IVFPQR_M_REFINE     = 16                    # IVFPQR 精修级PQ子量化器数 (需整除维度)
-    VEC_RERANKER_INDEX_IVFPQR_NBITS_REFINE = 8                     # IVFPQR 精修级每子量化位数
-    VEC_RERANKER_INDEX_IVF_RQ              = True
-    VEC_RERANKER_INDEX_REFINEFLAT_K_FACTOR = 10.0
     
     TOKEN_CALIBRATOR_CACHE_WRITE      = True                     # 是否写入Token估算器缓存
     TOKEN_CALIBRATOR_CACHE_READ       = True                     # 是否读取Token估算器缓存
@@ -174,6 +135,7 @@ class DefaultConfig:
     TOKEN_CALIBRATOR_CACHE_NAME       = "TokenCalibrator"        # Token估算器缓存文件名
     TOKEN_CALIBRATOR_CACHE_SAVE_INTERVAL = 60.0                  # Token估算器缓存定时写盘间隔（秒）
     
+    TRANSLATOR_ALLOCATION_CONCURRENT     = 256                                    # 翻译任务分配并发 只影响分配速度
     TRANSLATOR_MODE                      = "Concurrent"                           # 控制单函数实例LLM请求模式 Serial为串行 Concurrent为并发
     TRANSLATOR_CACHE_WRITE               = True
     TRANSLATOR_CACHE_READ                = True
@@ -231,10 +193,16 @@ VIII<content>为上下文内容,不译
     LOGS_TRANSLATOR_INFO = True
     LANG_PATH            = r"./Lang"
     LANGUAGE             = r"zh_CN"
+    HF_DOWNLOAD_KWARGS     = {}                                                     # hf_hub_download下载器传参 {"endpoint": "https://hf-mirror.com"}使用中国镜像站
+    MODS_PATH                     = r"./mods"            # string: 模组文件夹路径(存放模组 .py 与 *.cfg)
+    MODS_CFG_PATH                 = r"./mods/mods.cfg"   # string: 模组配置文件路径(段头 #mod:模组名, #注释, k=v)
+    
     TQDM_FPS             = 24
     TQDM_DIFF            = False       # 详细任务进度条 仅支持翻译请求 实验性
+    TQDM_RICH            = True
+    TQDM_TQDM            = True
     
-    #CONCURRENT太高Windows会报错
+    #CONCURRENT太高Windows会报错 Win:太快了不念
     QUESTS_READ_MAX_CONCURRENT  = 4
     QUESTS_WRITE_MAX_CONCURRENT = 4
     SCRIPT_READ_MAX_CONCURRENT  = 4
@@ -251,8 +219,8 @@ VIII<content>为上下文内容,不译
     DLL_WRITE_MAX_CONCURRENT    = 4
     SCRIPT_CRT_WRITE_UNICODE    = True
     
-    MONO_CECIL_DLL_PATH = r"./dll"
-    MONO_CECIL_DLL_NAME = "Mono.Cecil.dll"
+    DNLIB_DLL_PATH      = r"./dll"
+    DNLIB_DLL_NAME      = "dnlib.dll"
     
     DATA_COMMAND_PATH = r"./DataPack_Command"
     DATA_COMMAND_FILE = "DataPack_Command.txt"
@@ -260,61 +228,35 @@ VIII<content>为上下文内容,不译
     PACK_META_TEMPLATE_TRANSLATE         = "{name} {lang} 语言资源包, 制作: {author}, 翻译模型：{model}"
     PACK_META_TEMPLATE_MERGE             = "{name} {lang} 语言资源包, 制作: {author}, 工具自动合并"
     PACK_META_TEMPLATE_CASUALTIESUNKNOWN = "{lang} 语言文件\n制作: <color=\"yellow\">{author}</color>, 翻译模型：<color=\"blue\">{model}"  # 未知伤亡
-    PACK_AUTHOR                          = ""
+    PACK_AUTHOR                          = "" # 作者信息 空为硬编码的海盐青茫
 
-    INDEX_TEXT_K                  = 2                                            # int: 文本索引数
-    INDEX_WORD_K                  = 2                                            # int: 单词索引数
-    INDEX_LANG_K                  = 2                                            # int: 索引ID索引数
-    INDEX_TEXT_RANGE              = 8                                            # int: 文本索引文本范围 len(文本)超过±该值就不会加入参考文本
-    INDEX_WORD_RANGE              = 4                                            # int: 单词索引文本范围 len(文本)超过±该值就不会加入参考文本
-    INDEX_LANG_RANGE              = 8                                            # int: 索引ID索引文本范围 len(文本)超过±该值就不会加入参考文本
+    INDEX_TEXT_LOWER              = True                 # bool: BM25文本索引是否小写化
+    INDEX_LANGUAGE                = "en_us"              # string: BM25索引语言 语言类型在Mods文件夹
+    INDEX_TEXT_K                  = 3                    # int: 文本索引数
+    INDEX_WORD_K                  = 3                    # int: 单词索引数
+    INDEX_LANG_K                  = 3                    # int: 索引ID索引数 使用BM25时会禁用 因为BM25无法实时add
+    INDEX_TEXT_RANGE              = 8                    # int: 文本索引文本范围 len(文本)超过±该值就不会加入参考文本
+    INDEX_WORD_RANGE              = 4                    # int: 单词索引文本范围 len(文本)超过±该值就不会加入参考文本
+    INDEX_LANG_RANGE              = 8                    # int: 索引ID索引文本范围 len(文本)超过±该值就不会加入参考文本
     INDEX_QUESTS_BASIC_WORDS      = []
-    INDEX_MODE                    = ["Refine", "NSGSQ"]                          # strint list: 支持嵌套数组 [类型, 子规格]，例 ["Refine", "IVFPQ", "IP"]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ, GSQFast(下一个索引不能是Faiss)；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF 默认：IP
-    INDEX_LANG_MODE               = "IP"                                         # strint list: 索引ID(整合包索引)索引模式
-    INDEX_CONTEXTS_MODE           = "IP"                                         # strint list: 翻译上下文(TRANSLATOR_CONTEXTS)索引模式                                 
-    INDEX_SQ                      = "Q8"                                         # string: faiss: Q4, Q6, Q8, F16, BF16 indexgsq: GSQ2 GSQ3 GSQ4 GSQ5 GSQ6 GSQ8 (GSQ系列必须选)
-    INDEX_REFINE_LOW_DIM_DIM      = 64                                           # int: 粗排维度
-    INDEX_REFINE_LOW_DIM_MODE     = None                                         # strint none: 降维模式 模型支持Matryoshka Representation Learning请使用MRL 否则使用PCA 还有None RefineLowDim支持MRL和PCA Refine仅支持PCA
-    INDEX_SAMPLING                = numpy.float32(0.05)                          # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
+    INDEX_MODE                    = ["Refine", "NSGSQ"]  # strint list: 支持嵌套数组 [类型, 子规格]，例 ["Refine", "IVFPQ", "IP"]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ, GSQFast(下一个索引不能是Faiss)；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF 默认：IP 特殊：BM25(只能单层)
+    INDEX_LANG_MODE               = "IP"                 # strint list: 索引ID(整合包索引)索引模式
+    INDEX_CONTEXTS_MODE           = "IP"                 # strint list: 翻译上下文(TRANSLATOR_CONTEXTS)索引模式                                 
+    INDEX_SAMPLING                = numpy.float32(0.05)  # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
     INDEX_SAMPLING_MIN            = 1
     INDEX_RE_MINMAX               = False
     INDEX_RE_MEANSTD              = False
     INDEX_RE_QUANTILES            = False
     INDEX_RE_OPTIM                = False
-    INDEX_HNSW_M                  = 32
-    INDEX_HNSW_CONSTRUCTION       = 640
-    INDEX_HNSW_SEARCH             = 240
-    INDEX_HNSW_NBITS              = 8
-    INDEX_HNSW_PQ_M               = 16
-    INDEX_NSG_R                   = 64                                           # NSG 图出度 R
-    INDEX_NSG_SEARCH              = 240                                          # NSG 检索束宽 search_L (建议>=R)
-    INDEX_NSG_PQ_M                = 16                                           # NSGPQ 子量化器数 (需整除向量维度)
-    INDEX_NSG_NBITS               = 8                                            # NSGPQ 每子量化位数
-    INDEX_IVF_NLITS               = 8
-    INDEX_IVF_NLIST               = 0.25                                         # 聚类激活比例
-    INDEX_IVF_PQ_M                = 16
-    INDEX_IVF_RQ                  = True
-    INDEX_IVFPQR_M_REFINE         = 16                                           # IVFPQR 精修级PQ子量化器数 (需整除维度)
-    INDEX_IVFPQR_NBITS_REFINE     = 8                                            # IVFPQR 精修级每子量化位数
-    INDEX_REFINEFLAT_K_FACTOR     = 10.0
-    INDEX_GSQ_RERANKER_BLOCK_SIZE = 128                                          # 向量重排块大小(聚类)
-    INDEX_GSQ_RERANKER_FACTOR     = 8                                            # 向量重排检索的向量倍数(向量越多向量重排块缩放越高重排倍数越高耗时越久)
-    INDEX_GSQ_BLOCK_SIZE          = 128                                          # 量化块大小
-    INDEX_GSQ_PCA_DIM             = -1                                           # PCA降维维度 -1不降维
-    INDEX_CPU_COUNT               = numpy.float32(0.8)                           #float百分比线程 uint线程数 float1时线程100% uint1时1线程 类型32位 仅Faiss可用
-    INDEX_CONFIG                  = ["INDEX_MODE", "INDEX_SQ",
-                    "INDEX_RE_MINMAX", "INDEX_RE_MEANSTD", "INDEX_RE_QUANTILES", "INDEX_RE_OPTIM",
-                    "INDEX_HNSW_M", "INDEX_HNSW_CONSTRUCTION", "INDEX_HNSW_SEARCH", "INDEX_HNSW_NBITS", "INDEX_HNSW_PQ_M",
-                    "INDEX_NSG_R", "INDEX_NSG_SEARCH", "INDEX_NSG_PQ_M", "INDEX_NSG_NBITS",
-                    "INDEX_IVF_NLITS", "INDEX_IVF_PQ_M", "INDEX_IVF_RQ", "INDEX_IVFPQR_M_REFINE", "INDEX_IVFPQR_NBITS_REFINE", "INDEX_REFINEFLAT_K_FACTOR",
-                    "INDEX_GSQ_RERANKER_FACTOR", "INDEX_REFINE_LOW_DIM_DIM", "INDEX_REFINE_LOW_DIM_MODE",
-                    "INDEX_GSQ_RERANKER_BLOCK_SIZE", "INDEX_GSQ_BLOCK_SIZE", "INDEX_GSQ_PCA_DIM"]
-    INDEX_CONFIG_NEST  = {"Refine", "IVF", "IVFSQ", "IVFPQ"}
-    INDEX_CONFIG_TRAIN = {"HNSW", "HNSWSQ", "HNSWPQ", "IVF", "IVFSQ", "IVFPQ"}
+    INDEX_CPU_COUNT               = numpy.float32(0.8)   #float百分比线程 uint线程数 float1时线程100% uint1时1线程 类型32位 仅Faiss可用
     
-    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "MONO_CECIL_DLL_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH", "MODPACK_DOWNLOAD_CACHE_PATH"]
+    # 索引指纹: 索引类型参数已由 mods/*.cfg 接管(见 Mods().索引配置快照()), 这里只留框架参数
+    INDEX_CONFIG                  = ["INDEX_MODE", "INDEX_RE_MINMAX", "INDEX_RE_MEANSTD", "INDEX_RE_QUANTILES", "INDEX_RE_OPTIM",
+                    "INDEX_SAMPLING", "INDEX_SAMPLING_MIN", "INDEX_CPU_COUNT"]
+    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "DNLIB_DLL_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH", "MODPACK_DOWNLOAD_CACHE_PATH", "MODS_PATH"]
     LLM_POAT_CONFIG = [[402, 429,], [400, 401, 422, 500, 503]]
     
+    # 安全高风险区域
     API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE_VARIANT$", r"^LANGUAGE$"}
     API_TRANSLATOR_CORE_CONFIG_BLACK = {}
     API_TRANSLATOR_CORE_CONFIG_RANGE = {r"^LLM\d+_TEMP$": (0.0, 1.0), r"^TRANSLATOR_BATCH$": (1, 1), r"^INDEX_\w+_K$": (0, 5)}
@@ -390,8 +332,6 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
                 "tpm_mode"         : str(  层级配置.get("tpm_mode"          , Self.Config.LLM_TPM_MODE         )),
                 "active_time_start": str(  层级配置.get("active_time_start" , Self.Config.LLM_ACTIVE_TIME_START)),
                 "active_time_end"  : str(  层级配置.get("active_time_end"   , Self.Config.LLM_ACTIVE_TIME_END  )),
-                # 可修改值↑ ↓不可修改值
-                "线程锁": None
             }
     
     # get层级 食用方法: for inedx in 返回内容: print(index[键])
@@ -414,11 +354,15 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
 class Config:
     def __init__(Self, Config: dict, 创建缓存: bool = True):
         Self.ConfigDict = Config.copy()
-        Config = RuntimeConfig(**(Config or {}))
+        有效键 = {k: v for k, v in (Config or {}).items()
+        if k == "network" or re.match(r'^LLM\d+_', k) or hasattr(DefaultConfig, k)}
+        Config = RuntimeConfig(**有效键)
         Self.Config: DefaultConfig = Config.Config
         Self.Manager: RuntimeConfig = Config
         for index in Self.Config.PATH_CONFIG:
             Path(getattr(Self.Config, index)).mkdir(parents=True, exist_ok=True)
+        模组加载器 = getattr(type(Self), "模组加载器", None)
+        if 模组加载器 is not None: 模组加载器(Self.Config)
         Self.Locale: Locale = Locale(Self)
         Self.RichTqdm = Self.Locale.RichTqdm # 美化进度条 默认
         Self.TqdmTqdm = Self.Locale.TqdmTqdm # 标准进度条
@@ -439,18 +383,28 @@ class Config:
         Self.Network: Network = Network(Self) # 网络管理器核心 并发限制在此
         Self.Builder: Builder = Builder(Self)
         Self.Quantization: Quantization = Quantization(Self)
+        Self.Dnlib = Dnlib(Self)
         Self.File: File = File(Self)
         Self.Modpack: Modpack = Modpack(Self)
         Self.Translator = None
+        if "BM25" in Self.Config.INDEX_MODE: Self.Config.INDEX_LANG_K = 0
     def 关闭(Self):
-        for 缓存 in (getattr(Self, "CacheTranslator", None),
-                    getattr(Self, "CacheVector", None),
-                    getattr(Self, "CacheTokenCalibrator", None)):
-            if 缓存 is None: continue
-            管理器 = getattr(缓存, "翻译缓存实例", None) or getattr(缓存, "向量缓存实例", None) or getattr(缓存, "Token估算器缓存实例", None)
-            if 管理器 is not None and hasattr(管理器, "关闭"):
-                try: 管理器.关闭()
-                except Exception: pass
+        if getattr(Self, "已关闭", False): return
+        Self.已关闭 = True
+        if not getattr(Self, "共享缓存", False):
+            for 缓存 in (getattr(Self, "CacheTranslator", None),
+                        getattr(Self, "CacheVector", None),
+                        getattr(Self, "CacheTokenCalibrator", None)):
+                if 缓存 is None: continue
+                管理器 = getattr(缓存, "翻译缓存实例", None) or getattr(缓存, "向量缓存实例", None) or getattr(缓存, "Token估算器缓存实例", None)
+                if 管理器 is not None and hasattr(管理器, "关闭"):
+                    try: 管理器.关闭()
+                    except Exception: pass
+        日志 = getattr(Self, "Log", None)
+        if 日志 is not None:
+            Self.Log = None
+            try: 日志.关闭()
+            except Exception: pass
     def get_translator(Self):
         if Self.Translator is None: Self.Translator = Translator(Self)
         return Self.Translator
@@ -473,7 +427,10 @@ class Config:
             过滤后配置[键] = 值
         return 过滤后配置
     def get_config_temporary(Self, 用户配置: dict = None):
-        临时配置 = Config(Self.ConfigDict | (Self.过滤用户配置(用户配置) or {}), 创建缓存=False)
+        过滤后配置 = Self.过滤用户配置(dict(用户配置 or {}))
+        过滤后配置["LOGS_FILE_NAME"] = Self.Module.uuid()   # 放在过滤之后, 否则会被白名单丢掉导致临时实例写同一个日志文件
+        临时配置 = Config(Self.ConfigDict | 过滤后配置, 创建缓存=False)
+        临时配置.共享缓存 = True
         临时配置.Network = Self.Network
         临时配置.Builder.Network = Self.Network
         临时配置.CacheVector = Self.CacheVector

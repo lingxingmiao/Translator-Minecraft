@@ -220,7 +220,7 @@ class IPVS:
         查询向量 = np.asarray(输入列表[0], dtype=np.float32)
         if 查询向量.shape[0] == 0:
             return []
-        Self.Quantization.PCA应用懒加载(查询向量, 向量文件)
+        Self.Quantization.SpecTemp应用懒加载(查询向量, 向量文件)
         Self.Quantization.TT应用懒加载(查询向量, 向量文件)
         查询向量 = 查询向量.get() if GPU_ACC else 查询向量
         faiss.normalize_L2(查询向量)
@@ -247,7 +247,7 @@ class IPVS:
         查询向量 = np.asarray(输入列表[0], dtype=np.float32)
         if 查询向量.shape[0] == 0:
             return []
-        Self.Quantization.PCA应用懒加载(查询向量, 向量文件)
+        Self.Quantization.SpecTemp应用懒加载(查询向量, 向量文件)
         Self.Quantization.TT应用懒加载(查询向量, 向量文件)
         查询向量 = 查询向量.get() if GPU_ACC else 查询向量
         faiss.normalize_L2(查询向量)

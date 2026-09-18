@@ -27,7 +27,7 @@ class HEAI: # Just Enough Artificial Intelligence 移植 Had Enough Artificial I
         返回列表 = [[] for _ in range(len(查询列表))]
         输入列表 = await Self.Builder.并行生成向量([[查询词, "", ""] for 查询词 in 查询列表], 查询=True)
         向量列表 = np.asarray(输入列表[0], dtype=np.float32)
-        Self.Quantization.PCA应用懒加载(向量列表, Self.向量文件)
+        Self.Quantization.SpecTemp应用懒加载(向量列表, Self.向量文件)
         Self.Quantization.TT应用懒加载(向量列表, Self.向量文件)
         向量列表 = 向量列表.get() if GPU_ACC else 向量列表
         faiss.normalize_L2(向量列表)

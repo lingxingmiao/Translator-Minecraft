@@ -34,6 +34,7 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
             "retry_coef": Self.Config.EMB_RETRY_COEF,
             "retry_time": Self.Config.EMB_RETRY_TIME,
             "keepalive_timeout": Self.Config.EMB_KEEPALIVE_TIMEOUT,
+            "loader_kwargs": Self.Config.EMB_LOADER_KWARGS,
         }
         Self.重排层级 = {
             "url": Self.Config.RERANKER_API_URL,
@@ -49,6 +50,7 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
             "retry_coef": Self.Config.RERANKER_RETRY_COEF,
             "retry_time": Self.Config.RERANKER_RETRY_TIME,
             "keepalive_timeout": Self.Config.RERANKER_KEEPALIVE_TIMEOUT,
+            "loader_kwargs": Self.Config.RERANKER_LOADER_KWARGS,
         }
 #====================================================================================================↓限速与超时↓====================================================================================================#
     def 限速滑动窗口抽象(Self, 时间戳列表, Token数列表, 工作ID列表=None):
