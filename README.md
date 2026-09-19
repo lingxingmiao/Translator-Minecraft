@@ -5,7 +5,7 @@
 ## 概述
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的全面重构版本；<br>
 它不再是一个简单的翻译程序，而是一个高扩展性，高并发，支持极限向量压缩的翻译引擎。<br>
-我希望 Minecraft 生态汉化更易参加：消除语言壁垒，精简翻译流程，摆脱繁琐束缚
+我希望 Minecraft 生态汉化更易参加：消除语言壁垒，精简翻译流程，摆脱繁琐束缚！
 
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
@@ -18,6 +18,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - 资源包
 - [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime)
 - [模组](https://www.mcmod.cn/modlist.html?sort=createtime)
+- [附加包](https://www.mcmod.cn/modlist.html?platform=2)
 - [FTB任务](https://www.mcmod.cn/class/1423.html)
 - [更好的任务](https://www.mcmod.cn/class/944.html)
 - [核电工艺重制版](https://www.mcmod.cn/class/2483.html)附加包
@@ -26,15 +27,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [自定义主菜单](https://www.mcmod.cn/class/1030.html)
 - [精致菜单](https://www.mcmod.cn/class/4053.html)
 - [困难任务](https://www.mcmod.cn/class/478.html)
+-  GTNH Lang
 - [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
 - BepInEx插件(非Minecraft)(极小概率损坏模组)
 - [模组翻译](https://www.mcmod.cn/class/27911.html)
 - [TX Loader](https://www.mcmod.cn/class/9677.html)
 - SFT数据集(非游戏,用于蒸馏)
-
-即将支持以下组件
-- 附加包
-- GTNH Lang
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
