@@ -1065,6 +1065,7 @@ AI给我加了一堆BUG所以不发布
         - GTNH Lang![](https://img.shields.io/badge/状态-等待中-blue)
         - SFT数据集![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 模组配置可通过Config管理器修改
+- 添加 rar, 7z, zstd等格式输入![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 重构 API接口![](https://img.shields.io/badge/状态-等待中-blue)
 - 修改 通用文件路由逻辑![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 删除 除模组以外所有的翻译类型![](https://img.shields.io/badge/状态-进行中-brightgreen)
