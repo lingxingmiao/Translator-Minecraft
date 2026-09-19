@@ -1046,7 +1046,7 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.7 Bata.1（进行中）
 - 添加 模型类型
-    - 翻译类型(未包含:附加包 未使用:GTNH Lang)
+    - 翻译类型
         - 模组
         - 附加包
         - 数据包
@@ -1062,6 +1062,7 @@ AI给我加了一堆BUG所以不发布
         - 未知伤亡语言文件
         - BepInEx插件
         - 模组翻译
+        - GTNH Lang
         - TX Loader
         - GTNH Lang
         - SFT数据集
