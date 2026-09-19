@@ -196,15 +196,15 @@ conda env remove -n Translator_Minecraft
 #### 推荐配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
-- 内存: 24GB RAM
+- 内存: 32GB RAM
 - 显卡: NVIDIA GeForce RTX 3060 12 GB
-- 存储空间: 需要 4 GB 可用空间
+- 存储空间: 需要 6 GB 可用空间
 #### 服务器配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Xeon E-2468
 - 内存: 96GB RAM
 - 显卡: NVIDIA A100 PCIe 40 GB
-- 存储空间: 需要 12 GB 可用空间
+- 存储空间: 需要 120 GB 可用空间
 
 ### 推荐模型翻译质量排名
 <details>
