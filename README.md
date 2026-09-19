@@ -1044,30 +1044,30 @@ AI给我加了一堆BUG所以不发布
 </details>
 
 ### Release.1.7 Bata.1（进行中）
-- 添加 模型类型![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 模型类型
     - 翻译类型(未包含:附加包 未使用:GTNH Lang)
-        - 模组
-        - 附加包
-        - 数据包
-        - FTB任务
-        - BQ任务
-        - 更好的任务
-        - 核电工艺重制版附加包
-        - 帕秋莉手册
-        - CraftTweaker
-        - 自定义主菜单
-        - 精致菜单
-        - 困难任务
-        - 未知伤亡语言文件
-        - BepInEx插件
-        - 模组翻译
-        - TX Loader
-        - GTNH Lang
-        - SFT数据集
-- 添加 模组配置可通过Config管理器修改![](https://img.shields.io/badge/状态-进行中-brightgreen)
+        - 模组![](https://img.shields.io/badge/状态-等待中-blue)
+        - 附加包![](https://img.shields.io/badge/状态-等待中-blue)
+        - 数据包![](https://img.shields.io/badge/状态-等待中-blue)
+        - FTB任务![](https://img.shields.io/badge/状态-等待中-blue)
+        - BQ任务![](https://img.shields.io/badge/状态-等待中-blue)
+        - 更好的任务![](https://img.shields.io/badge/状态-等待中-blue)
+        - 核电工艺重制版附加包![](https://img.shields.io/badge/状态-等待中-blue)
+        - 帕秋莉手册![](https://img.shields.io/badge/状态-等待中-blue)
+        - CraftTweaker![](https://img.shields.io/badge/状态-等待中-blue)
+        - 自定义主菜单![](https://img.shields.io/badge/状态-等待中-blue)
+        - 精致菜单![](https://img.shields.io/badge/状态-等待中-blue)
+        - 困难任务![](https://img.shields.io/badge/状态-等待中-blue)
+        - 未知伤亡语言文件![](https://img.shields.io/badge/状态-等待中-blue)
+        - BepInEx插件![](https://img.shields.io/badge/状态-等待中-blue)
+        - 模组翻译![](https://img.shields.io/badge/状态-等待中-blue)
+        - TX Loader![](https://img.shields.io/badge/状态-等待中-blue)
+        - GTNH Lang![](https://img.shields.io/badge/状态-等待中-blue)
+        - SFT数据集![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 模组配置可通过Config管理器修改
 - 重构 API接口![](https://img.shields.io/badge/状态-等待中-blue)
-- 修改 通用文件路由逻辑![](https://img.shields.io/badge/状态-等待中-blue)
-- 删除 除模组以外所有的翻译类型![](https://img.shields.io/badge/状态-等待中-blue)
+- 修改 通用文件路由逻辑![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 删除 除模组以外所有的翻译类型![](https://img.shields.io/badge/状态-进行中-brightgreen)
  
 ### 其他正在进行时
 - 量化
