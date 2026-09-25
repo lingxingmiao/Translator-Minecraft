@@ -1067,6 +1067,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
 - 添加 模型输入翻译语言(用于无语言代码的语言)
+- 添加 Token计数添加进模型层级
 - 重构 API接口![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
