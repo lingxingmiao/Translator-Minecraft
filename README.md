@@ -122,7 +122,7 @@ conda activate Translator_Minecraft
 #                  向量处理       网络请求   进度显示与艺术 搜索文本
 pip install numpy numba gguf requests aiohttp rich tqdm  faiss-cpu
 # API服务器
-pip install uvicorn fastapi slowapi
+pip install uvicorn fastapi slowapi zstandard
 conda install -c conda-forge python-libarchive-c
 
 # BM25版本文本搜索（可选）
@@ -1075,7 +1075,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 通用文件路由逻辑
 - 删除 除模组以外所有的翻译类型
 - 删除 TranslatorArg.py
-- 添加 额外依赖 libarchive-c
+- 添加 额外依赖 libarchive-c zstandard
  
 ### 其他正在进行时
 - 量化
