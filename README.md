@@ -121,8 +121,8 @@ conda activate Translator_Minecraft
 
 #                  向量处理       网络请求   进度显示与艺术 搜索文本
 pip install numpy numba gguf requests aiohttp rich tqdm  faiss-cpu
-
-# 更多格式压缩文件处理
+# API服务器
+pip install uvicorn fastapi slowapi
 conda install -c conda-forge python-libarchive-c
 
 # BM25版本文本搜索（可选）
@@ -139,9 +139,6 @@ pip install -U xllamacpp
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/vulkan
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/cu128
 #pip install xllamacpp --force-reinstall --index-url https://xorbitsai.github.io/xllamacpp/whl/rocm-6.4.1
-
-# API服务器（可选）
-pip install uvicorn fastapi slowapi
 
 # 性能优化（可选）
 pip install ujson
@@ -1069,6 +1066,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
+- 添加 模型输入翻译语言(用于无语言代码的语言)
 - 重构 API接口![](https://img.shields.io/badge/状态-进行中-brightgreen)
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
@@ -1077,7 +1075,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 通用文件路由逻辑
 - 删除 除模组以外所有的翻译类型
 - 删除 TranslatorArg.py
-- 添加 额外以来 libarchive-c
+- 添加 额外依赖 libarchive-c
  
 ### 其他正在进行时
 - 量化
