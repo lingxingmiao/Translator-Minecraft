@@ -1077,6 +1077,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 BM25无法使用的问题
 - 删除 除模组以外所有的翻译类型
 - 删除 TranslatorArg.py
+- 删除 Config.LLM_TOKEN_CACHE_HIT_FIELD
 - 添加 额外依赖 libarchive-c zstandard
  
 ### 其他正在进行时
