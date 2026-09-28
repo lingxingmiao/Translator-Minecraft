@@ -203,7 +203,7 @@ conda env remove -n Translator_Minecraft
 - 显卡: NVIDIA A100 PCIe 40 GB
 - 存储空间: 需要 120 GB 可用空间
 
-### 推荐模型翻译质量排名
+### 推荐模型与翻译质量排名
 <details>
 <summary>点击展开/收起</summary>
 警告：WDDM模式下使用LMStudi的CUDA进行并行推理可能会导致模型崩溃！<br>
@@ -256,6 +256,10 @@ conda env remove -n Translator_Minecraft
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
 - [DeepSeek/DeepSeek-V3.2](https://huggingface.co/deepseek-ai/DeepSeek-V3.2) 50.1分
 - [Google/Gemma-4-E2B](https://huggingface.co/google/gemma-4-E2B) 49.3分
+#### 稳定性推荐
+- [Qwen/Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) 激活6B 总参数180B PLE表51B MTP层4B
+- [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 激活3.8B 总参数25.2B
+- [Google/Gemma-4-E4B](https://huggingface.co/google/gemma-4-E4B) 激活4.5B 总参数8B PLE表3.5B
 </details>
 
 ### 量化类型
