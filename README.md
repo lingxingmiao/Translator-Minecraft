@@ -1068,9 +1068,8 @@ AI给我加了一堆BUG所以不发布
         - GTNH Lang
         - SFT数据集
     - 索引方法
-        - IP(SQ)
-        - IP(PQ)
-        - IP(OPQ)
+        - IP(SQ, PQ, OPQ)
+        - Faiss Factory![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
