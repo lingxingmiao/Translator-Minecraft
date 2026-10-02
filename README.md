@@ -186,22 +186,21 @@ conda env remove -n Translator_Minecraft
 ### 系统需求
 #### 最低配置
 - 需要 64 位处理器和操作系统
-- 处理器: 有 L3 缓存与 AVX2 指令集
-- 内存: 8GB RAM
-- 显卡: 支持 Vulkan 1.2 显存大于等于 4GB
-- 存储空间: 需要 4 GB 可用空间
+- 处理器: Intel Xeon E3-1220 v2
+- 内存: 4GB RAM
+- 存储空间: 需要 512 MB 可用空间
 #### 推荐配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
-- 内存: 32GB RAM
+- 内存: 16GB RAM
 - 显卡: NVIDIA GeForce RTX 3060 12 GB
-- 存储空间: 需要 6 GB 可用空间
+- 存储空间: 需要 2 GB 可用空间
 #### 服务器配置
 - 需要 64 位处理器和操作系统
 - 处理器: Intel Xeon E-2468
-- 内存: 96GB RAM
+- 内存: 32GB RAM
 - 显卡: NVIDIA A100 PCIe 40 GB
-- 存储空间: 需要 120 GB 可用空间
+- 存储空间: 需要 16 GB 可用空间
 
 ### 推荐模型与翻译质量排名
 <details>
@@ -318,11 +317,11 @@ RMSE不代表Recall@10
 | **Int16_Max** | 16 | 16 | 16 | 16 |
 | **Float32** | 32 | 32 | 32 | 32 |
 
-> D=384
-> B=`VEC_QUANTIZATION_BLOCK_SIZE`
-> N=向量数量
-> M=`VEC_QUANTIZATION_PQ_M`=128
-> NBITS=`VEC_QUANTIZATION_PQ_NBITS`=8
+> D=384<br>
+> B=`VEC_QUANTIZATION_BLOCK_SIZE`<br>
+> N=向量数量<br>
+> M=`VEC_QUANTIZATION_PQ_M`=128<br>
+> NBITS=`VEC_QUANTIZATION_PQ_NBITS`=8<br>
 > 辅助量位宽 W=16(`Float16_E0M15`)
 
 
