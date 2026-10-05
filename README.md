@@ -27,11 +27,12 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [自定义主菜单](https://www.mcmod.cn/class/1030.html)
 - [精致菜单](https://www.mcmod.cn/class/4053.html)
 - [困难任务](https://www.mcmod.cn/class/478.html)
--  GTNH Lang
-- [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
-- BepInEx插件(非Minecraft)(极小概率损坏模组)
+- GTNH Lang
 - [模组翻译](https://www.mcmod.cn/class/27911.html)
 - [TX Loader](https://www.mcmod.cn/class/9677.html)
+- [GuideME](https://www.mcmod.cn/class/18414.html)
+- [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
+- BepInEx插件(非Minecraft)
 - SFT数据集(非游戏,用于蒸馏)
 
 后续计划支持以下组件(可能是大饼)
@@ -1065,6 +1066,7 @@ AI给我加了一堆BUG所以不发布
         - GTNH Lang
         - TX Loader
         - GTNH Lang
+        - GuideME
         - SFT数据集
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
