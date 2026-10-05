@@ -1087,6 +1087,7 @@ AI给我加了一堆BUG所以不发布
 - 修改 索引文件与向量文件不再共用VEC_FILE_配置
 - 修改 OPENBLAS_NUM_THREADS设为1
 - 修复 BM25无法使用的问题
+- 修复 多事件循环导致的锁跨循环崩溃
 - 删除 除模组以外所有的翻译类型
 - 删除 TranslatorArg.py
 - 删除 Config.LLM_TOKEN_CACHE_HIT_FIELD
