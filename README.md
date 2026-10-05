@@ -256,6 +256,19 @@ conda env remove -n Translator_Minecraft
 - [Tencent/HY-MT1.5-1.8B](https://huggingface.co/tencent/HY-MT1.5-1.8B) 53.1分
 - [DeepSeek/DeepSeek-V3.2](https://huggingface.co/deepseek-ai/DeepSeek-V3.2) 50.1分
 - [Google/Gemma-4-E2B](https://huggingface.co/google/gemma-4-E2B) 49.3分
+#### WMT26 Judge
+- [DeepSeek/DeepSeek-V4.1-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash) 83.55分
+- [IndexTeam/Index-Translate-35B-A3B-preview](https://huggingface.co/IndexTeam/Index-Translate-35B-A3B-preview) 76.76分
+- [IndexTeam/Index-Translate-9B](https://huggingface.co/IndexTeam/Index-Translate-9B) 75.35分
+- [Google/translategemma-12b-it](https://huggingface.co/google/translategemma-12b-it) 71.91分
+- [Qwen/Qwen3.5-35B-A3B](https://huggingface.co/Qwen/Qwen3.5-35B-A3B) 71.33分
+- [CohereLabs/North-Small-Translate-1.0](https://huggingface.co/CohereLabs/North-Small-Translate-1.0) 68.37分
+- [Tencent/Hy-MT2-30B-A3B](https://huggingface.co/tencent/Hy-MT2-30B-A3B) 66.81分
+- [Tencent/Hy-MT2-7B](https://huggingface.co/tencent/Hy-MT2-7B) 60.51分
+- [Qwen/Qwen3.5-9B-Base](https://huggingface.co/Qwen/Qwen3.5-9B-Base) 60.31分
+- [IndexTeam/Index-Translate-2B](https://huggingface.co/IndexTeam/Index-Translate-2B) 60.26分
+- [Tencent/Hy-MT2-1.8B](https://huggingface.co/tencent/Hy-MT2-1.8B) 49.35分
+- [Qwen/Qwen3.5-2B-Base](https://huggingface.co/Qwen/Qwen3.5-2B-Base) 32.11分
 #### 稳定性推荐
 - [Qwen/Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) 激活6B 总参数180B PLE表51B MTP层4B
 - [Google/Gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it) 激活3.8B 总参数25.2B
