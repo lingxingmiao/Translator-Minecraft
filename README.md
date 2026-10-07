@@ -4,8 +4,7 @@
 
 ## 概述
 Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0) 的全面重构版本；<br>
-它不再是一个简单的翻译程序，而是一个高扩展性，高并发，支持极限向量压缩的翻译引擎。<br>
-我希望 Minecraft 生态汉化更易参加：消除语言壁垒，精简翻译流程，摆脱繁琐束缚！
+它不再是一个简单的翻译程序，而是一个高扩展性，高并发的翻译引擎。<br>
 
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
@@ -176,23 +175,9 @@ conda env remove -n Translator_Minecraft
 </details>
 
 ### 系统需求
-#### 最低配置
-- 需要 64 位处理器和操作系统
-- 处理器: Intel Xeon E3-1220 v2
-- 内存: 4GB RAM
-- 存储空间: 需要 512 MB 可用空间
-#### 推荐配置
-- 需要 64 位处理器和操作系统
-- 处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X
-- 内存: 16GB RAM
-- 显卡: NVIDIA GeForce RTX 3060 12 GB
-- 存储空间: 需要 2 GB 可用空间
-#### 服务器配置
-- 需要 64 位处理器和操作系统
-- 处理器: Intel Xeon E-2468
-- 内存: 32GB RAM
-- 显卡: NVIDIA A100 PCIe 40 GB
-- 存储空间: 需要 16 GB 可用空间
+| 最低配置| 推荐配置 | 生产配置 |
+|-|-|-|
+|需要 64 位处理器和操作系统<br>处理器: Intel Xeon E3-1220 v2<br>内存: 4GB RAM<br>存储空间: 需要 512 MB 可用空间|需要 64 位处理器和操作系统<br>处理器: Intel Core i5-12400 / AMD Ryzen 5 5600X<br>内存: 16GB RAM<br>显卡: NVIDIA GeForce RTX 3060 12 GB<br>存储空间: 需要 2 GB 可用空间|需要 64 位处理器和操作系统<br>处理器: Intel Xeon E-2468<br>内存: 32GB RAM<br>显卡: NVIDIA A100 PCIe 40 GB<br>存储空间: 需要 16 GB 可用空间|
 
 ### 推荐模型与翻译质量排名
 <details>
