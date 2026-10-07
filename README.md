@@ -10,30 +10,21 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
 - [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文(想设置输出语言请使用API), 仅翻译功能(免费无限量不限速翻译)；
-- 公益API: https://api.tanslamc.top sk-123456, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言(公益网站使用的API)。
+- 公益API: https://api.tanslamc.top 密钥在网站, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言(公益网站使用的API)。
 
 ### 支持的内容
-- [整合包](https://www.mcmod.cn/modpack.html)
-- 光影包
-- 资源包
-- [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime)
-- [模组](https://www.mcmod.cn/modlist.html?sort=createtime)
-- [附加包](https://www.mcmod.cn/modlist.html?platform=2)
-- [FTB任务](https://www.mcmod.cn/class/1423.html)
-- [更好的任务](https://www.mcmod.cn/class/944.html)
-- [核电工艺重制版](https://www.mcmod.cn/class/2483.html)附加包
-- [帕秋莉手册](https://www.mcmod.cn/class/1388.html)
-- [CraftTweaker](https://www.mcmod.cn/class/669.html)(displayName/tooltip)
-- [自定义主菜单](https://www.mcmod.cn/class/1030.html)
-- [精致菜单](https://www.mcmod.cn/class/4053.html)
-- [困难任务](https://www.mcmod.cn/class/478.html)
-- GTNH Lang
-- [模组翻译](https://www.mcmod.cn/class/27911.html)
-- [TX Loader](https://www.mcmod.cn/class/9677.html)
-- [GuideME](https://www.mcmod.cn/class/18414.html)
-- [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale)(非Minecraft)
-- BepInEx插件(非Minecraft)
-- SFT数据集(非游戏,用于蒸馏)
+
+||||||||
+|-|-|-|-|-|-|-|
+| 综合 | [模组](https://www.mcmod.cn/modlist.html?sort=createtime) | [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime) | [附加包](https://www.mcmod.cn/modlist.html?platform=2) | 资源包 | 光影包 | [整合包](https://www.mcmod.cn/modpack.html) |
+| 魔改 | [CraftTweaker](https://www.mcmod.cn/class/669.html)(物品名/工具提示) | [核电工艺重制版](https://www.mcmod.cn/class/2483.html)附加包 | - | - | - | - |
+| 框架 | [GuideME](https://www.mcmod.cn/class/18414.html) | [帕秋莉手册](https://www.mcmod.cn/class/1388.html) | - | - | - | - |
+| 任务 | [FTB任务](https://www.mcmod.cn/class/1423.html) | [更好的任务](https://www.mcmod.cn/class/944.html) | [困难任务](https://www.mcmod.cn/class/478.html) | - | - | - |
+| 菜单 | [精致菜单](https://www.mcmod.cn/class/4053.html) | [自定义主菜单](https://www.mcmod.cn/class/1030.html) | - | - | - | - |
+| 语言文件类 | [TX Loader](https://www.mcmod.cn/class/9677.html) | [模组翻译](https://www.mcmod.cn/class/27911.html) | [GTNH Lang](https://github.com/GTNewHorizons/GTNH-Translations) | - | - | - |
+| Minecraft以外 | BepInEx插件 | [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale) | - | - | - | - |
+| 数据处理 | SFT(监督微调)数据集 | - | - | - | - | - |
+
 
 后续计划支持以下组件(可能是大饼)
 - KubeJS
