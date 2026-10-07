@@ -1053,8 +1053,8 @@ AI给我加了一堆BUG所以不发布
         - BepInEx插件
         - 模组翻译
         - GTNH Lang
+            - 修复 部分条目不会被翻译的问题
         - TX Loader
-        - GTNH Lang
         - GuideME
         - SFT数据集
     - 索引方法
