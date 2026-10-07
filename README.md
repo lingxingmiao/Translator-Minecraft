@@ -1091,6 +1091,8 @@ AI给我加了一堆BUG所以不发布
 - 量化
     - GSQ_NL
         - 残差
+- 索引
+    - CrackIVF
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
