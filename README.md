@@ -1060,6 +1060,7 @@ AI给我加了一堆BUG所以不发布
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
+        - GSD5(5电平极限调优版)
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
