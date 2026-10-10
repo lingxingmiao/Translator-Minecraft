@@ -9,7 +9,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 ### 出门左转
 - [GregTechCEu-affiliated-localization](https://github.com/lingxingmiao/GregTechCEu-affiliated-localization/): mcmod.cn 部分翻译好的模组与整合包；
 - [TranslatorMinecraft.html](https://lingxingmiao.github.io/TranslatorMinecraft.html): 公益网站, 只能翻译为中文(想设置输出语言请使用API), 仅翻译功能(免费无限量不限速翻译)；
-- 公益API: https://api.tanslamc.top 密钥在网站, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言(公益网站使用的API)。
+- 公益API: https://api.tanslamc.top 密钥太长了不念在网站自己看, 怎么用看默认配置看 TranslatorAPI.py, 可以自定义翻译语言(公益网站使用的API)。
 
 ### 支持的内容
 
@@ -1060,7 +1060,7 @@ AI给我加了一堆BUG所以不发布
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
-        - GSD5(5电平2.6bit R@10 90%)
+        - CSD5MoE(5电平2.6bit R@10 90%)
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
