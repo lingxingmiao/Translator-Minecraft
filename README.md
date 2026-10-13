@@ -1035,6 +1035,11 @@ AI给我加了一堆BUG所以不发布
 </details>
 
 ### Release.1.7 Bata.1（进行中）
+#### 附加模块更新日志
+- IPVS
+    - 添加 .hsj(画世界) 格式解析
+    - 删除 张量链分解调用
+#### 软件更新日志
 - 添加 模型类型
     - 翻译类型
         - 模组
@@ -1060,9 +1065,7 @@ AI给我加了一堆BUG所以不发布
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
-        - CSD
-            - CSDMoE
-            - CSDFast
+        - CSD![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
@@ -1071,7 +1074,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 批量翻译列表格式
 - 添加 向量文件get懒加载
 - 添加 Faiss GPU支持
-- 重构 API接口![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 重构 API接口
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
     - 添加 添加/删除/获取密钥接口
@@ -1091,11 +1094,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 额外依赖 libarchive-c zstandard
  
 ### 其他正在进行时
-- 量化
-    - GSQ_NL
-        - 残差
-- 索引
-    - CrackIVF
+- 滚木
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
