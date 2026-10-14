@@ -1088,6 +1088,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 BM25无法使用的问题
 - 修复 多事件循环导致的锁跨循环崩溃
 - 修复 批量翻译退回不会重置翻译错误计数的问题![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 xllamacpp嵌入模型没有池化导致的召回率崩塌
 - 删除 除模组与SFT数据集以外所有的翻译类型
 - 删除 TranslatorArg.py
 - 删除 Config.LLM_TOKEN_CACHE_HIT_FIELD
