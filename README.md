@@ -1079,6 +1079,7 @@ AI给我加了一堆BUG所以不发布
     - 添加 管理员密钥与用户密钥
     - 添加 添加/删除/获取密钥接口
     - 删除 语言文件分离/合并
+- 更新 llama.cpp使用新的媒体参数
 - 修改 通用文件路由逻辑
 - 修改 无精炼不再显示翻译精炼的进度条
 - 修改 索引文件与向量文件不再共用VEC_FILE_配置
@@ -1098,5 +1099,5 @@ AI给我加了一堆BUG所以不发布
 
 ### 编辑需要
 - ![](https://img.shields.io/badge/状态-等待中-blue) ![](https://img.shields.io/badge/状态-进行中-brightgreen) ![](https://img.shields.io/badge/状态-完成-brightgreen) ![](https://img.shields.io/badge/状态-修复极高风险漏洞-FF0000)
-- 顺序：添加 -> 重构 -> 优化 -> 修改 -> 修复 -> 删除 -> 依赖(循环前面的)
+- 顺序：添加 -> 重构 -> 优化 -> 更新 -> 修改 -> 修复 -> 删除 -> 依赖(循环前面的)
 - 预设：`brightgreen` `green` `yellowgreen` `yellow` `orange` `red` `blue` `lightgrey`
