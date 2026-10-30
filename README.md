@@ -1075,6 +1075,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 批量翻译列表格式
 - 添加 向量文件get懒加载
 - 添加 Faiss GPU支持
+- 添加 向量文件剪枝![](https://img.shields.io/badge/状态-等待中-blue)
 - 重构 API接口
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
