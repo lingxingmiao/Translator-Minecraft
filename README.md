@@ -1,4 +1,4 @@
-# Translator Minecraft
+ # Translator Minecraft
 > **面向 Minecraft 生态的下一代 AI 驱动自动化翻译与本地化工程框架。**<br>
 > 基于大语言模型与高级检索增强生成技术，重塑游戏完整汉化工作流。
 
@@ -1067,9 +1067,9 @@ AI给我加了一堆BUG所以不发布
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
-        - CSD![](https://img.shields.io/badge/状态-进行中-brightgreen)
+        - CSD
     - 量化方法
-        - GQTIP_NL![](https://img.shields.io/badge/状态-进行中-brightgreen)
+        - GQTIP_NL
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
@@ -1093,7 +1093,7 @@ AI给我加了一堆BUG所以不发布
 - 修复 BM25无法使用的问题
 - 修复 多事件循环导致的锁跨循环崩溃
 - 修复 批量翻译退回不会重置翻译错误计数的问题![](https://img.shields.io/badge/状态-等待中-blue)
-- 修复 xllamacpp嵌入模型没有池化导致的召回率崩塌
+- 修复 xllamacpp嵌入模型没有池化导致的召回率核爆
 - 删除 除模组与SFT数据集以外所有的翻译类型
 - 删除 TranslatorArg.py
 - 删除 Config.LLM_TOKEN_CACHE_HIT_FIELD
