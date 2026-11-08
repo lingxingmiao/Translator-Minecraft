@@ -40,7 +40,8 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 - [DeepSeek](https://www.mcmod.cn/author/34316.html)(程序)
     - DeepSeek V4 Flash Preview
     - DeepSeek V4 Flash 0731
-    - DeepSeek V4.1 Flash
+    - DeepSeek V4.1 Flash 0910
+    - DeepSeek V4.1 Flash 1017
     - DeepSeek V4 Pro Preview
 - [Qwen](https://www.mcmod.cn/author/38153.html)(程序)
     - Qwen2.5 Max([Translator Lang](https://github.com/lingxingmiao/Tools/tree/main/Minecraft%20AI%E7%BF%BB%E8%AF%91%E5%B7%A5%E5%85%B7/ver1.0))
