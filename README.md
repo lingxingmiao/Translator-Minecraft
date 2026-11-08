@@ -1067,6 +1067,8 @@ AI给我加了一堆BUG所以不发布
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
         - CSD![](https://img.shields.io/badge/状态-进行中-brightgreen)
+    - 量化方法
+        - GQTIP_NL![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 添加 模组配置可通过Config管理器修改
 - 添加 rar,7z,zstd等格式输入
 - 添加 ModpackMod下载器镜像站映射软编码
