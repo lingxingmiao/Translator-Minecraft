@@ -1079,6 +1079,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 向量文件get懒加载
 - 添加 Faiss GPU支持
 - 添加 向量文件剪枝![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 本地模型缓存上限
 - 重构 API接口
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
@@ -1088,18 +1089,24 @@ AI给我加了一堆BUG所以不发布
 - 修改 通用文件路由逻辑
 - 修改 无精炼不再显示翻译精炼的进度条
 - 修改 索引文件与向量文件不再共用VEC_FILE_配置
-- 修改 OPENBLAS_NUM_THREADS设为1
+- 修改 OPENBLAS_NUM_THREADS设为1(同时修复内存占用起飞)
 - 修改 批量翻译模型返回解析加大范围
 - 修复 BM25无法使用的问题
 - 修复 多事件循环导致的锁跨循环崩溃
-- 修复 批量翻译退回不会重置翻译错误计数的问题![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 批量翻译退回不会重置翻译错误计数的问题![](https://img.shields.io/badge/状态-进行中-brightgreen)
 - 修复 xllamacpp嵌入模型没有池化导致的召回率核爆
+- 修复 多出内存与显存溢出
 - 删除 除模组与SFT数据集以外所有的翻译类型
 - 删除 TranslatorArg.py
 - 删除 Config.LLM_TOKEN_CACHE_HIT_FIELD
 - 删除 张量链分解
 - 添加 额外依赖 libarchive-c zstandard
- 
+
+### Release.1.7 Bata.2
+#### 软件更新日志
+- 添加 API接口
+      - 添加 OpenAI Chat Completions 端点(仅纯文本翻译)
+   
 ### 其他正在进行时
 - 滚木
 
