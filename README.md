@@ -21,7 +21,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 | 任务 | [FTB任务](https://www.mcmod.cn/class/1423.html) | [更好的任务](https://www.mcmod.cn/class/944.html) | [困难任务](https://www.mcmod.cn/class/478.html) | - | - | - |
 | 菜单 | [精致菜单](https://www.mcmod.cn/class/4053.html) | [自定义主菜单](https://www.mcmod.cn/class/1030.html) | - | - | - | - |
 | 语言文件类 | [TX Loader](https://www.mcmod.cn/class/9677.html) | [模组翻译](https://www.mcmod.cn/class/27911.html) | [GTNH Lang](https://github.com/GTNewHorizons/GTNH-Translations) | - | - | - |
-| Minecraft以外 | BepInEx插件 | [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale) | - | - | - | - |
+| Minecraft以外 | BepInEx插件 | [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale) | class二进制文件 | - | - | - |
 | 数据处理 | SFT(监督微调)数据集 | DPO(直接偏好优化)数据集 | - | - | - | - |
 
 
@@ -1045,6 +1045,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 模型类型
     - 翻译类型
         - 模组
+            -  硬编码class(实验性)
         - 附加包
         - 数据包
             - 修复多处错误导致无法翻译的问题
