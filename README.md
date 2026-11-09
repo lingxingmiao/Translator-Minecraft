@@ -15,7 +15,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 
 ||||||||
 |-|-|-|-|-|-|-|
-| 综合 | [模组](https://www.mcmod.cn/modlist.html?sort=createtime) | [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime) | [附加包](https://www.mcmod.cn/modlist.html?platform=2) | 资源包 | 光影包 | [整合包](https://www.mcmod.cn/modpack.html) |
+| 综合 | [模组](https://www.mcmod.cn/modlist.html?sort=createtime)(含class) | [数据包](https://www.mcmod.cn/modlist.html?api=5&sort=createtime) | [附加包](https://www.mcmod.cn/modlist.html?platform=2) | 资源包 | 光影包 | [整合包](https://www.mcmod.cn/modpack.html) |
 | 魔改 | [CraftTweaker](https://www.mcmod.cn/class/669.html)(物品名/工具提示) | [核电工艺重制版](https://www.mcmod.cn/class/2483.html)附加包 | - | - | - | - |
 | 框架 | [GuideME](https://www.mcmod.cn/class/18414.html) | [帕秋莉手册](https://www.mcmod.cn/class/1388.html) | - | - | - | - |
 | 任务 | [FTB任务](https://www.mcmod.cn/class/1423.html) | [更好的任务](https://www.mcmod.cn/class/944.html) | [困难任务](https://www.mcmod.cn/class/478.html) | - | - | - |
@@ -1065,6 +1065,7 @@ AI给我加了一堆BUG所以不发布
             - 修复 部分条目不会被翻译的问题
         - TX Loader
         - GuideME
+        - Class二进制文件
     - 索引方法
         - IP(SQ, PQ, RQ, OPQ, LSQ)
         - Faiss Factory
@@ -1079,8 +1080,9 @@ AI给我加了一堆BUG所以不发布
 - 添加 批量翻译列表格式
 - 添加 向量文件get懒加载
 - 添加 Faiss GPU支持
-- 添加 向量文件剪枝![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 向量文件剪枝
 - 添加 本地模型缓存上限
+- 添加 FastEmbed缓存配置
 - 重构 API接口
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
@@ -1106,7 +1108,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.7 Bata.2
 #### 软件更新日志
 - 添加 API接口
-      - 添加 ~~Open~~CloseAI Chat Completions 端点(仅纯文本翻译)
+    - 添加 Open~~Close~~AI Chat Completions 端点(仅纯文本翻译)
    
 ### 其他正在进行时
 - 滚木
