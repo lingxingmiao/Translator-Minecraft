@@ -22,7 +22,7 @@ Translator Minecraft 是 [Translator Lang](https://github.com/lingxingmiao/Tools
 | 菜单 | [精致菜单](https://www.mcmod.cn/class/4053.html) | [自定义主菜单](https://www.mcmod.cn/class/1030.html) | - | - | - | - |
 | 语言文件类 | [TX Loader](https://www.mcmod.cn/class/9677.html) | [模组翻译](https://www.mcmod.cn/class/27911.html) | [GTNH Lang](https://github.com/GTNewHorizons/GTNH-Translations) | - | - | - |
 | Minecraft以外 | BepInEx插件 | [未知伤亡语言文件](https://github.com/Orsoniks/scavgame-locale) | - | - | - | - |
-| 数据处理 | SFT(监督微调)数据集 | - | - | - | - | - |
+| 数据处理 | SFT(监督微调)数据集 | DPO(直接偏好优化)数据集 | - | - | - | - |
 
 
 后续计划支持以下组件(可能是大饼)
