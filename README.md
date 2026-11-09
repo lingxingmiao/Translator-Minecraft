@@ -106,7 +106,7 @@ from TranslatorLib import Config, Translator, Tool # 还有一堆库统一在Tra
 ```powershell
 # 创建环境
 conda create -n Translator_Minecraft python=3.12 -y
-# Python3.15时懒加载库可用 3.15于2026年10月1日发布
+# Python3.15时懒加载库可用
 # conda create -n Translator_Minecraft python=3.15 -y
 # 激活环境
 conda activate Translator_Minecraft
@@ -1105,7 +1105,7 @@ AI给我加了一堆BUG所以不发布
 ### Release.1.7 Bata.2
 #### 软件更新日志
 - 添加 API接口
-      - 添加 OpenAI Chat Completions 端点(仅纯文本翻译)
+      - 添加 ~~Open~~CloseAI Chat Completions 端点(仅纯文本翻译)
    
 ### 其他正在进行时
 - 滚木
