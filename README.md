@@ -1084,6 +1084,7 @@ AI给我加了一堆BUG所以不发布
 - 添加 本地模型缓存上限
 - 添加 FastEmbed缓存配置
 - 添加 MaxToken退回逻辑![](https://img.shields.io/badge/状态-进行中-brightgreen)
+- 添加 网页实时进度条包装
 - 重构 API接口
     - 添加 上传下载文件GZip/Zstd压缩
     - 添加 管理员密钥与用户密钥
