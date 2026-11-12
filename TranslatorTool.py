@@ -1,5 +1,5 @@
-from TranslatorLib import (zipfile, json, eb, defaultdict, Path, uuid, random, ThreadPoolExecutor, partial, asyncio,
-                           TranslatorPersistence, Config)
+from TranslatorLib import (zipfile, json, eb, defaultdict, Path, uuid, random, ThreadPoolExecutor, partial, asyncio, datasets, Mods, Loop,
+                           TranslatorPersistence, Config, faiss, np, time, gguf)
 
 class Tool:
     def __init__(Self, App: Config):
@@ -194,7 +194,7 @@ class Tool:
             for index in Self.tqdm(Dict文件, desc="tqdm.file.processing"):
                 文本列表.append([index, Dict文件[index][0]])
         elif mode == "rerank":
-            文本列表 = asyncio.run(Self.Builder.获取相似度最高译文(Dict文件))
+            文本列表 = Loop.运行(Self.Builder.获取相似度最高译文(Dict文件))
             文本列表 = [[index[0], index[1]] for index in 文本列表]
         Self.CacheTranslator.翻译缓存(文本列表, 语言=Self.Config.LANGUAGE_OUTPUT)
         Self.日志("log.core.file.settle.end", info_level=0)
@@ -221,7 +221,7 @@ class Tool:
         系统提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
         预编译输入文本 = Self.Config.TRANSLATOR_USER_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT, text="{text}")
         if mode in ["Alpaca-EX", "DPO-Mini", "DPO-EX"]:
-            翻译映射 = asyncio.run(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
+            翻译映射 = Loop.运行(Self.Translator.翻译语言列表([[索引[1], 索引[0], ""] for 索引 in 待处理列表], 获取参考文本=True))
         if mode == "Alpaca-EX":
             提示词 = Self.Config.TRANSLATOR_SYSTEM_PROMPT.format(lang=Self.Config.LANGUAGE_OUTPUT)
             所有翻译对 = []
@@ -404,92 +404,8 @@ class Tool:
         elif file == None:
             for _ in Self.tqdm(range(1), desc="tqdm.file.read"):
                 待处理列表 = [[k, v, ""] for k, v in Self.CacheTranslator.翻译缓存(语言=Self.Config.LANGUAGE_OUTPUT).items()]
-        asyncio.run(TranslatorPersistence.参考词预处理(Self=Self, texts=待处理列表, use_cache=False, 查询=False))
+        Loop.运行(TranslatorPersistence.参考词预处理(Self=Self, texts=待处理列表, use_cache=False, 查询=False))
         Self.日志("log.core.file.settle.end", info_level=0)
-        
-    def 翻译流程转DictMini(Self, path1, path2, DictMini, 文件匹配, 读取方法, 过滤方法, 读取并发, 日志类型, OutputPath = r"./"):
-        文件列表, 翻译列表, 参考列表, 参考文件列表 = [], [], [], []
-        参考字典 = {}
-        翻译参考列表 = defaultdict(list)
-        path1 = Path(path1)
-        path2 = Path(path2)
-        if isinstance(文件匹配, str):
-            文件匹配 = [文件匹配]
-        for index in 文件匹配:
-            文件列表.extend([p for p in path1.rglob(index)] if Path(path1).is_dir() else [path1])
-            参考文件列表.extend([p for p in path2.rglob(index)] if Path(path2).is_dir() else [path2])
-        Self.日志(f"log.core.file.{日志类型}.read.start", info_level=0)
-        with ThreadPoolExecutor(max_workers=读取并发) as 执行器:
-            结果集 = 执行器.map(读取方法, 文件列表)
-            for 结果 in Self.tqdm(结果集, total=len(文件列表), desc="tqdm.file.read"):
-                翻译列表.extend(结果)
-        with ThreadPoolExecutor(max_workers=读取并发) as 执行器:
-            结果集 = 执行器.map(读取方法, 参考文件列表)
-            for 结果 in Self.tqdm(结果集, total=len(参考文件列表), desc="tqdm.file.read"):
-                参考列表.extend(结果)
-        Self.日志(f"log.core.file.{日志类型}.read.end", info_level=0)
-        过滤后 = []
-        try:
-            for 条目 in 翻译列表:
-                if 过滤方法(条目):
-                    过滤后.append(条目)
-        except Exception:
-            Self.日志(f"log.module.{日志类型}.clean.error", index=条目, e=eb.format_exc(), info_level=2)
-        if 参考列表 != None:
-            for item in 参考列表:
-                try:
-                    参考字典[str(item[0])] = item[1]
-                except Exception:
-                    Self.日志("log.core.parsing.reference.word.error", e=eb.format_exc(), item=item, info_level=2)
-            for index in 翻译列表:
-                key = str(index[0])
-                if key in 参考字典:
-                    翻译参考列表[index[1]].append(参考字典[key])
-        if DictMini:
-            with open(DictMini, "r", encoding="utf-8") as f:
-                Dict文件 = json.load(f)
-            for 原文, 值列表 in 翻译参考列表.items():
-                if 原文 in Dict文件:
-                    for 单个值 in 值列表:
-                        if 单个值 not in Dict文件[原文]:
-                            Dict文件[原文].append(单个值)
-                else:
-                    Dict文件[原文] = 值列表.copy()
-            with open(DictMini, "w", encoding="utf-8") as f:
-                json.dump(Dict文件, f, ensure_ascii=False)
-        else:
-            with open(f"{OutputPath}/Dict-Mini.json", "w", encoding="utf-8") as f:
-                json.dump(翻译参考列表, f, ensure_ascii=False)
-                
-    def 导入FTB任务DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.snbt", Self.File.读取单个FTBQ_Snbt文件, Self.Module.过滤键文本, Self.Config.QUESTS_READ_MAX_CONCURRENT, "quests", OutputPath)
-    def 导入BQ任务DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.json", Self.File.读取单个BQ_Json文件, Self.Module.过滤键文本, Self.Config.QUESTS_READ_MAX_CONCURRENT, "quests", OutputPath)
-    def 导入HQM任务DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, ["*.hqm", "*.json"], partial(Self.File.读取单个HQM文件, mode="L" if any(Path(path).rglob("*.hqm")) else "H"), Self.Module.过滤键文本, Self.Config.QUESTS_READ_MAX_CONCURRENT, "quests", OutputPath)
-    def 导入ZS脚本DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.zs", Self.File.读取单个ZS文件, lambda 条目: 条目[1] and not Self.正则表达式预编译.翻译剔除方法.match(条目[1]), Self.Config.SCRIPT_READ_MAX_CONCURRENT, "script", OutputPath)
-    def 导入CMM菜单DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.json", Self.File.读取单个CMM文件, Self.Module.过滤键文本, Self.Config.MENU_READ_MAX_CONCURRENT, "menu", OutputPath)
-    def 导入FM菜单DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        if Path(f"{path}/customization").is_dir(): 
-            Self.翻译流程转DictMini(f"{path}/customization", path2, DictMini, "*.txt", Self.File.读取单个FM文件, Self.Module.过滤键文本, Self.Config.MENU_READ_MAX_CONCURRENT, "menu", OutputPath)
-        if Path(f"{path}/locals").is_dir():
-            Self.语言文件对转DictMini(f"{path}/locals/", DictMini, OutputPath)
-    def 导入帕秋莉手册DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.json", Self.File.读取单个帕秋莉手册文件, Self.Module.过滤键文本, Self.Config.BOOK_READ_MAX_CONCURRENT, "book", OutputPath)
-    def 导入数据包DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        path = Path(path)
-        if path.is_file():
-            缓存文件夹 = Path(f"{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}/")
-            with zipfile.ZipFile(path, 'r') as zf: zf.extractall(缓存文件夹)
-        else: 
-            缓存文件夹 = path
-        Self.翻译流程转DictMini(缓存文件夹, path2, DictMini, ["*.json", "*.mcmeta", "*.mcfunction"], Self.File.读取单个数据包文件, Self.Module.过滤键文本, Self.Config.DATA_READ_MAX_CONCURRENT, "data", OutputPath)
-    def 导入未知伤亡语言文件DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, ["*.json"], Self.File.读取未知伤亡语言文件, Self.Module.过滤键文本, Self.Config.LANG_READ_MAX_CONCURRENT, "lang", OutputPath)
-    def 导入未知伤亡dll模组DictMini(Self, path, path2, DictMini, OutputPath = r"./"):
-        Self.翻译流程转DictMini(path, path2, DictMini, "*.dll", Self.File.读取单个DLL文件, Self.Module.过滤DLL文本, Self.Config.DLL_READ_MAX_CONCURRENT, "dll", OutputPath)
     def 去重DictMini(Self, file: str):
         Self.日志("log.core.file.settle.start", info_level=0)
         with open(file, "r", encoding="utf-8") as f:
@@ -503,26 +419,152 @@ class Tool:
         Self.日志("log.core.file.settle.end", info_level=0)
         Self.日志("log.core.dictmini.dedup", before=去重前, after=去重后, info_level=0)
         
-测试 = True
-if __name__ == "__main__" and 测试:
-    参数 = {
-        "LANGUAGE": "zh_CN",
-        "TRANSLATOR_CACHE_READ": False,
-        "EMB_MAX_WORKERS": 20,
-        "DEBUG_MODE": True,
-        "EMB_MAX_TOKENS": 512,
-        "VEC_FILE_NAME": "Vector6", #"VEC_QUANTIZATION": "Float16_Max",
-        "TRANSLATOR_CACHE_NAME": "Translator_Cache3",
-        "INDEX_MODE": "BM25"
-    }
-    from TranslatorLib import Config
-    配置 = Config(参数)
-    翻译 = Tool(配置)
-    #翻译.语言文件对转DictMini(r"C:\Users\FengMang\Downloads\Minecraft-Shaders-zh_CN-Lang-Files-Surisen.zip", r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.导入未知伤亡语言文件DictMini(r"C:\Users\FengMang\Downloads\EN.json", r"C:\Users\FengMang\Downloads\zh_CN.json", r"C:\Users\FengMang\Downloads\Dict-Mini.json") #byd保留所有权利不敢用
-    翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.导入DictMini参考词(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.DictMini转换数据集(r"C:\Users\FengMang\Downloads\Dict-Mini.json", max_length=20000, mode="DPO-Mini")
-    #翻译.导入DictMini缓存(r"C:\Users\FengMang\Downloads\Dict-Mini.json")
-    #翻译.合并语言文件更新(r"C:\Users\FengMang\Downloads\chestdna-1.02q-mc1.21.1-fabric.jar", r"C:\Users\FengMang\Desktop\TranslatorMinecraft\Cache\e1da873790f04e19b850843f61435bdb\zh_CN.translang")
-    #翻译.翻译缓存转换数据集()
+    def 翻译数据集(Self, path: str, field: str, input_suffix: str=".parquet", instruction: str=None, output_path: str=None):
+        输入路径 = Path(path)
+        处理路径 = []
+        if instruction is None: instruction = f"翻译为{Self.Config.LANGUAGE_OUTPUT}语言"
+        if 输入路径.is_dir():
+            处理路径 = [p for p in 输入路径.rglob('*') if p.suffix == input_suffix]
+        elif 输入路径.is_file():
+            处理路径 = [输入路径]
+        else:
+            Self.日志("log.module.datasets.un.path.err", info_level=3, path=输入路径)
+            raise FileNotFoundError(Self.Lang("log.module.datasets.not.path.err", path=输入路径))
+        for 文件路径 in Self.tqdm(处理路径, desc="tqdm.translator.datasets"):
+            数据集 = []
+            if 文件路径.suffix == ".parquet":
+                数据集 = list(datasets.load_dataset("parquet", 文件路径, split="train"))
+            elif 文件路径.suffix == ".jsonl":
+                with open(文件路径, "r", encoding="utf-8") as f:
+                    for 行 in f:
+                        行 = 行.strip()
+                        if 行:
+                            数据集.append(json.loads(行))
+            elif 文件路径.suffix == ".json":
+                with open(文件路径, "r", encoding="utf-8") as f:
+                    数据 = json.load(f)
+                数据集 = 数据 if isinstance(数据, list) else (list(数据.values()) if isinstance(数据, dict) else [数据])
+            else:
+                Self.日志("log.module.datasets.un.suffix.err", file=文件路径, info_level=2)
+                continue
+            输入列表 = [[str(idx), i[field], ""] for idx, i in enumerate(数据集)]
+            输出列表 = Loop.运行(Self.Translator.翻译语言列表(输入列表))
+            翻译映射 = {键: 译文 for 键, 译文, _ in 输出列表}
+            导出列表 = []
+            for idx, 行 in enumerate(数据集):
+                原文 = 行[field]
+                译文 = 翻译映射.get(str(idx), 原文)
+                if not 译文:
+                    译文 = 原文
+                导出列表.append({"instruction": instruction, "input": 原文, "output": 译文})
+            保存路径 = output_path if output_path else str(Path(文件路径).parent / f"{Path(文件路径).stem}_SFT.parquet")
+            导出数据集 = datasets.Dataset.from_list(导出列表)
+            导出数据集.to_parquet(保存路径)
+            Self.日志("log.core.translator.succeed", path=Path(保存路径).resolve(), info_level=0)
+
+    def 剪枝向量库(Self, 向量库: str, 缓存库: str, k: int, 输出路径: str = "", 量化: str = None, 批量: int = 4096, 设备: str = "cpu"):
+        # 向量库: 要被剪枝的库(如 Vectors/Vector.gguf)   缓存库: 实际命中过的向量(如 VectorCaches/VectorCache.gguf)
+        # k: 每条缓存向量在向量库里取前 k 个候选(全库精确检索), 全部候选的并集就是"被激活过"的向量
+        # 输出路径: 目录(自动命名) 或 .gguf 文件           量化: None=沿用源文件张量类型  ""=原始张量  其它=Q8_0/F16
+        # 设备: faiss 检索设备 cpu/gpu                    返回: 输出文件路径
+        开始时间 = time.time()
+        Self.日志("log.core.vector.prune.start", file=向量库, probe=缓存库, k=k, info_level=0)
+        try:
+            if k < 1: raise ValueError(Self.Lang("log.core.vector.prune.k.err", k=k))
+            向量库, 缓存库 = Path(向量库).resolve(), Path(缓存库).resolve()
+            输出路径 = Path(输出路径) if 输出路径 else Path(f"./{Self.Config.PATH_CACHE}/{uuid.uuid4().hex}")
+            if 输出路径.suffix.lower() != ".gguf": 输出路径 = 输出路径 / f"{向量库.stem}.pruned.gguf"
+            输出路径 = 输出路径.resolve() # ↓ 必须先解析成绝对路径再比对, 否则 Vectors/Vector.gguf 和 C:\...\Vector.gguf 判不相等, 会覆盖掉输入
+            输出路径.parent.mkdir(parents=True, exist_ok=True)
+            if 输出路径 in (向量库, 缓存库): raise ValueError(Self.Lang("log.core.vector.prune.same.err", path=输出路径))
+            
+            def 取矩阵(向量文件): # ↓ 向量库 {"Vector":(N,D)} / 缓存库 {"vec":(N,D)} / 其它取第一个二维张量
+                if isinstance(向量文件, dict):
+                    for 键 in ("vec", "Vector"):
+                        值 = 向量文件.get(键)
+                        if isinstance(值, np.ndarray) and 值.ndim == 2: return 值
+                    for 值 in 向量文件.values():
+                        if isinstance(值, np.ndarray) and 值.ndim == 2: return 值
+                if isinstance(向量文件, np.ndarray) and 向量文件.ndim == 2: return 向量文件
+                raise ValueError(Self.Lang("log.core.vector.prune.matrix.err", file=向量库))
+            
+            def 取文本(快照): # ↓ 向量库 [[原文, 译文], ...] / 缓存库 {"texts": [...]}
+                if isinstance(快照, dict): return list(快照.get("texts", []) or [])
+                if isinstance(快照, (list, tuple)): return list(快照)
+                return []
+            
+            def 读库(路径):
+                向量文件, 快照 = TranslatorPersistence.向量GGUF读取(str(路径))
+                if not 向量文件: raise ValueError(Self.Lang("log.core.vector.prune.matrix.err", file=路径))
+                矩阵 = 取矩阵(向量文件)
+                if 矩阵.dtype != np.float32: 矩阵 = 矩阵.astype(np.float32)
+                return np.ascontiguousarray(矩阵), 取文本(快照), 向量文件
+            
+            def 检索(库矩阵, 探针):
+                faiss.normalize_L2(库矩阵) # ↓ 原地归一化, 内积即余弦
+                索引器 = faiss.IndexFlatIP(库矩阵.shape[1]) # ↓ 全库暴力检索, 不近似
+                if 设备 == "gpu": 索引器 = faiss.index_cpu_to_gpu(faiss.StandardGpuResources(), 0, 索引器)
+                索引器.add(库矩阵)
+                命中, 首名 = set(), np.empty(len(探针), dtype=np.float32)
+                for 起 in Self.tqdm(range(0, len(探针), 批量), desc="tqdm.vector.prune"):
+                    块 = np.ascontiguousarray(探针[起:起 + 批量], dtype=np.float32)
+                    faiss.normalize_L2(块)
+                    相似度, 编号 = 索引器.search(块, k)
+                    首名[起:起 + len(块)] = 相似度[:, 0]
+                    命中.update(int(号) for 号 in 编号.ravel() if 号 >= 0)
+                return 命中, 首名
+            
+            def 检索Numpy(库矩阵, 探针): # ↓ 没有 faiss 时的兜底, 口径与 IP 一致
+                块大小 = max(1, min(批量, 256)) # ↓ 相似度矩阵是 (批, 全库) float32, 别一次铺满内存
+                库矩阵 /= np.maximum(np.linalg.norm(库矩阵, axis=1, keepdims=True), 1e-12)
+                探针 = 探针 / np.maximum(np.linalg.norm(探针, axis=1, keepdims=True), 1e-12)
+                命中, 首名 = set(), np.empty(len(探针), dtype=np.float32)
+                for 起 in Self.tqdm(range(0, len(探针), 块大小), desc="tqdm.vector.prune"):
+                    相似度 = 探针[起:起 + 块大小] @ 库矩阵.T
+                    前k = np.argpartition(-相似度, k - 1, axis=1)[:, :k]
+                    首名[起:起 + len(相似度)] = 相似度[np.arange(len(相似度)), 前k[:, 0]]
+                    命中.update(int(号) for 号 in 前k.ravel())
+                return 命中, 首名
+            
+            库矩阵, 库文本, 库字典 = 读库(向量库)
+            探针矩阵, _, _ = 读库(缓存库)
+            if 探针矩阵.shape[1] != 库矩阵.shape[1]:
+                raise ValueError(Self.Lang("log.core.vector.prune.dim.err", lib=库矩阵.shape[1], probe=探针矩阵.shape[1]))
+            if len(探针矩阵) == 0: raise ValueError(Self.Lang("log.core.vector.prune.empty.err"))
+            k = min(k, len(库矩阵))
+            
+            命中集合, 检索器 = None, None
+            if 设备 == "gpu":
+                try: 命中集合, 首名 = 检索(库矩阵, 探针矩阵); 检索器 = "faiss-gpu"
+                except Exception: 设备 = "cpu"
+            if 命中集合 is None:
+                try: 命中集合, 首名 = 检索(库矩阵, 探针矩阵); 检索器 = "faiss-cpu"
+                except Exception: 命中集合, 首名 = 检索Numpy(库矩阵, 探针矩阵); 检索器 = "numpy"
+            保留索引 = np.array(sorted(命中集合), dtype=np.int64)
+            子矩阵 = np.ascontiguousarray(库矩阵[保留索引])
+            子文本 = [库文本[i] for i in 保留索引] if 库文本 else []
+            del 库矩阵, 探针矩阵 # ↓ 全库矩阵先放掉, 给重编码/量化腾内存
+            Self.日志("log.core.vector.prune.hit", keep=len(保留索引), total=len(库文本),
+                      rate=f"{len(保留索引) / max(len(库文本), 1):.2%}", info_level=0)
+            
+            目标量化 = 量化
+            if 目标量化 is None: # ↓ 默认沿用源文件张量类型; F32/F16/BF16 走原始张量
+                try:
+                    读取器 = gguf.GGUFReader(str(向量库))
+                    try: 目标量化 = next((张量项.tensor_type.name for 张量项 in 读取器.tensors if 张量项.name != "tv.text"), "F32")
+                    finally: del 读取器
+                except Exception: 目标量化 = "F32"
+                if 目标量化 in ("F32", "F16", "BF16"): 目标量化 = ""
+            输出字典 = Self.Quantization.编码向量(子矩阵)
+            if isinstance(输出字典, dict): # ↓ PCA 投影/均值是全局参数, 行切片后依然有效, 原样带上
+                for 键, 值 in (库字典.items() if isinstance(库字典, dict) else []):
+                    if 键 not in 输出字典 and str(键).startswith("PCA"): 输出字典[键] = 值
+            临时路径 = Path(str(输出路径) + ".tmp")
+            TranslatorPersistence.向量GGUF写入(str(临时路径), 输出字典, 子文本 if 子文本 else None, 目标量化, Self.Lang)
+            临时路径.replace(输出路径)
+            Self.日志("log.core.vector.prune.end", path=输出路径, size=f"{输出路径.stat().st_size / 1024 / 1024:.1f}",
+                      force=目标量化 or "原始", engine=检索器, elapsed=f"{time.time() - 开始时间:.1f}", info_level=0)
+            return 输出路径
+        except Exception:
+            Self.日志("log.core.vector.prune.error", e=eb.format_exc(), info_level=3)
+            raise

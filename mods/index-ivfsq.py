@@ -1,7 +1,12 @@
+# 可用配置(覆盖键 MOD_INDEX_IVFSQ_<键>, 全大写):
+#   QUANT        标量量化类型       "Q8"
+#   NLIST        聚类数系数         0.25
+#   BYRESIDUAL   是否对残差量化     True
+
 from TranslatorLib import Mods, faiss, np
 
-参数 = Mods().模组配置("index-ivfsq", {"Quant": "Q8", "Nlist": 0.25, "ByResidual": True})
-Quant, Nlist, ByResidual = 参数["Quant"], float(参数["Nlist"]), bool(参数["ByResidual"])
+参数 = Mods().模组配置("index-ivfsq", {"QUANT": "Q8", "NLIST": 0.25, "BYRESIDUAL": True})
+Quant, Nlist, ByResidual = 参数["QUANT"], float(参数["NLIST"]), bool(参数["BYRESIDUAL"])
 
 
 @Mods().注册索引类型("IVFSQ", 数据源="Vector", 支持增量=True, 包装型=True)

@@ -1,7 +1,10 @@
+# 可用配置(覆盖键 MOD_QUANT_Q_K_M_<键>, 全大写):
+#   BLOCKSIZE   量化分块大小   128
+
 from TranslatorLib import Mods, np, math, CleanVRAM, TranslatorQuantization
 
-参数 = Mods().模组配置("quant-q_k_m", {"BlockSize": 128})
-BlockSize = int(参数["BlockSize"])
+参数 = Mods().模组配置("quant-q_k_m", {"BLOCKSIZE": 128})
+BlockSize = int(参数["BLOCKSIZE"])
 
 def Qx_K编码(Self, 数组, 最大量级):
     块大小 = BlockSize

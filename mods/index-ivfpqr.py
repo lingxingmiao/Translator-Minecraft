@@ -1,9 +1,16 @@
+# 可用配置(覆盖键 MOD_INDEX_IVFPQR_<键>, 全大写):
+#   NLIST         聚类数系数(×√向量数)   0.25
+#   PQM           PQ 子空间数            16
+#   NBITS         每个子空间的位数        8
+#   MREFINE       重排 PQ 子空间数        16
+#   NBITSREFINE   重排每个子空间的位数     8
+
 from TranslatorLib import Mods, faiss, np
 
-参数 = Mods().模组配置("index-ivfpqr", {"Nlist": 0.25, "PqM": 16, "Nbits": 8, "MRefine": 16, "NbitsRefine": 8})
-Nlist = float(参数["Nlist"])
-PqM, Nbits = int(参数["PqM"]), int(参数["Nbits"])
-MRefine, NbitsRefine = int(参数["MRefine"]), int(参数["NbitsRefine"])
+参数 = Mods().模组配置("index-ivfpqr", {"NLIST": 0.25, "PQM": 16, "NBITS": 8, "MREFINE": 16, "NBITSREFINE": 8})
+Nlist = float(参数["NLIST"])
+PqM, Nbits = int(参数["PQM"]), int(参数["NBITS"])
+MRefine, NbitsRefine = int(参数["MREFINE"]), int(参数["NBITSREFINE"])
 
 
 @Mods().注册索引类型("IVFPQR", 数据源="Vector", 支持增量=True, 包装型=True)

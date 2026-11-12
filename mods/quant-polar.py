@@ -1,7 +1,11 @@
+# 可用配置(覆盖键 MOD_QUANT_POLAR_<键>, 全大写):
+#   BLOCKSIZE   量化分块大小   128
+#   SPLLM       码本采样比例   0.05
+
 from TranslatorLib import Mods, np, math, CleanVRAM, TranslatorQuantization
 
-参数 = Mods().模组配置("quant-polar", {"BlockSize": 128, "SplLM": 0.05})
-BlockSize, SplLM = int(参数["BlockSize"]), float(参数["SplLM"])
+参数 = Mods().模组配置("quant-polar", {"BLOCKSIZE": 128, "SPLLM": 0.05})
+BlockSize, SplLM = int(参数["BLOCKSIZE"]), float(参数["SPLLM"])
 
 # PolarQuant: 块L2归一化 + Walsh-Hadamard旋转 + 在真实样本上拟合 Lloyd-Max 码本
 # 参考: PolarQuant: Optimal Gaussian Weight Quantization via Hadamard Rotation for LLM Compression

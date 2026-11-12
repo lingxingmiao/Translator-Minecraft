@@ -1,8 +1,15 @@
+# 可用配置(覆盖键 MOD_INDEX_NSGSQ_<键>, 全大写):
+#   QUANT     标量量化类型        "Q8"
+#   R         每个节点的邻居数   64
+#   L         构建期候选数       144
+#   C         裁剪候选数         212
+#   SEARCHL   查询期候选数       240
+
 from TranslatorLib import Mods, faiss
 
-参数 = Mods().模组配置("index-nsgsq", {"Quant": "Q8", "R": 64, "L": 144, "C": 212, "SearchL": 240})
-Quant, R, L, C = 参数["Quant"], int(参数["R"]), int(参数["L"]), int(参数["C"])
-SearchL = int(参数["SearchL"])
+参数 = Mods().模组配置("index-nsgsq", {"QUANT": "Q8", "R": 64, "L": 128, "C": 512, "SEARCHL": 240})
+Quant, R, L, C = 参数["QUANT"], int(参数["R"]), int(参数["L"]), int(参数["C"])
+SearchL = int(参数["SEARCHL"])
 
 
 @Mods().注册索引类型("NSGSQ", 数据源="Vector", 支持增量=True)

@@ -1,12 +1,11 @@
-from TranslatorLib import Mods, np, math
-
-# 自定义浮点格式
 #   Float32      : 原生 float32 (无损, 也可作缩放类型)
 #   Float16      : 原生 float16 (也可作缩放类型)
 #   Float16_E0M15: 1 符号 + 15 小数位 (int16 定点, 分辨率 2^-15, 范围 [-1,1))
 #   Float8_E0M7  : 1 符号 + 7  小数位 (int8  定点, 分辨率 2^-7,  范围 [-1,1))
 #   Float12_E0M11: 12 位打包的定点   (分辨率 2^-11, 范围 [-1,1))
 #   Float8_E4M3  : 1 符号 + 4 指数 + 3 尾数 (指数偏置 120)
+
+from TranslatorLib import Mods, np, math
 
 @Mods().注册量化类型("Float32", 32)
 def F32编码Float32(Self, 数组):

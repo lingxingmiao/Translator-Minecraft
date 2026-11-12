@@ -1,8 +1,13 @@
+# 可用配置(覆盖键 MOD_QUANT_OPQ_<键>, 全大写):
+#   PQM       子空间数          128
+#   PQNBITS   每个子空间的位数   8
+#   OPQITRS   旋转矩阵迭代次数   25
+
 from TranslatorLib import Mods, np, CleanVRAM, faiss, GPU_ACC
 
-参数 = Mods().模组配置("quant-opq", {"PqM": 128, "PqNbits": 8, "OpqItrs": 25})
-PqM, PqNbits = int(参数["PqM"]), int(参数["PqNbits"])
-OpqItrs = int(参数["OpqItrs"])
+参数 = Mods().模组配置("quant-opq", {"PQM": 128, "PQNBITS": 8, "OPQITRS": 25})
+PqM, PqNbits = int(参数["PQM"]), int(参数["PQNBITS"])
+OpqItrs = int(参数["OPQITRS"])
 
 
 def OPQ训练(Self, 数组):

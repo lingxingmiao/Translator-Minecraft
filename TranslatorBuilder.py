@@ -1,5 +1,5 @@
 from TranslatorLib import (np, eb, asyncio, random, aiohttp, io, base64, re,
-                           TranslatorPersistence, Config)
+                           requests, TranslatorPersistence, Config)
 
 class Builder:
     def __init__(Self, App: Config):
@@ -39,16 +39,25 @@ class Builder:
                     向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
                 Self.Network.close_emb(工作ID)
                 return (向量列表, 原文)
+            except asyncio.CancelledError:
+                Self.Network.close_emb(工作ID)
+                raise
             except Exception:
                 Self.日志("log.core.locally.generate.vectors.error", e=eb.format_exc(), info_level=2)
                 Self.Network.close_emb(工作ID)
                 return (None, 原文)
         else:
             
-            Json数据 = {
-                "input": [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文],
-                "model": 层级["model"]
-            }
+            if (层级.get("api_type") or "").lower() == "dashscope":
+                Json数据 = {
+                    "input": {"contents": [{"text": Self.Config.EMB_PROMPT_NAME[查询].format(t=i)} for i in 原文]},
+                    "model": 层级["model"]
+                }
+            else:
+                Json数据 = {
+                    "input": [Self.Config.EMB_PROMPT_NAME[查询].format(t=i) for i in 原文],
+                    "model": 层级["model"]
+                }
             Json数据.update(层级["api_kwargs"])
             
             while True:
@@ -64,13 +73,17 @@ class Builder:
                             )
                         响应体.raise_for_status()
                         响应值 = await 响应体.json()
+                    数据列表 = ((响应值.get("output") or {}).get("embeddings") if (层级.get("api_type") or "").lower() == "dashscope" else 响应值.get("data")) or []
                     for index in range(len(原文)):
-                        向量列表.append(响应值['data'][index]['embedding'])
+                        向量列表.append(数据列表[index]['embedding'])
                     向量列表 = np.asarray(向量列表, dtype=np.float32)
                     if Self.Config.VEC_DIM_CLIP != -1:
                         向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
                     Self.Network.close_emb(工作ID)
                     return (向量列表, 原文)
+                except asyncio.CancelledError:
+                    Self.Network.close_emb(工作ID)
+                    raise
                 except:
                     重试次数 += 1
                     if 重试次数 >= 层级["max_retry"]:
@@ -157,7 +170,7 @@ class Builder:
             while True:
                 会话, 模型层级, 工作ID = Self.Network.get_emb()
                 if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
-                await asyncio.sleep(0) # 别删 删了用不了
+                await asyncio.sleep(Self.Config.SESSION_ALLOCATION_RETRY_INTERVAL)
             工作列表.append([asyncio.create_task(Self.生成向量(原文, 会话, 模型层级, 工作ID, 查询)), len(index)])
 
         for 任务 in asyncio.as_completed([t[0] for t in 工作列表]):
@@ -225,6 +238,20 @@ class Builder:
             Self.媒体标记 = "<__media__>"
         return Self.媒体标记
 
+    def 获取本地媒体标记(Self) -> str:
+        if Self.媒体标记:
+            return Self.媒体标记
+        try:
+            地址 = Self.图像嵌入模型.listening_address
+            if 地址 and not 地址.startswith("http"):
+                地址 = "http://" + 地址
+            属性 = requests.get(地址.rstrip("/") + "/props", timeout=10).json()
+            Self.媒体标记 = (属性 or {}).get("media_marker") or "<__media__>"
+        except Exception:
+            Self.日志("log.core.image.props.error", e=eb.format_exc(), info_level=2)
+            Self.媒体标记 = "<__media__>"
+        return Self.媒体标记
+
     async def 生成图像向量(Self, 图像列表: list, 路径列表: list, 会话: aiohttp.ClientSession, 层级: dict, 工作ID: str) -> tuple:
         重试次数 = 0
         响应值 = None
@@ -236,7 +263,7 @@ class Builder:
                 elif Self.Config.EMB_REASONING_FRAME.lower() == "fastembed":
                     向量列表 = await asyncio.to_thread(lambda: list(Self.图像嵌入模型.embed(图像列表)))
                 elif any(x in Self.Config.EMB_REASONING_FRAME.lower() for x in ["llama.cpp", "xllamacpp", "llamacpp"]):
-                    媒体标记 = Self.媒体标记 or "<__media__>"
+                    媒体标记 = await asyncio.to_thread(Self.获取本地媒体标记)
                     base64列表 = [Self.图像转base64(i, 最大边长=getattr(Self.Config, "EMB_IMG_MAX_SIDE", 448)) for i in 图像列表]
                     向量列表 = await asyncio.to_thread(lambda: [item["embedding"] for item in Self.图像嵌入模型.handle_embeddings({
                         "input": {"prompt_string": " ".join([媒体标记] * len(base64列表)), "multimodal_data": base64列表},
@@ -248,6 +275,9 @@ class Builder:
                     向量列表 = 向量列表[:, :Self.Config.VEC_DIM_CLIP]
                 Self.Network.close_emb(工作ID)
                 return (向量列表, 路径列表)
+            except asyncio.CancelledError:
+                Self.Network.close_emb(工作ID)
+                raise
             except Exception:
                 Self.日志("log.core.image.locally.generate.vectors.error", e=eb.format_exc(), info_level=2)
                 Self.Network.close_emb(工作ID)
@@ -257,15 +287,25 @@ class Builder:
                 Self.日志("log.core.image.no.api.url", info_level=3)
                 Self.Network.close_emb(工作ID)
                 return (None, 路径列表)
-            媒体标记 = await Self.获取媒体标记(会话, 层级)
             try:
-                base64列表 = [Self.图像转base64(i, 最大边长=getattr(Self.Config, "EMB_IMG_MAX_SIDE", 448)) for i in 图像列表]
-                Json数据 = {
-                    "input": {"prompt_string": " ".join([媒体标记] * len(base64列表)), "multimodal_data": base64列表},
-                    "model": 层级["model"],
-                    "encoding_format": "float",
-                }
+                if (层级.get("api_type") or "").lower() == "dashscope":
+                    # 百炼原生多模态: input.contents 按序放图, 返回 output.embeddings 与之等长(兼容模式不支持 qwen3-vl-embedding)
+                    Json数据 = {
+                        "input": {"contents": [{"image": "data:image/png;base64," + Self.图像转base64(i, 最大边长=getattr(Self.Config, "EMB_IMG_MAX_SIDE", 448))} for i in 图像列表]},
+                        "model": 层级["model"],
+                    }
+                else:
+                    媒体标记 = await Self.获取媒体标记(会话, 层级)
+                    base64列表 = [Self.图像转base64(i, 最大边长=getattr(Self.Config, "EMB_IMG_MAX_SIDE", 448)) for i in 图像列表]
+                    Json数据 = {
+                        "input": {"prompt_string": " ".join([媒体标记] * len(base64列表)), "multimodal_data": base64列表},
+                        "model": 层级["model"],
+                        "encoding_format": "float",
+                    }
                 Json数据.update(层级["api_kwargs"])
+            except asyncio.CancelledError:
+                Self.Network.close_emb(工作ID)
+                raise
             except Exception:
                 Self.日志("log.core.image.convert.error", e=eb.format_exc(), info_level=2)
                 Self.Network.close_emb(工作ID)
@@ -283,7 +323,7 @@ class Builder:
                             )
                         响应体.raise_for_status()
                         响应值 = await 响应体.json()
-                    数据列表 = 响应值.get('data') or []
+                    数据列表 = ((响应值.get("output") or {}).get("embeddings") if (层级.get("api_type") or "").lower() == "dashscope" else 响应值.get("data")) or []
                     if len(数据列表) != len(图像列表):
                         raise RuntimeError(Self.Lang(
                             "log.core.image.api.generate.vectors.count.mismatch",
@@ -367,14 +407,19 @@ class Builder:
 
         Self.日志("log.core.vector.generate.start", info_level=0)
         进度条任务 = asyncio.create_task(管理进度条())
+        # ↓限制同时在飞的批次: 本地多模态模型(尤其 llama.cpp)通常非线程安全, 每个批次还会持有自己的 base64 与模型激活
+        并发信号量 = asyncio.Semaphore(max(1, getattr(Self.Config, "EMB_IMG_CONCURRENCY", 4) or 4))
+        async def 受限生成图像向量(图像列表, 路径列表):
+            async with 并发信号量:
+                while True:
+                    会话, 模型层级, 工作ID = Self.Network.get_emb()
+                    if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
+                    await asyncio.sleep(Self.Config.SESSION_ALLOCATION_RETRY_INTERVAL)
+                return await Self.生成图像向量(图像列表, 路径列表, 会话, 模型层级, 工作ID)
         for index in 分组结果:
             图像列表 = [i[0] for i in index]
             路径列表 = [i[1] for i in index]
-            while True:
-                会话, 模型层级, 工作ID = Self.Network.get_emb()
-                if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
-                await asyncio.sleep(0)
-            工作列表.append([asyncio.create_task(Self.生成图像向量(图像列表, 路径列表, 会话, 模型层级, 工作ID)), len(index)])
+            工作列表.append([asyncio.create_task(受限生成图像向量(图像列表, 路径列表)), len(index)])
 
         for 任务 in asyncio.as_completed([t[0] for t in 工作列表]):
             返回值为None = False
@@ -441,7 +486,7 @@ class Builder:
                     while True:
                         会话, 模型层级, 工作ID = Self.Network.reranker_emb()
                         if 会话 is not None and 工作ID is not None and 模型层级 is not None: break
-                        await asyncio.sleep(0) # 别删 删了用不了
+                        await asyncio.sleep(Self.Config.SESSION_ALLOCATION_RETRY_INTERVAL)
                     相似度 = []
                     async with 会话.post(url=模型层级["url"], json=请求内容, timeout=aiohttp.ClientTimeout(connect=模型层级["conn_timeout"], sock_read=模型层级["timeout"])) as 响应体:
                         if 响应体.status >= 400:
@@ -459,6 +504,9 @@ class Builder:
                         相似度.append(index["document"]["text"])
                     Self.Network.close_reranker(工作ID)
                     return [请求消息[0], 响应值[0]["document"]["text"], 相似度]
+                except asyncio.CancelledError:
+                    Self.Network.close_emb(工作ID)
+                    raise
                 except Exception:
                     if 工作ID is not None: Self.Network.close_reranker(工作ID)
                     Self.日志("log.core.translator.cache.generate.messages.error", messages=请求消息[1], e=eb.format_exc(), info_level=1)

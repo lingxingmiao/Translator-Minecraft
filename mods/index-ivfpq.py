@@ -1,7 +1,12 @@
+# 可用配置(覆盖键 MOD_INDEX_IVFPQ_<键>, 全大写):
+#   NLIST   聚类数系数(×√向量数)   0.25
+#   PQM     PQ 子空间数            16
+#   NBITS   每个子空间的位数        8
+
 from TranslatorLib import Mods, faiss, np
 
-参数 = Mods().模组配置("index-ivfpq", {"Nlist": 0.25, "PqM": 16, "Nbits": 8})
-Nlist, PqM, Nbits = float(参数["Nlist"]), int(参数["PqM"]), int(参数["Nbits"])
+参数 = Mods().模组配置("index-ivfpq", {"NLIST": 0.25, "PQM": 128, "NBITS": 8})
+Nlist, PqM, Nbits = float(参数["NLIST"]), int(参数["PQM"]), int(参数["NBITS"])
 
 
 @Mods().注册索引类型("IVFPQ", 数据源="Vector", 支持增量=True, 包装型=True)

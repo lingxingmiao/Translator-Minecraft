@@ -12,13 +12,7 @@ class Modpack: # 当前版本工作内容: 整合包清单解析 自动识别下
         Self.会话.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 TranslatorMinecraft",
         })
-        # ↓镜像站配置 解决中国大陆无法访问CurseForge/ModrinthCDN的问题 参考HMCL BMCLAPIDownloadProvider
-        Self.镜像映射 = {
-            "https://api.curseforge.com": "https://mod.mcimirror.top/curseforge",
-            "https://edge.forgecdn.net": "https://mod.mcimirror.top",
-            "https://api.modrinth.com": "https://mod.mcimirror.top/modrinth",
-            "https://cdn.modrinth.com": "https://mod.mcimirror.top",
-        }
+        # ↓镜像站映射已移入配置 Self.Config.MODPACK_MIRROR_MAP(原地址前缀 -> 镜像地址前缀), 见 镜像替换()
         # ↓下载文件LFU缓存: {url_hash: [缓存文件名, 访问频率, 最后访问代数, 文件大小]}
         Self.下载缓存元数据 = {}
         Self.下载缓存轮次 = 0
@@ -127,10 +121,10 @@ class Modpack: # 当前版本工作内容: 整合包清单解析 自动识别下
         except Exception:
             Self.日志("log.modpack.cache.write.error", e=eb.format_exc(), info_level=1)
     def 镜像替换(Self, url: str) -> str:
-        """替换URL为镜像地址(启用镜像且配置镜像时)"""
+        """按配置 MODPACK_MIRROR_MAP(原地址前缀 -> 镜像地址前缀)替换URL; 关闭镜像或映射为空时原样返回"""
         if not Self.Config.MODPACK_USE_MIRROR:
             return url
-        for 原地址, 镜像地址 in Self.镜像映射.items():
+        for 原地址, 镜像地址 in (Self.Config.MODPACK_MIRROR_MAP or {}).items():
             if url.startswith(原地址):
                 return url.replace(原地址, 镜像地址)
         return url

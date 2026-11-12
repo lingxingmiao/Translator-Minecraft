@@ -1,7 +1,11 @@
+# 可用配置(覆盖键 MOD_QUANT_Q2_NF_<键>, 全大写):
+#   BLOCKSIZE   量化分块大小   128
+#   CLIP        裁切分位        0.998
+
 from TranslatorLib import Mods, np, math, CleanVRAM
 
-参数 = Mods().模组配置("quant-q2_nf", {"BlockSize": 128, "Clip": 0.998})
-BlockSize, Clip = int(参数["BlockSize"]), 参数["Clip"]
+参数 = Mods().模组配置("quant-q2_nf", {"BLOCKSIZE": 128, "CLIP": 0.998})
+BlockSize, Clip = int(参数["BLOCKSIZE"]), 参数["CLIP"]
 
 边界 = np.array([-0.9816, 0.0, 0.9816], dtype=np.float32)
 中心 = np.array([-1.5121, -0.4528, 0.4528, 1.5121], dtype=np.float32)

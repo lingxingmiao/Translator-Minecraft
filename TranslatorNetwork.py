@@ -7,7 +7,7 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
         Self.Module = App.Module
         Self.CacheTokenCalibrator = App.CacheTokenCalibrator
         Self.日志 = App.日志
-        Self.层级列表 = App.Manager.get()
+        Self.层级列表 = App.Manage.get()
         Self.ˀꜝ锁锁ꜝˀ = SimpleNamespace()
         Self.ˀꜝ锁锁ꜝˀ.异步会话 = threading.Lock()
         Self.ˀꜝ锁锁ꜝˀ.翻译层级并发 = threading.Lock()
@@ -18,12 +18,14 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
         Self.ˀꜝ缓存ꜝˀ.翻译层级并发 = defaultdict(lambda: [0, [], [], []]) # {"层级ID": [工作活跃数, RPM, TPM, 工作ID]}
         Self.ˀꜝ缓存ꜝˀ.嵌入层级并发 = defaultdict(lambda: [0, [], []]) # {"层级ID": [工作活跃数, RPM(无效果), 工作ID]}
         Self.ˀꜝ缓存ꜝˀ.重排层级并发 = defaultdict(lambda: [0, [], []]) # {"层级ID": [工作活跃数, RPM(无效果), 工作ID]}
-        Self.停止事件 = asyncio.Event()
+        Self.停止事件 = None
         Self.定时任务 = {}
         Self.嵌入层级 = {
             "url": Self.Config.EMB_API_URL,
             "key": Self.Config.EMB_API_KEY,
+            "api_type": Self.Config.EMB_API_TYPE,
             "model": Self.Config.EMB_MODEL,
+            "pooling": Self.Config.EMB_POOLING,
             "api_kwargs": Self.Config.EMB_API_KWARGS,
             "timeout": Self.Config.EMB_TIMEOUT,
             "conn_timeout": Self.Config.EMB_CONN_TIMEOUT,
@@ -222,7 +224,9 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
     def 获取异步会话(Self, 层级) -> aiohttp.ClientSession:
         循环id = Self.获取当前事件循环ID()
         缓存键 = (层级["url"], 层级["key"], 层级["model"])
-        with Self.ˀꜝ锁锁ꜝˀ.异步会话:
+        if not Self.ˀꜝ锁锁ꜝˀ.异步会话.acquire(timeout=10): # ↓不让偶发长持锁把整条翻译流水线永久钉死(宁可这一条超时报错重试)
+            raise TimeoutError(f"async session lock timeout: {缓存键[0]}")
+        try:
             本循环会话 = Self.ˀꜝ缓存ꜝˀ.异步会话.get(循环id)
             if 本循环会话 is not None:
                 已有会话 = 本循环会话.get(缓存键)
@@ -253,19 +257,45 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
                 headers=请求头,
             )
             Self.ˀꜝ缓存ꜝˀ.异步会话.setdefault(循环id, {})[缓存键] = 会话
+            if Self.定时任务.get("清理无活跃会话") is None or Self.定时任务["清理无活跃会话"].done():
+                try:
+                    Self.定时任务["清理无活跃会话"] = asyncio.get_running_loop().create_task(Self.自动关闭会话())
+                except RuntimeError:
+                    pass
             return 会话
+        finally:
+            Self.ˀꜝ锁锁ꜝˀ.异步会话.release()
     async def 关闭异步会话(Self, url=None, key=None, model=None):
         缓存键 = (url, key, model)
+        待关闭列表 = []
+        # ↓锁内只做摘除 绝不能持有threading.Lock去await
+        # 否则同进程里同步调用获取异步会话的翻译线程会被永久阻塞(现场: 生成翻译卡死在TranslatorNetwork.py:227)
         with Self.ˀꜝ锁锁ꜝˀ.异步会话:
             for 循环id, 层级会话 in list(Self.ˀꜝ缓存ꜝˀ.异步会话.items()):
                 if 缓存键 in 层级会话:
-                    会话 = 层级会话[缓存键]
-                    if not 会话.closed:
-                        await 会话.close()
-                        del 层级会话[缓存键]
-                        
+                    待关闭列表.append(层级会话.pop(缓存键))
+        for 会话 in 待关闭列表:
+            if 会话.closed:
+                continue
+            try:
+                await asyncio.wait_for(会话.close(), timeout=15.0) # ←关连接也不能无限等 否则清理协程自己会卡住
+            except Exception:
+                pass
+    async def 关闭全部(Self):
+        Self.取停止事件().set()
+        with Self.ˀꜝ锁锁ꜝˀ.异步会话:
+            会话列表 = [会话 for 层级 in Self.ˀꜝ缓存ꜝˀ.异步会话.values() for 会话 in 层级.values()]
+            Self.ˀꜝ缓存ꜝˀ.异步会话.clear()
+        for 会话 in 会话列表:
+            if not 会话.closed:
+                try: await 会话.close()
+                except Exception: pass
+    def 取停止事件(Self):
+        if Self.停止事件 is None:
+            Self.停止事件 = asyncio.Event()
+        return Self.停止事件
     async def 自动关闭会话(Self):
-        while not Self.停止事件.is_set(): # 上班到下班
+        while not Self.取停止事件().is_set(): # 上班到下班
             for 层级id, 缓存数据 in list(Self.ˀꜝ缓存ꜝˀ.翻译层级并发.items()):
                 if 缓存数据[0] == 0: # 没有活跃任务
                     层级 = next((t for t in Self.层级列表 if t["id"] == 层级id), None)
@@ -278,14 +308,14 @@ class Network: # 当前版本(R1.6 B.4)工作内容: VibeCoding内容重新组�
                 if 缓存数据[0] == 0: # 没有活跃任务
                     await Self.关闭异步会话(Self.重排层级["url"], Self.重排层级["key"], Self.重排层级["model"])
             try:
-                await asyncio.wait_for(Self.停止事件.wait(), timeout=Self.Config.SESSION_CLEAN_INTERVAL)
+                await asyncio.wait_for(Self.取停止事件().wait(), timeout=Self.Config.SESSION_CLEAN_INTERVAL)
             except asyncio.TimeoutError:
                 pass
     async def __aenter__(Self): # 启动自动调用
         Self.定时任务["清理无活跃会话"] = asyncio.create_task(Self.自动关闭会话())
         return Self
     async def __aexit__(Self, exc_type, exc_val, exc_tb): # 关闭自动调用
-        Self.停止事件.set()
+        Self.取停止事件().set()
         任务 = list(Self.定时任务.values())
         for index in 任务:
             if not index.done():

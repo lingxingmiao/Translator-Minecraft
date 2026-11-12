@@ -1,32 +1,45 @@
+# 可用配置(覆盖键 MOD_INDEX_GSQ_<键>, 全大写):
+#   QUANT             量化类型(GSQ1_NL/GSQ2_NL/...)   "GSQ2"
+#   NLIST             聚类数系数(×√向量数)             4.0
+#   NPROBE            查询时探测的簇数                 39
+#   QUERYBLOCK        查询分块大小                     64
+#   MINVECTORS        向量数低于此值就不建粗聚类        50000
+#   USEPCA            是否先 PCA 降维                  True
+#   PCADIM            PCA 目标维度(-1=按块大小)         -1
+#   BLOCKSIZE         量化分块大小                     128
+#   RERANKBLOCKSIZE   重排分块大小                     128
+#   ITRSLM            码本迭代次数                     200
+#   SPLLM             码本采样比例                     0.05
+#   ESLM              码本早停阈值                     1e-06
 
 from TranslatorLib import Mods, np, njit, _prange, faiss, SimpleNamespace, pickle
 
 参数 = Mods().模组配置("index-gsq", {
-    "Quant": "GSQ2",  
-    "Nlist": 4.0,  
-    "Nprobe": 39, 
-    "QueryBlock": 64,
-    "MinVectors": 50000, 
-    "UsePCA": True,
-    "PcaDim": -1,
-    "BlockSize": 128,
-    "RerankBlockSize": 128,
-    "ItrsLM": 200,
-    "SplLM": 0.05,
-    "EsLM": 1e-6,
+    "QUANT": "GSQ2",  
+    "NLIST": 4.0,  
+    "NPROBE": 39, 
+    "QUERYBLOCK": 64,
+    "MINVECTORS": 50000, 
+    "USEPCA": True,
+    "PCADIM": -1,
+    "BLOCKSIZE": 128,
+    "RERANKBLOCKSIZE": 128,
+    "ITRSLM": 200,
+    "SPLLM": 0.05,
+    "ESLM": 1e-6,
 })
-Quant = 参数["Quant"]
-Nlist因子 = float(参数["Nlist"])
-Nprobe默认 = int(参数["Nprobe"])
-查询块 = int(参数["QueryBlock"])
-最小向量数 = int(参数["MinVectors"])
-用PCA = bool(参数["UsePCA"])
-PcaDim = int(参数["PcaDim"])
-块大小 = int(参数["BlockSize"])
-重排块大小 = int(参数["RerankBlockSize"])
-迭代次数 = int(参数["ItrsLM"])
-采样比例 = float(参数["SplLM"])
-早停阈值 = float(参数["EsLM"])
+Quant = 参数["QUANT"]
+Nlist因子 = float(参数["NLIST"])
+Nprobe默认 = int(参数["NPROBE"])
+查询块 = int(参数["QUERYBLOCK"])
+最小向量数 = int(参数["MINVECTORS"])
+用PCA = bool(参数["USEPCA"])
+PcaDim = int(参数["PCADIM"])
+块大小 = int(参数["BLOCKSIZE"])
+重排块大小 = int(参数["RERANKBLOCKSIZE"])
+迭代次数 = int(参数["ITRSLM"])
+采样比例 = float(参数["SPLLM"])
+早停阈值 = float(参数["ESLM"])
 
 @njit(cache=True)
 def 加速打包2(量化值):

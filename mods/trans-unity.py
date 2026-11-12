@@ -1,8 +1,53 @@
-from TranslatorLib import Path, eb, clr, Dnlib加载
+# 可用配置(覆盖键 MOD_TRANS_UNITY_<键>, 全大写):
+#   FILE_MATCH        文件匹配 glob   "*.dll"
+#   READ_CONCURRENT   读取并发        4
+#   WRITE_CONCURRENT  写入并发        4
+#   DLL_PATH          dnlib 所在目录  "./dll"
+#   DLL_NAME          dnlib 文件名    "dnlib.dll"
+
+from TranslatorLib import (re, Path, Parser, Mods, eb)
+
+模组参数 = Mods().模组配置("trans-unity", {
+    "FILE_MATCH": "*.dll",
+    "READ_CONCURRENT": 4,
+    "WRITE_CONCURRENT": 4,
+    "DLL_PATH": "./dll",
+    "DLL_NAME": "dnlib.dll",
+}, 索引指纹=False)
+
+
+clr = None
+try:
+    import contextlib as _contextlib, io as _io
+    with _contextlib.redirect_stderr(_io.StringIO()):
+        import clr
+except Exception:
+    clr = None
+
+
+_dnlib模块 = None
+
 
 _依赖提示 = "pythonnet" if clr is None else "dnlib"
 
+
+def Dnlib加载(dll路径):
+    """加载 ./dll/dnlib.dll; 返回 dnlib 模块或 None(pythonnet 不可用)。"""
+    global _dnlib模块
+    if _dnlib模块 is not None:
+        return _dnlib模块
+    if clr is None:
+        return None
+    if not dll路径.is_file():
+        raise FileNotFoundError(f"dnlib not found: {dll路径}")
+    clr.AddReference(str(dll路径))
+    import dnlib  # type: ignore
+    _dnlib模块 = dnlib
+    return _dnlib模块
+
+
 class Dnlib:
+
     def __init__(Self, App):
         Self.Config = App.Config
         Self.日志 = App.日志
@@ -15,6 +60,7 @@ class Dnlib:
         Self.OpCodes = None
         Self.WriterOptions = None
         Self.ModuleDefMD = None
+
     def 确保加载(Self) -> bool:
         if Self._已尝试加载:
             return Self._可加载
@@ -32,8 +78,10 @@ class Dnlib:
             Self.日志("log.module.dll.dnlib.load.error", e=str(e), info_level=2)
         return Self._可加载
     @property
+
     def 可用(Self) -> bool:
         return Self.确保加载()
+
     def 文本(Self, 键: str, **kwargs) -> str:
         Lang = getattr(Self._App, "Lang", None)
         if callable(Lang):
@@ -42,14 +90,17 @@ class Dnlib:
             except Exception:
                 pass
         return 键
+
     def 标记不可用(Self, e):
         Self.失败原因 = e
         Self.失败键 = "log.module.dll.dnlib.unavailable"
         Self.失败参数 = {"e": e}
+
     def 异常(Self, 键: str, **kwargs) -> RuntimeError:
         return RuntimeError(Self.文本(键, **kwargs))
+
     def 加载(Self):
-        dll路径 = Path(f"{Self.Config.DNLIB_DLL_PATH}/{Self.Config.DNLIB_DLL_NAME}").resolve()
+        dll路径 = Path(f"{Mods().取值(Self, ('trans-unity', 'DLL_PATH'))}/{Mods().取值(Self, ('trans-unity', 'DLL_NAME'))}").resolve()
         if not dll路径.is_file():
             raise FileNotFoundError(Self.文本("log.module.dll.dnlib.not.found", path=str(dll路径)))
         模块 = Dnlib加载(dll路径)
@@ -59,6 +110,7 @@ class Dnlib:
         Self.OpCodes = 模块.DotNet.Emit.OpCodes
         Self.WriterOptions = 模块.DotNet.Writer.ModuleWriterOptions
     @staticmethod
+
     def 是否插件(mod) -> bool:
         try:
             for 类型 in mod.GetTypes():
@@ -68,6 +120,7 @@ class Dnlib:
         except Exception:
             return True
         return False
+
     def 读取字符串(Self, 文件路径) -> list:
         if not Self.可用:
             Self.日志(Self.失败键 or "log.module.dll.dnlib.unavailable", info_level=2, **Self.失败参数)
@@ -109,14 +162,15 @@ class Dnlib:
                 except Exception:
                     pass
     @staticmethod
+
     def 占位符集合(文本: str) -> frozenset:
-        import re
         结果 = set()
         for m in re.finditer(r'\{[^{}]*\}', 文本):
             结果.add(m.group(0))
         for m in re.finditer(r'%(?:\d+\$)?[-+ 0#]*\d*(?:\.\d+)?[sdfoxXeEgGcCbB]', 文本):
             结果.add(m.group(0))
         return frozenset(结果)
+
     def 回写(Self, 文件路径, 替换字典: dict) -> dict:
         统计 = {"文件": str(文件路径), "请求": len(替换字典), "应用": 0,
                 "占位符跳过": 0, "校验失败": 0, "回滚": False,
@@ -220,3 +274,58 @@ class Dnlib:
                 except Exception:
                     pass
         return 统计
+
+
+def 取解析器(Self):
+    return Dnlib(Self)
+
+
+def 执行(Self, 根, path2=None, **参数):
+    解析 = UnityParser(Self)
+    Self.翻译流程(根, Mods().取值(Self, ("trans-unity", "FILE_MATCH")), 解析.读取, Self.Module.过滤DLL文本, lambda x: x[0][0], 解析.写回,
+                Mods().取值(Self, ("trans-unity", "READ_CONCURRENT")),
+                Mods().取值(Self, ("trans-unity", "WRITE_CONCURRENT")), "dll", path2=path2, **参数)
+
+
+def 探测DLL(Self, 路径):
+    return Path(路径).suffix.lower() == '.dll'
+
+
+class UnityParser(Parser):
+
+    def 读取(Self, 文件路径):
+        结果 = []
+        p_file = Path(文件路径)
+        if not 取解析器(Self).可用:
+            return 结果
+        try:
+            for s in 取解析器(Self).读取字符串(p_file):
+                结果.append([["ldstr", s], s, p_file])
+        except Exception:
+            Self.日志("log.module.dll.load.error", file=str(p_file), e=eb.format_exc(), info_level=2)
+        return 结果
+
+    def 写回(Self, 翻译列表):
+        文件映射 = {}
+        for 条目 in 翻译列表:
+            位置信息 = 条目[0]
+            译文 = 条目[1]
+            文件路径对象 = 条目[2]
+            原文 = 位置信息[1]
+            文件映射.setdefault(str(文件路径对象), {})[原文] = 译文
+        for 文件路径, 替换字典 in 文件映射.items():
+            if not 替换字典:
+                continue
+            try:
+                统计 = 取解析器(Self).回写(文件路径, 替换字典)
+                跳过 = 统计.get("占位符跳过") or 0
+                if 跳过 and not 统计.get("回滚"):
+                    Self.日志("log.module.dll.placeholder.skip", file=文件路径,
+                              count=跳过, applied=统计.get("应用", 0), info_level=1)
+            except Exception as e:
+                Self.日志("log.module.dll.write.error", file=文件路径, e=str(e), info_level=2)
+
+
+Mods().注册翻译类型("Unity", 执行, 显示名="Unity.NET Assembly",
+                文件探测=探测DLL, 探测分数=80, 解析器类=UnityParser,
+                产物="源文件")

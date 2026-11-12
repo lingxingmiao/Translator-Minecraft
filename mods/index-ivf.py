@@ -1,7 +1,10 @@
+# 可用配置(覆盖键 MOD_INDEX_IVF_<键>, 全大写):
+#   NLIST   聚类数系数(×√向量数)   0.25
+
 from TranslatorLib import Mods, faiss, np
 
-参数 = Mods().模组配置("index-ivf", {"Nlist": 0.25})
-Nlist = float(参数["Nlist"])
+参数 = Mods().模组配置("index-ivf", {"NLIST": 0.25})
+Nlist = float(参数["NLIST"])
 
 
 @Mods().注册索引类型("IVF", 数据源="Vector", 支持增量=True, 包装型=True)

@@ -20,6 +20,7 @@ class Module:
             "tooltip": re.compile(r'(\.addTooltip\(")((?:[^"\\]|\\.)*)("\))'),
             "displayName": re.compile(r'(\.displayName\s*=\s*")((?:[^"\\]|\\.)*)(")'),
         }
+        Self.正则表达式预编译.孤立代理 = re.compile(r'[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]')
     def __enter__(Self):
         return Self
     def 输出路径处理(Self, path: str):
@@ -160,6 +161,38 @@ class Module:
                 return 默认值
         return 当前
             
+    def 解析模型输出JSON(Self, 文本: str):
+        # ↓解析模型输出的JSON数组/对象 容忍代码围栏与前后废话 无法解析返回 None
+        if not isinstance(文本, str): return None
+        候选 = 文本.strip()
+        if not 候选: return None
+        if 候选.startswith("```"): # ↓剥离Markdown代码围栏
+            候选 = re.sub(r'^```[a-zA-Z0-9_+-]*[ \t]*\r?\n?', '', 候选)
+            候选 = re.sub(r'\r?\n?```$', '', 候选).strip()
+            if not 候选: return None
+        try: return json.loads(候选)
+        except Exception: pass
+        for 起始, 结束 in (('[', ']'), ('{', '}')): # ↓截取第一段括号配平的JSON 跳过字符串内的括号与转义
+            搜索位 = 0
+            while (起点 := 候选.find(起始, 搜索位)) >= 0:
+                搜索位 = 起点 + 1
+                深度, 引号内, 转义 = 0, False, False
+                for 位置 in range(起点, len(候选)):
+                    字符 = 候选[位置]
+                    if 转义: 转义 = False; continue
+                    if 字符 == '\\': 转义 = True; continue
+                    if 引号内:
+                        if 字符 == '"': 引号内 = False
+                        continue
+                    if 字符 == '"': 引号内 = True; continue
+                    if 字符 == 起始: 深度 += 1
+                    elif 字符 == 结束:
+                        深度 -= 1
+                        if 深度 == 0:
+                            try: return json.loads(候选[起点:位置 + 1])
+                            except Exception: break
+                        elif 深度 < 0: break
+        return None
     async def POST获取错误(Self, 响应体, err):
         try:
             错误原文 = await 响应体.text()
@@ -193,3 +226,7 @@ class Module:
                 Self.设置实例参数(attr, value)
             else:
                 setattr(实例, key, value)
+    def 清理孤立代理(Self, 值):
+        if not isinstance(值, str) or not Self.正则表达式预编译.孤立代理.search(值): return 值
+        try: return 值.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
+        except UnicodeEncodeError: return Self.正则表达式预编译.孤立代理.sub("\ufffd", 值)

@@ -1,7 +1,12 @@
-from TranslatorLib import Mods, np, CleanVRAM, TranslatorQuantization
+# 可用配置(覆盖键 MOD_QUANT_GSQ_NL_<键>, 全大写):
+#   BLOCKSIZE   量化分块大小(每组向量数)   128
+#   SPLLM       码本采样比例               0.05
 
-参数 = Mods().模组配置("quant-gsq_nl", {"BlockSize": 128, "SplLM": 0.05})
-BlockSize, SplLM = int(参数["BlockSize"]), float(参数["SplLM"])
+from TranslatorLib import Mods, np, CleanVRAM, TranslatorQuantization
+import numpy as _实np
+
+参数 = Mods().模组配置("quant-gsq_nl", {"BLOCKSIZE": 128, "SPLLM": 0.05})
+BlockSize, SplLM = int(参数["BLOCKSIZE"]), float(参数["SPLLM"])
 
 def GSQ_NL编码(Self, 数组, 电平数):
     分组行数 = BlockSize
@@ -154,3 +159,45 @@ def 注册档位(名称, 电平数, 打包位宽, 声明位数):
 
 for 名称, 电平数, 打包位宽, 声明位数 in 档位表:
     注册档位(名称, 电平数, 打包位宽, 声明位数)
+
+
+# ---------------------------------------------------------------------------
+#  分块 Walsh-Hadamard 正交旋转（index-csd 的正旋转依赖）
+#  维度能被 分组 整除时按块旋转；否则退化为恒等（仍保持内积，不做旋转）
+# ---------------------------------------------------------------------------
+_哈达玛缓存 = {}
+
+
+def _哈达玛(阶):
+    矩 = _哈达玛缓存.get(int(阶))
+    if 矩 is None:
+        阶 = int(阶)
+        矩 = _实np.ones((1, 1), _实np.float32)
+        while 矩.shape[0] < 阶:
+            矩 = _实np.block([[矩, 矩], [矩, -矩]])
+        矩 = _实np.ascontiguousarray(矩 / _实np.float32(_实np.sqrt(阶)), _实np.float32)
+        _哈达玛缓存[阶] = 矩
+    return 矩
+
+
+def 正交旋转(维度, 分组=128):
+    """-> (正旋转, 逆旋转)；两者都是逐块 H·x，H 为归一化 Hadamard（H=Hᵀ, H²=I）
+       分组必须是 2 的幂且整除维度；否则退化为恒等（保持内积，不做旋转）"""
+    D, B = int(维度), int(分组)
+    if D <= 0:
+        raise ValueError("正交旋转: 维度必须 > 0")
+    if B <= 0 or (B & (B - 1)) or D % B:
+        恒等 = lambda A: _实np.ascontiguousarray(A, _实np.float32)
+        return 恒等, 恒等
+    H = _哈达玛(B)
+    块数 = D // B
+
+    def 正旋转(A):
+        A = _实np.ascontiguousarray(A, _实np.float32)
+        return _实np.ascontiguousarray((A.reshape(-1, 块数, B) @ H.T).reshape(-1, D), _实np.float32)
+
+    def 逆旋转(A):
+        A = _实np.ascontiguousarray(A, _实np.float32)
+        return _实np.ascontiguousarray((A.reshape(-1, 块数, B) @ H).reshape(-1, D), _实np.float32)
+
+    return 正旋转, 逆旋转

@@ -1,7 +1,12 @@
+# 可用配置(覆盖键 MOD_INDEX_REFINE_<键>, 全大写):
+#   LOWDIMMODE   低维模式(None=不降维, "mrl"=按维度截断)   None
+#   LOWDIMDIM    低维维度                                  64
+#   KFACTOR      重排时多取几倍候选                         10.0
+
 from TranslatorLib import Mods, faiss
 
-参数 = Mods().模组配置("index-refine", {"LowDimMode": None, "LowDimDim": 64, "KFactor": 10.0})
-LowDimMode, LowDimDim, KFactor = 参数["LowDimMode"], int(参数["LowDimDim"]), float(参数["KFactor"])
+参数 = Mods().模组配置("index-refine", {"LOWDIMMODE": None, "LOWDIMDIM": 64, "KFACTOR": 10.0})
+LowDimMode, LowDimDim, KFactor = 参数["LOWDIMMODE"], int(参数["LOWDIMDIM"]), float(参数["KFACTOR"])
 
 
 @Mods().注册索引类型("Refine", 数据源="Vector", 支持增量=True, 包装型=True)

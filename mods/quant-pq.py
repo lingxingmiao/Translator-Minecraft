@@ -1,7 +1,11 @@
+# 可用配置(覆盖键 MOD_QUANT_PQ_<键>, 全大写):
+#   PQM       子空间数          128
+#   PQNBITS   每个子空间的位数   8
+
 from TranslatorLib import Mods, np, CleanVRAM, faiss, GPU_ACC
 
-参数 = Mods().模组配置("quant-pq", {"PqM": 128, "PqNbits": 8})
-PqM, PqNbits = int(参数["PqM"]), int(参数["PqNbits"])
+参数 = Mods().模组配置("quant-pq", {"PQM": 128, "PQNBITS": 8})
+PqM, PqNbits = int(参数["PQM"]), int(参数["PQNBITS"])
 
 
 def PQ编码(Self, 数组):

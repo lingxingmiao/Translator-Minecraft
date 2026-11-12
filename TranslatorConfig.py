@@ -1,10 +1,17 @@
-from TranslatorLib import (dataclass, replace, re, numpy, random, Path,
-                           Locale, Log, Index, Builder, Module, Quantization, File, Dnlib, Network, Modpack, TranslationCache, VectorCache, TokenCalibratorCache, Translator)
+import sys as _sys, os as _os
+if __file__:
+    _根目录 = _os.path.dirname(_os.path.abspath(__file__))
+    if _根目录 not in _sys.path:
+        _sys.path.insert(0, _根目录)
+
+from TranslatorLib import (dataclass, replace, re, numpy, random, Path, os,
+                           Locale, Log, Index, Builder, Module, Quantization, File, Network, Modpack, Mods, TranslationCache, VectorCache, TokenCalibratorCache, Translator, Tool, Loop)
 
 @dataclass
 class DefaultConfig:
     LANGUAGE_INPUT = "en_us"
     LANGUAGE_OUTPUT = "zh_cn"
+    LANGUAGE_MODEL = None
     LANGUAGE_VARIANT = True                                                             # 保存语言文件时是否同时生成大小写互补变体(zh_cn.lang -> zh_CN.lang) 防游戏只识别大写变体 仅Linux可用 翻译模型与整合包自动识别游戏版本范围
     
     # 可以使用 LLM0 LLM1 LLM2 多模型
@@ -24,6 +31,7 @@ class DefaultConfig:
     LLM_RETRY_SEED_RANDOM      = True                                                   # 重试是否再次随机种子 未实装
     LLM_MAX_WORKERS            = 3                                                      # 请求最大并发数
     LLM_MIN_COUNT              = 0                                                      # 多模型最低启用翻译条目数
+    LLM_BATCH_MODE             = "List"                                                 # 批量翻译输入模式 List为列表模式 其他均为HTML
     LLM_RPM                    = 0                                                      # 每分钟最大请求数(Requests Per Minute), 0=不限制
     LLM_TPM                    = 0                                                      # 每分钟最大Token数(Tokens Per Minute), 0=不限制
     LLM_TPM_MODE               = "TokenCalibrator"                                      # TPM估算模式 TokenCalibrator为实时学习 Max为字符与Token比例1:1
@@ -38,17 +46,20 @@ class DefaultConfig:
     LLM_CONN_REUSE             = False                                                  # aiohttp.TCPConnector.force_close参数 服务端会中断改成True
     LLM_RETRY_TIME             = 5
     LLM_RETRY_COEF             = 1.2
+    
     LLM_TOKEN_IN               = 0                                                      # 翻译实例.Config.LLM_TOKEN_IN   获取使用了多少Token
     LLM_TOKEN_OUT              = 0                                                      # 翻译实例.Config.LLM_TOKEN_OUT  获取使用了多少Token
     LLM_TOKEN_CACHE_HIT        = 0                                                      # 翻译实例.Config.LLM_TOKEN_HIT  获取使用了多少Token 非OpenAI标准
-    LLM_TOKEN_CACHE_HIT_FIELD  = [["usage", "prompt_cache_hit_tokens"]]                 # 上配置获取字段 依次尝试
     LLM_TOKEN_CACHE_MISS       = 0                                                      # 翻译实例.Config.LLM_TOKEN_MISS 获取使用了多少Token 非OpenAI标准
-    LLM_TOKEN_CACHE_MISS_FIELD = [["usage", "prompt_cache_miss_tokens"]]                # 上配置获取字段 依次尝试
+    LLM_TOKEN_CACHE_HIT_FIELD  = [["usage", "prompt_cache_hit_tokens"],                 # DeepSeek 阿里云百炼 XiaomiMiMo
+                                  ["usage", "prompt_tokens_details", "cached_tokens"]]  # LLM_TOKEN_CACHE_HIT获取字段 依次尝试
 
     EMB_API_URL             = ""
     EMB_API_KEY             = ""
+    EMB_API_TYPE            = "llama.cpp"                # string: llamacpp(llama.cpp server: prompt_string/multimodal_data) / dashscope(百炼原生多模态: input.contents)
     EMB_MODEL               = "BAAI/bge-base-en-v1.5"   # string: 嵌入模型/HuggingFace仓库名
     EMB_REASONING_FRAME     = "FastEmbed"               # string: 嵌入模型推理框架 SentenceTransformer FastEmbed llama.cpp
+    EMB_POOLING             = False                     # bool: 是否启用嵌入模型池化 仅xllamacpp
     EMB_MODEL_ACC_MODE      = "ONNX"                    # string: None, ONNX, OpenVINO, float32, float16, bfloat16 仅SentenceTransformer可用
     EMB_MODEL_DEVICE        = "cpu"                     # string: list: cpu 或 cuda:0 ...
     EMB_ENCODE_PROMPT_NAME  = ""                        # string: 预留功能 仅当前程序加载嵌入模型可用
@@ -70,6 +81,7 @@ class DefaultConfig:
     EMB_RETRY_COEF          = 1.2
     EMB_IMG_MAX_SIDE        = 448                      # int: 图像最长边限制 (超出则缩放, 规避多模态 batch 限制)
     EMB_IMG_MAX_BATCH       = 1                        # int: 图像向量每批最大张数
+    EMB_IMG_CONCURRENCY     = 4                        # int: 图像向量生成并发上限 (本地多模态模型通常非线程安全, 且每次调用都持有 base64 与激活)
 
     RERANKER_API_URL           = ""
     RERANKER_API_KEY           = ""
@@ -88,25 +100,31 @@ class DefaultConfig:
     RERANKER_CONN_REUSE        = False
     RERANKER_RETRY_TIME        = 5
     RERANKER_RETRY_COEF        = 1.2
+    
+    CACHE_MODEL       = 2 # 本地模型缓存数量
+    CACHE_INDEX       = 2 # 本地索引缓存数量
+    CACHE_VECTOR      = 2 # 本地向量缓存数量
+    
+    ENV_FASTEMBED_CACHE_PATH = r"./FastEmbed_Cache" # FastEmbed嵌入模型缓存路径
 
     SESSION_CLEAN_INTERVAL = 10 # 清理无任务会话间隔时间 同时管理LLM EMB RERANKER
-
+    SESSION_ALLOCATION_RETRY_INTERVAL = 0.05 # 会话重试间隔 如LLM EMB模型生成失败重新生成
+    
     #GSQ_K请启用向量重排来降低重建误差 小于5w向量请使用非GSQ_NL
     VEC_FILE_PATH                = r"./Vectors"         # 向量存储路径
-    VEC_FILE_NAME                = "Vectors"            # 向量文件名
+    VEC_FILE_NAME                = "Vector"             # 向量文件名
     VEC_READ_CACHE               = False                # 读取时缓存解码后的向量到内存 应用到上面的两个配置
-    VEC_CACHE_PATH               = r"./Vectors"         # 文本→向量缓存路径
-    VEC_CACHE_NAME               = "VectorsCache"       # 文本→向量缓存文件名
+    VEC_READ_LAZY                = True                 # 懒加载向量文件 get一次加载一次文件
+    VEC_CACHE_PATH               = r"./VectorCaches"    # 文本→向量缓存路径
+    VEC_CACHE_NAME               = "VectorCache"        # 文本→向量缓存文件名
     VEC_CACHE_SAVE_INTERVAL      = 30.0                 # 向量缓存定时写盘间隔（秒）；并发生成时改为后台节流批量落盘，避免频繁全量 IO
     VEC_CACHE_DECAY_GRACE        = 256                  # 宽限期（轮），此期限内不计算衰减
     VEC_CACHE_DECAY_THRESHOLD    = 0.05                 # 衰减分数阈值，低于此值淘汰
     VEC_CACHE_MAX_SIZE           = 409600               # 硬上限，超限按衰减分数淘汰最低分
-    VEC_CACHE_GGUF_QUANT         = ""                   # string: 缓存 GGUF 张量量化 空=原始张量(与原向量逐位一致) 可填 Q8_0/F16 等 与 VEC_GGUF_QUANT 独立
+    VEC_CACHE_GGUF_QUANT         = "Q8_0"                   # string: 缓存 GGUF 张量量化 空=原始张量(与原向量逐位一致) 可填 Q8_0/F16 等 与 VEC_GGUF_QUANT 独立
     VEC_DIM_CLIP                 = -1                   # 向量生成时维度裁剪 -1不裁切 仅推荐支持俄罗斯套娃表示学习的模型启用
     VEC_SPECTEMP_DIM             = -1                   # SpecTemp降维维度 -1不降维
     VEC_SPECTEMP_TEMPER          = -1                   # -1:自适应 0:纯PCA 0<γ≤1:固定
-    VEC_TT_SHAPE                 = []                   # list: TT分解各维大小，空=自动拆分为2^?
-    VEC_TT_RANK                  = -1                   # int: TT分解截断秩（越大精度越高，越小压缩比越高）
     VEC_GGUF_QUANT               = "Q8_0"               # string: GGML原生量化
     VEC_QUANTIZATION             = "Float32"            # string list(2): 单一格式(如 "GSQ6_NL") 或 混合格式(如 ["GSQ2_NL", "Float12_Max"]) 自动按维度能量贡献分配高低精度
     VEC_QUANTIZATION_MIX_RATIO   = 0.2                  # float: 混合模式下 高精度格式 覆盖的维度占比 (按每维度能量贡献 top% 选择)
@@ -114,14 +132,14 @@ class DefaultConfig:
     VEC_QUANTIZATION_CLIP_TYPE   = "Sort"               # string: 分位裁切方法 见 mods/quant_clip-sort.py / mods/quant_clip-percentile.py
     VEC_QUANTIZATION_ITRS_LM     = 200                  # _LM步数
     VEC_QUANTIZATION_ES_LM       = 1e-6                 # _LM早停 两步之间小于该值退出
-    VEC_QUANTIZATION_SCALE_TYPE  = "Int8_Max"           # string: 块缩放 注册表里的量化类型都能选(见 mods/ 与 量化方法总览.md), 支持带伴随量(MaxScale/Shape/码本)的格式
+    VEC_QUANTIZATION_SCALE_TYPE  = "Int8_Max"           # string: 块缩放 注册表里的量化类型都能选, 支持带伴随量(MaxScale/Shape/码本)的格式
     VEC_QUANTIZATION_SCALE_INNER_TYPE = "Float16_E0M15" # string: 块缩放的二级缩放类型 块量化器(Qx_K_M/GSQ_NL)内部的 Min/Scale/Mean 用它编码, 用来打断自递归(等价 llama.cpp 把 d/dmin 打成 fp16)
     
     # 向量重排 仅支持GSQ系列索引提升召回率
     VEC_RERANKER                           = True
     VEC_RERANKER_INDEX_RERANKER_BLOCK_SIZE = 128                   # 向量重排块大小(聚类)
     VEC_RERANKER_INDEX_FACTOR              = 8.0                   # 向量搜索乘数
-    VEC_RERANKER_INDEX_MODE                = ["Refine", "HNSWPQ"]  # 支持嵌套数组 [类型, 子规格]，例 ["Refine", ["IVFPQ", "IP"]]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF；包装型省略子规格时默认子索引=IP
+    VEC_RERANKER_INDEX_MODE                = ["HNSW"]  # 支持嵌套数组 [类型, 子规格]，例 ["Refine", ["IVFPQ", "IP"]]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF；包装型省略子规格时默认子索引=IP
     VEC_RERANKER_INDEX_SAMPLING            = numpy.float32(0.05)   # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
     VEC_RERANKER_INDEX_SAMPLING_MIN        = 1
     VEC_RERANKER_INDEX_RE_MINMAX           = False
@@ -145,31 +163,40 @@ class DefaultConfig:
     TRANSLATOR_REFINE_ROUNDS             = 0                                      # 翻译精炼次数
     TRANSLATOR_BATCH                     = 1                                      # 单次请求翻译文本数
     TRANSLATOR_BATCH_RETRY               = 1                                      # 批量翻译重试次数 超过退回单条翻译
+    TRANSLATOR_ITEM_RETRY                = 2                                      # 降级逐条后允许失败的条目数 超过整组判失败
     TRANSLATOR_CONTEXTS_MODE             = "space"                                # string: token:最少上下文消耗 space:上下文空间最近 vector:语义空间最近
     TRANSLATOR_CONTEXTS                  = False                                  # bool int: 翻译上下文 False:无 int值:数量(对) True:无上限
     TRANSLATOR_ORIGINAL_REFERENCE        = False                                  # 文本对照 Input:UV False:紫外线 True:紫外线(UV)
     TRANSLATOR_ORIGINAL_REFERENCE_FORMAT = "{t}({o})"                             # 文本对照格式 o为原文 t为译文
     TRANSLATOR_SUMMARY                   = False                                  # bool: 翻译前总结 用来提升语义一致性
     TRANSLATOR_SUMMARY_MAX_TEXT          = 81920                                  # int: 最大输入大小
-    TRANSLATOR_SUMMARY_SYSTEM_PROMPT     = "你是Minecraft模组内容分析器,通读待翻译文本后用{lang}语言输出一段概述(≤200字),概括主题/玩法/核心术语,并理清哪些类别不做翻译,不翻译具体条目。"
+    TRANSLATOR_SUMMARY_SYSTEM_PROMPT     = "你是Minecraft模组内容分析器,通读待翻译文本后用{lang}语言输出一段概述(≤200字),概括主题/玩法/核心术语。"
     TRANSLATOR_SUMMARY_USER_PROMPT       = "请总结以下模组文本的内容与核心术语:\n{text}"
     TRANSLATOR_SUMMARY_TEXT              = "\nVIII以下为翻译前总结内容,请参考内容后翻译"
     TRANSLATOR_USER_PROMPT               = "翻译为{lang}语言(仅输出翻译内容):{text}"
     TRANSLATOR_SYSTEM_PROMPT             = """你是翻译器,将文本准确一致地翻译成{lang}语言
 ##翻译规则
-I返回译文不加解释与废话(如“这是译文”“如下翻译”).
-II返回译文必须与段落及格式相同.
-III遇ULV.LV.MV.HV.EV.IV.LuV.ZPM.UV.UHV.UEV.UIV.UXV.UMV.OpV.MAX不译
-IV不译内容(如专名、键等),保留原文.
-V遇&或§或%则留后一位不译.
-VIHTML和Markdown和JSON语法翻译可读文本内容,即使语法错误,不改标签或符号.
-VII<rag-input>为参考内容,不译
-VIII<content>为上下文内容,不译
+I返回译文不加解释与废话(如“这是译文”“如下翻译”)
+II返回译文必须与段落及格式相同
+V遇&§%则留后一位不译
+VIHTML和Markdown和JSON语法翻译可读文本内容,即使语法错误,不改标签或符号
+###无需翻译直接输出
+I ULV LV MV HV EV IV Lu ZPM UV UHV UEV UIV UXV UMV OpV MAX
+II 专有名词、键等
+###无需翻译不得输出
+I<rag-input>为参考
+II<content>为上下文
 """
 
     MODPACK_MOD_CONCURRENT                 = 8                         # 翻译整合包时翻译模组并发数
     MODPACK_AUTO_DOWNLOAD                  = True                      # bool: 翻译整合包时是否自动识别清单并下载缺失模组
     MODPACK_USE_MIRROR                     = True                      # bool: 使用镜像站(MCIM) 解决中国大陆无法访问CurseForge/Modrinth
+    MODPACK_MIRROR_MAP                     = {
+        "https://api.curseforge.com": "https://mod.mcimirror.top/curseforge",
+        "https://edge.forgecdn.net": "https://mod.mcimirror.top",
+        "https://api.modrinth.com": "https://mod.mcimirror.top/modrinth",
+        "https://cdn.modrinth.com": "https://mod.mcimirror.top",
+    }
     MODPACK_CURSEFORGE_API_KEY             = ""                        # string: CurseForge官方API Key(可选) 留空使用网页公开接口
     MODPACK_DOWNLOAD_CONCURRENT            = 8                         # int: 模组下载并发数
     MODPACK_DOWNLOAD_RETRY                 = 3                         # int: 单文件下载失败重试次数
@@ -178,7 +205,7 @@ VIII<content>为上下文内容,不译
     MODPACK_DOWNLOAD_CACHE                 = True                      # bool: 是否启用下载文件缓存 同一URL重复下载时直接复用
     MODPACK_DOWNLOAD_CACHE_PATH            = r"./Modpack_Download"     # string: 下载缓存存储路径
     MODPACK_DOWNLOAD_CACHE_NAME            = "Modpack_Download_Cache"  # string: 下载缓存元数据文件名
-    MODPACK_DOWNLOAD_CACHE_MAX_SIZE        = 512                       # int: 缓存文件数硬上限 超限按LFU评分淘汰最低分
+    MODPACK_DOWNLOAD_CACHE_MAX_SIZE        = 1024                      # int: 缓存文件数硬上限 超限按LFU评分淘汰最低分
     MODPACK_DOWNLOAD_CACHE_DECAY_GRACE     = 8                         # int: 淘汰宽限期(轮) 此期限内不计算衰减
     MODPACK_DOWNLOAD_CACHE_DECAY_THRESHOLD = 0.05                      # float: 衰减分数阈值 频率/(代数差+1)低于此值淘汰
 
@@ -194,33 +221,27 @@ VIII<content>为上下文内容,不译
     LANG_PATH            = r"./Lang"
     LANGUAGE             = r"zh_CN"
     HF_DOWNLOAD_KWARGS     = {}                                                     # hf_hub_download下载器传参 {"endpoint": "https://hf-mirror.com"}使用中国镜像站
-    MODS_PATH                     = r"./mods"            # string: 模组文件夹路径(存放模组 .py 与 *.cfg)
-    MODS_CFG_PATH                 = r"./mods/mods.cfg"   # string: 模组配置文件路径(段头 #mod:模组名, #注释, k=v)
+
+    ARCHIVE_MAX_ENTRIES           = 200_000              # int: 归档条目数上限(防归档炸弹)
+    ARCHIVE_MAX_BYTES             = 8 << 30        # int: 归档解压总量上限(防归档炸弹) 8 GiB
+    ARCHIVE_SUFFIXES              = (
+        (".zip", "zipfile"),     (".jar", "zipfile"),        (".mcpack", "zipfile"), (".mcaddon", "zipfile"),
+        (".mcworld", "zipfile"), (".mctemplate", "zipfile"), (".mrpack", "zipfile"), (".apk", "zipfile"),
+        (".tar", "tarfile"),     (".tgz", "tarfile"),        (".tbz2", "tarfile"),   (".txz", "tarfile"),
+        (".gz", "libarchive"),   (".xz", "libarchive"),      (".bz2", "libarchive"), (".zst", "libarchive"),
+        (".7z", "libarchive"),   (".rar", "libarchive"),
+    )
+    ARCHIVE_WRITABLE_SUFFIXES     = (".zip",)           # tuple: 写归档唯一使用的后缀(zipfile 只能写 zip) 输出名不带归档后缀时补它
+
+    LIB_PATH                      = r"./libs"            # string:库
+
+    MODS_PATH                     = r"./mods"            # string: 模组文件夹路径(存放模组 .py 与 .zip)
+    MOD_CONFIG                    = {}                    # dict: 模组配置覆盖 统一键名 MOD_<模组名>_<配置项> 全大写(如 MOD_INDEX_HNSW_M) 模组默认值由模组文件 Mods().模组配置("index-hnsw", {...}) 声明
     
     TQDM_FPS             = 24
     TQDM_DIFF            = False       # 详细任务进度条 仅支持翻译请求 实验性
     TQDM_RICH            = True
     TQDM_TQDM            = True
-    
-    #CONCURRENT太高Windows会报错 Win:太快了不念
-    QUESTS_READ_MAX_CONCURRENT  = 4
-    QUESTS_WRITE_MAX_CONCURRENT = 4
-    SCRIPT_READ_MAX_CONCURRENT  = 4
-    SCRIPT_WRITE_MAX_CONCURRENT = 4
-    MENU_READ_MAX_CONCURRENT    = 4
-    MENU_WRITE_MAX_CONCURRENT   = 4
-    BOOK_READ_MAX_CONCURRENT    = 4
-    BOOK_WRITE_MAX_CONCURRENT   = 4
-    DATA_READ_MAX_CONCURRENT    = 4
-    DATA_WRITE_MAX_CONCURRENT   = 4
-    LANG_READ_MAX_CONCURRENT    = 4
-    LANG_WRITE_MAX_CONCURRENT   = 4
-    DLL_READ_MAX_CONCURRENT     = 4
-    DLL_WRITE_MAX_CONCURRENT    = 4
-    SCRIPT_CRT_WRITE_UNICODE    = True
-    
-    DNLIB_DLL_PATH      = r"./dll"
-    DNLIB_DLL_NAME      = "dnlib.dll"
     
     DATA_COMMAND_PATH = r"./DataPack_Command"
     DATA_COMMAND_FILE = "DataPack_Command.txt"
@@ -230,16 +251,18 @@ VIII<content>为上下文内容,不译
     PACK_META_TEMPLATE_CASUALTIESUNKNOWN = "{lang} 语言文件\n制作: <color=\"yellow\">{author}</color>, 翻译模型：<color=\"blue\">{model}"  # 未知伤亡
     PACK_AUTHOR                          = "" # 作者信息 空为硬编码的海盐青茫
 
+    INDEX_FILE_PATH               = r"./Indexs"          # string: 索引文件夹路径
+    INDEX_FILE_NAME               = "Index"              # string: 索引文件名
     INDEX_TEXT_LOWER              = True                 # bool: BM25文本索引是否小写化
     INDEX_LANGUAGE                = "en_us"              # string: BM25索引语言 语言类型在Mods文件夹
-    INDEX_TEXT_K                  = 3                    # int: 文本索引数
-    INDEX_WORD_K                  = 3                    # int: 单词索引数
-    INDEX_LANG_K                  = 3                    # int: 索引ID索引数 使用BM25时会禁用 因为BM25无法实时add
+    INDEX_TEXT_K                  = 12                   # int: 文本索引数
+    INDEX_WORD_K                  = 4                    # int: 单词索引数
+    INDEX_LANG_K                  = 6                    # int: 索引ID索引数 使用BM25时会禁用 因为BM25无法实时add
     INDEX_TEXT_RANGE              = 8                    # int: 文本索引文本范围 len(文本)超过±该值就不会加入参考文本
     INDEX_WORD_RANGE              = 4                    # int: 单词索引文本范围 len(文本)超过±该值就不会加入参考文本
     INDEX_LANG_RANGE              = 8                    # int: 索引ID索引文本范围 len(文本)超过±该值就不会加入参考文本
     INDEX_QUESTS_BASIC_WORDS      = []
-    INDEX_MODE                    = ["Refine", "NSGSQ"]  # strint list: 支持嵌套数组 [类型, 子规格]，例 ["Refine", "IVFPQ", "IP"]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ, GSQFast(下一个索引不能是Faiss)；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF 默认：IP 特殊：BM25(只能单层)
+    INDEX_MODE                    = ["NSGPQ"]            # strint list: 支持嵌套数组 [类型, 子规格]，例 ["Refine", "IVFPQ", "IP"]；叶子: L2 IP；独立: HNSW HNSWSQ HNSWPQ NSGFlat NSGSQ NSGPQ, GSQFast(下一个索引不能是Faiss)；包装(需子规格): Refine RefineLowDim IVFSQ IVFPQ IVFPQR IVF 默认：IP 特殊：BM25(只能单层)
     INDEX_LANG_MODE               = "IP"                 # strint list: 索引ID(整合包索引)索引模式
     INDEX_CONTEXTS_MODE           = "IP"                 # strint list: 翻译上下文(TRANSLATOR_CONTEXTS)索引模式                                 
     INDEX_SAMPLING                = numpy.float32(0.05)  # float百分比采样 uint采样数量 float1时采样100% uint1时采样1条向量 类型32位
@@ -248,18 +271,51 @@ VIII<content>为上下文内容,不译
     INDEX_RE_MEANSTD              = False
     INDEX_RE_QUANTILES            = False
     INDEX_RE_OPTIM                = False
-    INDEX_CPU_COUNT               = numpy.float32(0.8)   #float百分比线程 uint线程数 float1时线程100% uint1时1线程 类型32位 仅Faiss可用
+    INDEX_CPU_COUNT               = numpy.float32(0.8)   # Faiss线程数 float百分比线程 uint线程数 float1时线程100% uint1时1线程 类型32位
+    INDEX_GPU_DEVICE_IDS          = [0]                  # list: Faiss GPU设备ID列表
+    INDEX_GPU_MIN_COMPUTE         = 50                   # int: 低于该算力的显卡直接跳过GPU(cu129的nvcc最低只编到sm_50; Kepler 3.x那代卡连cuBLAS初始化都会断言abort 拦不住)
+    INDEX_GPU_TRAIN               = False                # bool: Faiss 训练是否使用GPU
+    INDEX_GPU_ADD                 = False                # bool: Faiss 添加向量是否使用GPU
+    INDEX_GPU_SEARCH              = False                # bool: Faiss 搜索是否使用GPU
+    INDEX_GPU_SEARCH_MODE         = "IndexShards"        # str: Faiss 多GPU模式(搜索/训练/添加共用) IndexShards数据分片 IndexReplicas数据复制
     
     # 索引指纹: 索引类型参数已由 mods/*.cfg 接管(见 Mods().索引配置快照()), 这里只留框架参数
     INDEX_CONFIG                  = ["INDEX_MODE", "INDEX_RE_MINMAX", "INDEX_RE_MEANSTD", "INDEX_RE_QUANTILES", "INDEX_RE_OPTIM",
                     "INDEX_SAMPLING", "INDEX_SAMPLING_MIN", "INDEX_CPU_COUNT"]
-    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "DNLIB_DLL_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH", "MODPACK_DOWNLOAD_CACHE_PATH", "MODS_PATH"]
+    PATH_CONFIG = ["TOKEN_CALIBRATOR_CACHE_PATH", "TRANSLATOR_CACHE_PATH", "DATA_COMMAND_PATH", "PATH_CACHE", "LOGS_FILE_PATH", "LANG_PATH", "MODPACK_DOWNLOAD_CACHE_PATH", "MODS_PATH"]
     LLM_POAT_CONFIG = [[402, 429,], [400, 401, 422, 500, 503]]
     
     # 安全高风险区域
-    API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE_VARIANT$", r"^LANGUAGE$"}
+    API_TRANSLATOR_CORE_CONFIG_WHITE = {r"^LANGUAGE_INPUT$", r"^LANGUAGE_OUTPUT$", r"^LANGUAGE_MODEL$", r"^LANGUAGE_VARIANT$", r"^LANGUAGE$"}
     API_TRANSLATOR_CORE_CONFIG_BLACK = {}
     API_TRANSLATOR_CORE_CONFIG_RANGE = {r"^LLM\d+_TEMP$": (0.0, 1.0), r"^TRANSLATOR_BATCH$": (1, 1), r"^INDEX_\w+_K$": (0, 5)}
+    API_HOST = "127.0.0.1"
+    API_PORT = "49180"
+    API_SSL_KEY_FILE = None
+    API_SSL_CERT_FILE = None
+    API_WORKERS = 5
+    API_RPM = 120 # API每分钟请求上线
+    API_ZSTD_BLKSIZE = 1 << 20 # Zstd流式块传输块大小 1 << 20 = 1MiB
+    API_ZSTD_MDFS = 8 << 30 # Zstd流式块传输最大大小 8 << 30 = 8GiB
+    API_TASK_PATH = "./apiTask"
+    API_TASK_FILE = "Task"
+    API_TASK_FTD = 30 # 落盘间隔
+    API_TASK_VALIDITY = 172800 # 任务保质期 单位:秒
+    API_TASK_VALIDITY_INSP = 1800 # 任务保质期检查间隔 单位:秒
+    API_TASK_DEDUP = False # 同文件去重 如果有用SHA3 256文件
+    API_UPLOAD_COMPLVL = 6 # 上传文件压缩等级
+    API_UPLOAD_MINSIZE = 512 # 多少字节会启用上传压缩
+    API_BINARY_SUFFIXES = (".dll",) # tuple: 非归档但同样按"已压缩产物"下发的后缀(二进制产物) 归档类由 ARCHIVE_SUFFIXES 自动覆盖
+    API_PRODUCT_MIME = ( # tuple: 产物媒体类型注册表(唯一硬编码点) (产物后缀, HTTP Content-Type) 顺序即注册顺序 "可压缩/已压缩产物"按 归档注册表 ∪ API_BINARY_SUFFIXES 自动判定
+        (".json", "application/json"),
+        (".lang", "text/plain; charset=utf-8"), (".txt", "text/plain; charset=utf-8"),
+        (".log", "text/plain; charset=utf-8"), (".zs", "text/plain; charset=utf-8"),
+        (".properties", "text/plain; charset=utf-8"),
+        (".zip", "application/zip"), (".jar", "application/java-archive"),
+        (".mrpack", "application/zip"), (".mcpack", "application/zip"),
+        (".mcaddon", "application/zip"), (".dll", "application/octet-stream"),
+    )
+    API_ADMIN_KEY = ["sk-259259"] # 管理员密钥 默认使用sk-259259 默认密钥安全性和dev1ce A1👁红宝石一样高 性能高的和i20一样
 DEFAULT_CONFIG = DefaultConfig()
 class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含DefaultConfig的功能或值
     class _层级(dict):
@@ -279,18 +335,28 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
             if re.match(r'^LLM\d+_', 键): 层级参数[键] = 值
             else: 其他参数[键] = 值
         
+        # ↓分离模组配置 MOD_<模组名>_<配置项>(全大写) 统一并入 Config.MOD_CONFIG
+        模组配置 = {}
+        for 键 in [键 for 键 in 其他参数 if Mods().是模组配置键(键)]:
+            模组配置[键.upper()] = 其他参数.pop(键)
+        
         # ↓应用其他参数到配置 network特殊处理存入NETWORK变量
         for 键, 值 in 其他参数.items():
             if 键 == "network":
                 object.__setattr__(Self, "NETWORK", 值)
-            elif hasattr(Self.Config, 键): setattr(Self.Config, 键, 值)
-            else: raise AttributeError(f"Unknown config key: {键}")
+                continue
+            if not hasattr(DefaultConfig, 键):
+                setattr(DefaultConfig, 键, None)
+            setattr(Self.Config, 键, 值)
+        
+        # ↓模组配置覆盖: 显式 MOD_CONFIG 字典 + 扁平 MOD_* 键, 合并进新字典不污染默认值
+        Self.Config.MOD_CONFIG = {**Mods().归一化模组配置(Self.Config.MOD_CONFIG), **模组配置}
         
         # ↓解析层级参数 按层级号分组 格式: {层级号: {字段: 值}, ...}
-        匹配模式 = re.compile(r'^LLM(\d+)_(.+)$')
+        LLM匹配模式 = re.compile(r'^LLM(\d+)_(.+)$')
         层级分组 = {}
         for 键, 值 in 层级参数.items():
-            匹配结果 = 匹配模式.match(键)
+            匹配结果 = LLM匹配模式.match(键)
             if 匹配结果:
                 层级号, 字段 = int(匹配结果.group(1)), 匹配结果.group(2).lower()
                 层级分组.setdefault(层级号, {})[字段] = 值
@@ -332,6 +398,11 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
                 "tpm_mode"         : str(  层级配置.get("tpm_mode"          , Self.Config.LLM_TPM_MODE         )),
                 "active_time_start": str(  层级配置.get("active_time_start" , Self.Config.LLM_ACTIVE_TIME_START)),
                 "active_time_end"  : str(  层级配置.get("active_time_end"   , Self.Config.LLM_ACTIVE_TIME_END  )),
+                "token_in"         : int(  层级配置.get("token_in"          , Self.Config.LLM_TOKEN_IN         )),
+                "token_out"        : int(  层级配置.get("token_out"         , Self.Config.LLM_TOKEN_OUT        )),
+                "token_cache_hit"  : int(  层级配置.get("token_cache_hit"   , Self.Config.LLM_TOKEN_CACHE_HIT  )),
+                "token_cache_miss" : int(  层级配置.get("token_cache_miss"  , Self.Config.LLM_TOKEN_CACHE_MISS )),
+                "batch_mode"       : str(  层级配置.get("batch_mode"        , Self.Config.LLM_BATCH_MODE       )),
             }
     
     # get层级 食用方法: for inedx in 返回内容: print(index[键])
@@ -346,23 +417,25 @@ class RuntimeConfig(DefaultConfig): # 这个括号是继承 RuntimeConfig包含D
     def __setattr__(Self, 名称, 值):
         if 名称 in ('Config', '_层级注册表'):
             object.__setattr__(Self, 名称, 值)
-        elif hasattr(Self.Config, 名称):
-            setattr(Self.Config, 名称, 值)
-        else:
-            raise AttributeError(f"Unknown config key: {名称}")
+            return
+        if not hasattr(DefaultConfig, 名称):
+            setattr(DefaultConfig, 名称, None) # ↓未知键直接注册成默认值, 不再抛 AttributeError
+        setattr(Self.Config, 名称, 值)
         
 class Config:
     def __init__(Self, Config: dict, 创建缓存: bool = True):
         Self.ConfigDict = Config.copy()
-        有效键 = {k: v for k, v in (Config or {}).items()
-        if k == "network" or re.match(r'^LLM\d+_', k) or hasattr(DefaultConfig, k)}
+        有效键 = dict(Config or {}) # ↓不再按 hasattr(DefaultConfig) 过滤丢键, 未知键交给 RuntimeConfig 直接注册
         Config = RuntimeConfig(**有效键)
         Self.Config: DefaultConfig = Config.Config
-        Self.Manager: RuntimeConfig = Config
+        if Self.Config.LANGUAGE_MODEL is None:
+            Self.Config.LANGUAGE_MODEL = Self.Config.LANGUAGE_OUTPUT
+        Self.Manage: RuntimeConfig = Config
         for index in Self.Config.PATH_CONFIG:
             Path(getattr(Self.Config, index)).mkdir(parents=True, exist_ok=True)
-        模组加载器 = getattr(type(Self), "模组加载器", None)
-        if 模组加载器 is not None: 模组加载器(Self.Config)
+        os.environ.setdefault("FASTEMBED_CACHE_PATH", str(Path(Self.Config.ENV_FASTEMBED_CACHE_PATH).resolve()))
+        # Locale/Lang/Log 先建好再加载模组: 模组在 import 期就要注册类型/挂载,
+        # 注册报错要出本地化文案, 所以那时 Self 上必须已经有 Lang 和 Log(两者都不依赖模组表)。
         Self.Locale: Locale = Locale(Self)
         Self.RichTqdm = Self.Locale.RichTqdm # 美化进度条 默认
         Self.TqdmTqdm = Self.Locale.TqdmTqdm # 标准进度条
@@ -370,6 +443,9 @@ class Config:
         Self.Lang = Self.Locale.Lang
         Self.Log: Log = Log(Self)
         Self.日志 = Self.Log.写入日志
+        Loop.绑定语言(Self.Lang, Self.日志)
+        模组加载器 = getattr(type(Self), "模组加载器", None)
+        if 模组加载器 is not None: 模组加载器(Self.Config, Self)
         if 创建缓存:
             Self.CacheTranslator: TranslationCache = TranslationCache(Self)
             Self.CacheVector: VectorCache = VectorCache(Self)
@@ -383,11 +459,12 @@ class Config:
         Self.Network: Network = Network(Self) # 网络管理器核心 并发限制在此
         Self.Builder: Builder = Builder(Self)
         Self.Quantization: Quantization = Quantization(Self)
-        Self.Dnlib = Dnlib(Self)
         Self.File: File = File(Self)
         Self.Modpack: Modpack = Modpack(Self)
         Self.Translator = None
+        Self.Tool = None
         if "BM25" in Self.Config.INDEX_MODE: Self.Config.INDEX_LANG_K = 0
+        
     def 关闭(Self):
         if getattr(Self, "已关闭", False): return
         Self.已关闭 = True
@@ -405,9 +482,18 @@ class Config:
             Self.Log = None
             try: 日志.关闭()
             except Exception: pass
+        if not getattr(Self, "共享缓存", False):
+            try: Loop.运行(Self.Network.关闭全部())
+            except Exception: pass
+            try: Loop.关闭()
+            except Exception: pass
+            
     def get_translator(Self):
         if Self.Translator is None: Self.Translator = Translator(Self)
         return Self.Translator
+    def get_tool(Self):
+        if Self.Tool is None: Self.Tool = Tool(Self)
+        return Self.Tool
     def 过滤用户配置(Self, 用户配置: dict) -> dict:
         规则 = {
             "allow_patterns": Self.Config.API_TRANSLATOR_CORE_CONFIG_WHITE,
@@ -428,7 +514,7 @@ class Config:
         return 过滤后配置
     def get_config_temporary(Self, 用户配置: dict = None):
         过滤后配置 = Self.过滤用户配置(dict(用户配置 or {}))
-        过滤后配置["LOGS_FILE_NAME"] = Self.Module.uuid()   # 放在过滤之后, 否则会被白名单丢掉导致临时实例写同一个日志文件
+        过滤后配置["LOGS_FILE_NAME"] = Self.Module.uuid()
         临时配置 = Config(Self.ConfigDict | 过滤后配置, 创建缓存=False)
         临时配置.共享缓存 = True
         临时配置.Network = Self.Network
@@ -441,3 +527,6 @@ class Config:
     def get_translator_temporary(Self, 用户配置: dict = None):
         临时配置 = Self.get_config_temporary(用户配置)
         return 临时配置.get_translator()
+    def get_tool_temporary(Self, 用户配置: dict = None):
+        临时配置 = Self.get_config_temporary(用户配置)
+        return 临时配置.get_tool()

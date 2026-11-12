@@ -1,7 +1,12 @@
+# 可用配置(覆盖键 MOD_INDEX_REFINELOWDIM_<键>, 全大写):
+#   LOWDIMMODE   低维模式("mrl"=按维度截断)   "mrl"
+#   LOWDIMDIM    低维维度                     64
+#   KFACTOR      重排时多取几倍候选            10.0
+
 from TranslatorLib import Mods, njit, _prange, numpy, faiss, pickle, IndexGSQ
 
-参数 = Mods().模组配置("index-refinelowdim", {"LowDimMode": "mrl", "LowDimDim": 64, "KFactor": 10.0})
-LowDimMode, LowDimDim, KFactor = 参数["LowDimMode"], int(参数["LowDimDim"]), float(参数["KFactor"])
+参数 = Mods().模组配置("index-refinelowdim", {"LOWDIMMODE": "mrl", "LOWDIMDIM": 64, "KFACTOR": 10.0})
+LowDimMode, LowDimDim, KFactor = 参数["LOWDIMMODE"], int(参数["LOWDIMDIM"]), float(参数["KFACTOR"])
 
 
 @njit(cache=True, parallel=True, fastmath=True)

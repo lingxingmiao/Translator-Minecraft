@@ -1,3 +1,45 @@
-Qwen3.5
+TranslatorMinecraft
+Copyright (C) 2026 lingxingmiao
+
+本软件以 GNU Affero General Public License v3.0 或更高版本（AGPL-3.0-or-later）分发，
+许可证全文见同目录 LICENSE，或 https://www.gnu.org/licenses/agpl-3.0.html
+
+================================================================================
+第三方组件
+================================================================================
+
+本软件在运行与分发过程中会包含下列第三方组件。各组件的版权归其各自作者所有，
+并按各自的许可证条款使用。
+
+--------------------------------------------------------------------------------
+VaultPatcher
+--------------------------------------------------------------------------------
+Copyright (C) 3093FengMing
+License : GNU General Public License v3.0 (GPL-3.0)
+          https://www.gnu.org/licenses/gpl-3.0.html
+Project : https://github.com/3093FengMing/VaultPatcher
+
+用途    ：在类加载期把模组中硬编码的字符串替换为本地化文本
+分发形式：mods/vaultpatcher-<version>.jar（原样分发，未做任何修改）
+
+说明：VaultPatcher 以 GPL-3.0 授权，本软件以 AGPL-3.0 授权。依据 GPLv3 第 13 条
+      关于 AGPL 的兼容条款，二者可以组合分发，组合后的整体按 AGPL-3.0 分发。
+      VaultPatcher 源代码见上述项目地址。
+
+--------------------------------------------------------------------------------
+Qwen（通义千问）模型
+--------------------------------------------------------------------------------
 Copyright (c) 2026 Alibaba Cloud. All Rights Reserved.
-Licensed under the Apache License, Version 2.0.
+License : Apache License, Version 2.0
+          https://www.apache.org/licenses/LICENSE-2.0
+
+用途    ：作为BM25模型分词器。
+
+================================================================================
+其他说明
+================================================================================
+
+Minecraft、Minecraft Forge、Fabric、NeoForge 及其相关资源版权归 Mojang Studios
+与各自权利方所有，本软件不包含也不分发上述内容。
+
+本软件生成的翻译成果（语言资源包、硬编码模块）由使用者自行承担内容责任。
