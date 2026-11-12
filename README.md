@@ -114,7 +114,7 @@ conda activate Translator_Minecraft
 #                  向量处理       网络请求   进度显示与艺术 搜索文本
 pip install numpy numba gguf requests aiohttp rich tqdm  faiss-cpu
 # API服务器
-pip install uvicorn fastapi slowapi zstandard
+pip install uvicorn fastapi slowapi zstandard python-multipart
 conda install -c conda-forge python-libarchive-c
 
 # BM25版本文本搜索（可选）
