@@ -1111,9 +1111,13 @@ AI给我加了一堆BUG所以不发布
 
 ### Release.1.7 Bata.2（进行中）
 #### 软件更新日志
-- 添加 MaxToken退回逻辑
+- 添加 MaxToken退回逻辑![](https://img.shields.io/badge/状态-等待中-blue)
+- 添加 跳过已经被翻译到目标语言的过滤器![](https://img.shields.io/badge/状态-等待中-blue)
 - 添加 API接口
-    - 添加 Open~~Close~~AI Chat Completions 端点(仅纯文本翻译)
+    - 添加 Open~~Close~~AI Chat Completions 端点(仅纯文本翻译)![](https://img.shields.io/badge/状态-等待中-blue)
+- 修改 模组包含输出语言语言文件时不再跳过![](https://img.shields.io/badge/状态-等待中-blue)
+- 修复 非lang文件夹下的语言文件也会被翻译导致游戏无法启动
+- 修复 26.x版本使用VaultPatcher1.5.4游戏报错的问题
    
 ### 其他正在进行时
 - 滚木
